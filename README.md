@@ -6,7 +6,7 @@ A simple, local-only web scraper with a browser-based UI. Built with Nuxt 4.
 
 I tried various existing scrapers, but none of them worked the way I needed for my specific use cases. So I built my own.
 
-Is it perfect? No. Is it feature-complete? Definitely not. But it does exactly what I need it to do, and it might be useful for you too.
+Is it perfect? No. Is it feature-complete? Definitely not. But it does exactly what I need it to do.
 
 ## Features
 
