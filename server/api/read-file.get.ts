@@ -5,6 +5,7 @@ import { resolve } from 'path'
 export default defineEventHandler(async (event) => {
     const query = getQuery(event)
     const filePath = query.path as string
+    const base64 = query.base64 === 'true'
 
     if (!filePath) {
         throw createError({
@@ -25,8 +26,16 @@ export default defineEventHandler(async (event) => {
     }
 
     try {
-        const content = await readFile(resolvedPath, 'utf-8')
-        return { content }
+        if (base64) {
+            // Read as binary and encode to base64
+            const buffer = await readFile(resolvedPath)
+            const content = buffer.toString('base64')
+            return { content }
+        } else {
+            // Read as text
+            const content = await readFile(resolvedPath, 'utf-8')
+            return { content }
+        }
     } catch (error) {
         throw createError({
             statusCode: 404,

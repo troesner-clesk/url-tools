@@ -29,6 +29,7 @@ interface Props {
 const props = defineProps<Props>()
 
 const expandedHtml = ref<string | null>(null)
+const copiedColumn = ref<string | null>(null)
 
 function getStatusClass(status: number): string {
   if (status >= 200 && status < 300) return 'status-ok'
@@ -46,10 +47,10 @@ function copyHtml(html: string) {
   navigator.clipboard.writeText(html)
 }
 
-// Spalte kopieren
+// Copy column with visual feedback
 function copyColumn(columnName: string) {
   let values: string[] = []
-  
+
   if (props.mode === 'html' && props.htmlResults) {
     switch (columnName) {
       case 'url': values = props.htmlResults.map(r => r.url); break
@@ -68,14 +69,20 @@ function copyColumn(columnName: string) {
       case 'rel': values = props.linkResults.map(r => r.rel || ''); break
     }
   }
-  
+
   navigator.clipboard.writeText(values.join('\n'))
+
+  // Show visual feedback
+  copiedColumn.value = columnName
+  setTimeout(() => {
+    copiedColumn.value = null
+  }, 1500)
 }
 
-// Statistiken für Links
+// Statistics for links
 const linkStats = computed(() => {
   if (!props.linkResults?.length) return null
-  
+
   const total = props.linkResults.length
   const status200 = props.linkResults.filter(r => r.status >= 200 && r.status < 300).length
   const status3xx = props.linkResults.filter(r => r.status >= 300 && r.status < 400).length
@@ -84,7 +91,7 @@ const linkStats = computed(() => {
   const errors = props.linkResults.filter(r => r.status === 0).length
   const internal = props.linkResults.filter(r => r.type === 'internal').length
   const external = props.linkResults.filter(r => r.type === 'external').length
-  
+
   return { total, status200, status3xx, status4xx, status5xx, errors, internal, external }
 })
 </script>
@@ -98,21 +105,29 @@ const linkStats = computed(() => {
       <span class="stat status-redirect">3xx: {{ linkStats.status3xx }}</span>
       <span class="stat status-error">4xx: {{ linkStats.status4xx }}</span>
       <span class="stat status-error">5xx: {{ linkStats.status5xx }}</span>
-      <span v-if="linkStats.errors" class="stat status-error">Fehler: {{ linkStats.errors }}</span>
+      <span v-if="linkStats.errors" class="stat status-error">Errors: {{ linkStats.errors }}</span>
       <span class="stat-divider">|</span>
-      <span class="stat type-internal">Intern: {{ linkStats.internal }}</span>
-      <span class="stat type-external">Extern: {{ linkStats.external }}</span>
+      <span class="stat type-internal">Internal: {{ linkStats.internal }}</span>
+      <span class="stat type-external">External: {{ linkStats.external }}</span>
     </div>
 
-    <!-- HTML Ergebnisse -->
+    <!-- HTML Results -->
     <template v-if="mode === 'html' && htmlResults?.length">
       <table>
         <thead>
           <tr>
-            <th @click="copyColumn('url')" class="th-copy" title="Spalte kopieren">URL ⧉</th>
-            <th @click="copyColumn('status')" class="th-copy" title="Spalte kopieren">Status ⧉</th>
-            <th @click="copyColumn('contentType')" class="th-copy" title="Spalte kopieren">Content-Type ⧉</th>
-            <th @click="copyColumn('size')" class="th-copy" title="Spalte kopieren">Größe ⧉</th>
+            <th @click="copyColumn('url')" :class="['th-copy', { copied: copiedColumn === 'url' }]" title="Click to copy column">
+              {{ copiedColumn === 'url' ? '✓ Copied!' : 'URL ⧉' }}
+            </th>
+            <th @click="copyColumn('status')" :class="['th-copy', { copied: copiedColumn === 'status' }]" title="Click to copy column">
+              {{ copiedColumn === 'status' ? '✓ Copied!' : 'Status ⧉' }}
+            </th>
+            <th @click="copyColumn('contentType')" :class="['th-copy', { copied: copiedColumn === 'contentType' }]" title="Click to copy column">
+              {{ copiedColumn === 'contentType' ? '✓ Copied!' : 'Content-Type ⧉' }}
+            </th>
+            <th @click="copyColumn('size')" :class="['th-copy', { copied: copiedColumn === 'size' }]" title="Click to copy column">
+              {{ copiedColumn === 'size' ? '✓ Copied!' : 'Size ⧉' }}
+            </th>
             <th>HTML</th>
           </tr>
         </thead>
@@ -127,24 +142,24 @@ const linkStats = computed(() => {
             <td>{{ result.contentType }}</td>
             <td>{{ formatSize(result.size) }}</td>
             <td>
-              <button 
-                v-if="!result.error" 
+              <button
+                v-if="!result.error"
                 class="btn-small"
                 @click="expandedHtml = expandedHtml === result.url ? null : result.url"
               >
-                {{ expandedHtml === result.url ? 'Schließen' : 'Anzeigen' }}
+                {{ expandedHtml === result.url ? 'Close' : 'View' }}
               </button>
-              <button 
+              <button
                 v-if="!result.error"
                 class="btn-small"
                 @click="copyHtml(result.html)"
               >
-                Kopieren
+                Copy
               </button>
               <span v-if="result.error" class="error-text">{{ result.error }}</span>
             </td>
           </tr>
-          <!-- Expandierter HTML-View -->
+          <!-- Expanded HTML View -->
           <tr v-if="expandedHtml">
             <td colspan="5">
               <pre class="html-preview">{{ htmlResults?.find(r => r.url === expandedHtml)?.html }}</pre>
@@ -154,18 +169,32 @@ const linkStats = computed(() => {
       </table>
     </template>
 
-    <!-- Link Ergebnisse -->
+    <!-- Link Results -->
     <template v-if="mode === 'links' && linkResults?.length">
       <table>
         <thead>
           <tr>
-            <th @click="copyColumn('sourceUrl')" class="th-copy" title="Spalte kopieren">Source ⧉</th>
-            <th @click="copyColumn('targetUrl')" class="th-copy" title="Spalte kopieren">Target ⧉</th>
-            <th @click="copyColumn('status')" class="th-copy" title="Spalte kopieren">Status ⧉</th>
-            <th @click="copyColumn('redirectChain')" class="th-copy" title="Spalte kopieren">Redirects ⧉</th>
-            <th @click="copyColumn('type')" class="th-copy" title="Spalte kopieren">Typ ⧉</th>
-            <th @click="copyColumn('anchorText')" class="th-copy" title="Spalte kopieren">Anchor ⧉</th>
-            <th @click="copyColumn('rel')" class="th-copy" title="Spalte kopieren">Rel ⧉</th>
+            <th @click="copyColumn('sourceUrl')" :class="['th-copy', { copied: copiedColumn === 'sourceUrl' }]" title="Click to copy column">
+              {{ copiedColumn === 'sourceUrl' ? '✓ Copied!' : 'Source ⧉' }}
+            </th>
+            <th @click="copyColumn('targetUrl')" :class="['th-copy', { copied: copiedColumn === 'targetUrl' }]" title="Click to copy column">
+              {{ copiedColumn === 'targetUrl' ? '✓ Copied!' : 'Target ⧉' }}
+            </th>
+            <th @click="copyColumn('status')" :class="['th-copy', { copied: copiedColumn === 'status' }]" title="Click to copy column">
+              {{ copiedColumn === 'status' ? '✓ Copied!' : 'Status ⧉' }}
+            </th>
+            <th @click="copyColumn('redirectChain')" :class="['th-copy', { copied: copiedColumn === 'redirectChain' }]" title="Click to copy column">
+              {{ copiedColumn === 'redirectChain' ? '✓ Copied!' : 'Redirects ⧉' }}
+            </th>
+            <th @click="copyColumn('type')" :class="['th-copy', { copied: copiedColumn === 'type' }]" title="Click to copy column">
+              {{ copiedColumn === 'type' ? '✓ Copied!' : 'Type ⧉' }}
+            </th>
+            <th @click="copyColumn('anchorText')" :class="['th-copy', { copied: copiedColumn === 'anchorText' }]" title="Click to copy column">
+              {{ copiedColumn === 'anchorText' ? '✓ Copied!' : 'Anchor ⧉' }}
+            </th>
+            <th @click="copyColumn('rel')" :class="['th-copy', { copied: copiedColumn === 'rel' }]" title="Click to copy column">
+              {{ copiedColumn === 'rel' ? '✓ Copied!' : 'Rel ⧉' }}
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -190,9 +219,9 @@ const linkStats = computed(() => {
       </table>
     </template>
 
-    <!-- Keine Ergebnisse -->
+    <!-- No Results -->
     <div v-if="(!htmlResults?.length && mode === 'html') || (!linkResults?.length && mode === 'links')" class="no-results">
-      Noch keine Ergebnisse. Gib URLs ein und klicke auf "Go".
+      No results yet. Enter URLs and click "Start".
     </div>
   </div>
 </template>
@@ -264,6 +293,11 @@ th {
 .th-copy:hover {
   color: #0066cc;
   background: #1a1a2a;
+}
+
+.th-copy.copied {
+  color: #4ade80;
+  background: #1a4d1a;
 }
 
 .url-cell {

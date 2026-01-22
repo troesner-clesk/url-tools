@@ -1,5 +1,12 @@
 import { defineEventHandler, readBody } from 'h3'
-import { extractLinks, getRedirectChain, formatRedirectChain, isInternalLink, normalizeUrl } from '../utils/link-analyzer'
+import { extractLinks, getRedirectChain, formatRedirectChain, normalizeUrl } from '../utils/link-analyzer'
+
+interface RequestSettings {
+    timeout: number      // Sekunden
+    retries: number      // 0-3
+    proxy?: string       // Optional: http://host:port
+    headers?: Record<string, string>  // Custom Headers
+}
 
 interface ScrapeLinksRequest {
     urls: string[]
@@ -8,6 +15,8 @@ interface ScrapeLinksRequest {
     maxDepth: number
     rateLimit: number
     sameDomainOnly: boolean
+    urlFilter?: string   // Regex-Filter für URLs
+    settings?: RequestSettings
 }
 
 interface LinkResult {
@@ -20,10 +29,52 @@ interface LinkResult {
     rel: string
     depth: number
     error?: string
+    retryCount?: number
 }
 
 function sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+// Fetch mit Retry-Logik
+async function fetchWithRetry(
+    url: string,
+    settings: RequestSettings
+): Promise<{ response: Response; retryCount: number }> {
+    const { timeout, retries, headers } = settings
+    let lastError: Error | null = null
+
+    for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+            const controller = new AbortController()
+            const timeoutId = setTimeout(() => controller.abort(), timeout * 1000)
+
+            const response = await fetch(url, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (compatible; HTMLScraper/1.0)',
+                    ...headers
+                },
+                signal: controller.signal
+            })
+            clearTimeout(timeoutId)
+
+            if (response.status >= 500 && attempt < retries) {
+                lastError = new Error(`Server error: ${response.status}`)
+                await sleep(1000 * (attempt + 1))
+                continue
+            }
+
+            return { response, retryCount: attempt }
+        } catch (error) {
+            lastError = error instanceof Error ? error : new Error('Unknown error')
+            if (attempt < retries) {
+                await sleep(1000 * (attempt + 1))
+                continue
+            }
+        }
+    }
+
+    throw lastError
 }
 
 export default defineEventHandler(async (event) => {
@@ -34,6 +85,24 @@ export default defineEventHandler(async (event) => {
             statusCode: 400,
             message: 'urls array required'
         })
+    }
+
+    // Default-Settings
+    const settings: RequestSettings = {
+        timeout: body.settings?.timeout ?? 30,
+        retries: body.settings?.retries ?? 1,
+        proxy: body.settings?.proxy,
+        headers: body.settings?.headers
+    }
+
+    // URL-Filter (Regex)
+    let urlFilterRegex: RegExp | null = null
+    if (body.urlFilter) {
+        try {
+            urlFilterRegex = new RegExp(body.urlFilter)
+        } catch {
+            // Ungültiger Regex - ignorieren
+        }
     }
 
     const results: LinkResult[] = []
@@ -60,33 +129,34 @@ export default defineEventHandler(async (event) => {
         }).filter(Boolean)
     )
 
-    const delayMs = 1000 / body.rateLimit // z.B. 500ms bei 2 req/s
+    const delayMs = 1000 / body.rateLimit
 
     while (queue.length > 0 && results.length < body.maxUrls) {
         const item = queue.shift()!
 
+        // URL-Filter prüfen
+        if (urlFilterRegex && !urlFilterRegex.test(item.url)) {
+            continue
+        }
+
         try {
-            // Rate Limiting
             if (results.length > 0) {
                 await sleep(delayMs)
             }
 
-            // Seite fetchen
-            const response = await fetch(item.url, {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (compatible; HTMLScraper/1.0)'
-                },
-                signal: AbortSignal.timeout(30000)
-            })
+            const { response, retryCount } = await fetchWithRetry(item.url, settings)
 
             const html = await response.text()
             const links = extractLinks(html, item.url)
 
-            // Links verarbeiten
             for (const link of links) {
                 if (results.length >= body.maxUrls) break
 
-                // Status und Redirect-Kette prüfen
+                // URL-Filter auch auf Target-URLs anwenden
+                if (urlFilterRegex && !urlFilterRegex.test(link.targetUrl)) {
+                    continue
+                }
+
                 const redirectInfo = await getRedirectChain(link.targetUrl)
 
                 const result: LinkResult = {
@@ -98,18 +168,17 @@ export default defineEventHandler(async (event) => {
                     anchorText: link.anchorText,
                     rel: link.rel.join(', '),
                     depth: item.depth,
-                    error: redirectInfo.error
+                    error: redirectInfo.error,
+                    retryCount
                 }
 
                 results.push(result)
 
-                // Rekursiv crawlen?
                 if (body.recursive &&
                     link.isInternal &&
                     item.depth < body.maxDepth &&
                     !visited.has(link.targetUrl)) {
 
-                    // Same-Domain Check
                     const targetDomain = new URL(link.targetUrl).hostname
                     if (!body.sameDomainOnly || baseDomains.has(targetDomain)) {
                         visited.add(link.targetUrl)
@@ -117,7 +186,6 @@ export default defineEventHandler(async (event) => {
                     }
                 }
 
-                // Rate Limiting zwischen Link-Checks
                 await sleep(delayMs / 2)
             }
         } catch (error) {

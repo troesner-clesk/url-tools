@@ -3,6 +3,14 @@ interface Props {
   mode: 'html' | 'links'
 }
 
+interface RequestSettings {
+  timeout: number
+  retries: number
+  proxy: string
+  headers: Record<string, string>
+  parallelRequests: number
+}
+
 interface Settings {
   recursive: boolean
   maxUrls: number
@@ -11,7 +19,8 @@ interface Settings {
   sameDomainOnly: boolean
   saveFormat: 'json' | 'csv' | 'both'
   cssSelector: string
-  parallelRequests: number
+  urlFilter: string
+  requestSettings: RequestSettings
 }
 
 const props = defineProps<Props>()
@@ -25,7 +34,14 @@ const settings = defineModel<Settings>('settings', {
     sameDomainOnly: true,
     saveFormat: 'json' as const,
     cssSelector: '',
-    parallelRequests: 5
+    urlFilter: '',
+    requestSettings: {
+      timeout: 30,
+      retries: 1,
+      proxy: '',
+      headers: {},
+      parallelRequests: 5
+    }
   })
 })
 
@@ -34,91 +50,95 @@ const customSelector = ref('')
 
 <template>
   <div class="settings-panel">
-    <h3>Settings</h3>
-    
-    <!-- Save Format (immer sichtbar) -->
+    <!-- Common Request Settings -->
+    <RequestSettings v-model:settings="settings.requestSettings" />
+
+    <!-- Auto-Save Format -->
     <div class="setting-group">
       <label>Auto-Save Format</label>
       <select v-model="settings.saveFormat">
         <option value="json">JSON</option>
         <option value="csv">CSV</option>
-        <option value="both">Beides</option>
+        <option value="both">Both</option>
       </select>
     </div>
 
-    <!-- HTML-spezifische Settings -->
+    <!-- HTML-specific Settings -->
     <template v-if="mode === 'html'">
       <div class="setting-group">
-        <label>Bereich extrahieren</label>
+        <label>Extract area</label>
         <select v-model="settings.cssSelector">
-          <option value="">Ganze Seite</option>
-          <option value="main">Nur Hauptinhalt (main)</option>
-          <option value="article">Nur Artikel (article)</option>
-          <option value="main, article">Hauptinhalt oder Artikel</option>
-          <option value=".content, #content">Content-Bereich (.content / #content)</option>
-          <option value="body > *:not(header):not(footer):not(nav)">Ohne Header/Footer/Nav</option>
-          <option value="custom">Eigener CSS-Selector...</option>
+          <option value="">Full page</option>
+          <option value="main">Main content only (main)</option>
+          <option value="article">Article only (article)</option>
+          <option value="main, article">Main content or article</option>
+          <option value=".content, #content">Content area (.content / #content)</option>
+          <option value="body > *:not(header):not(footer):not(nav)">Without Header/Footer/Nav</option>
+          <option value="custom">Custom CSS selector...</option>
         </select>
       </div>
-      
+
       <div v-if="settings.cssSelector === 'custom'" class="setting-group">
-        <label>Eigener CSS-Selector</label>
-        <input 
-          type="text" 
-          v-model="customSelector" 
-          placeholder="z.B. .post-content, #main-text"
+        <label>Custom CSS selector</label>
+        <input
+          type="text"
+          v-model="customSelector"
+          placeholder="e.g. .post-content, #main-text"
           @input="settings.cssSelector = customSelector"
         >
         <div class="setting-hint">
-          CSS-Selector für das zu extrahierende Element
-        </div>
-      </div>
-
-      <div class="setting-group">
-        <label>Parallele Requests</label>
-        <input 
-          type="number" 
-          v-model.number="settings.parallelRequests" 
-          min="1" 
-          max="20"
-        >
-        <div class="setting-hint">
-          Mehr = schneller, aber höherer RAM-Verbrauch
+          CSS selector for the element to extract
         </div>
       </div>
     </template>
 
-    <!-- Link-spezifische Settings -->
+    <!-- Link-specific Settings -->
     <template v-if="mode === 'links'">
       <div class="setting-group">
         <label>
           <input type="checkbox" v-model="settings.recursive">
-          Rekursiv crawlen
+          Crawl recursively
         </label>
       </div>
 
       <template v-if="settings.recursive">
         <div class="setting-group">
-          <label>Max. URLs</label>
-          <input type="number" v-model.number="settings.maxUrls" min="1" max="10000">
+          <label>Max URLs</label>
+          <input
+            type="number"
+            v-model.number="settings.maxUrls"
+            min="1"
+            max="10000"
+          >
         </div>
 
         <div class="setting-group">
-          <label>Max. Tiefe</label>
-          <input type="number" v-model.number="settings.maxDepth" min="1" max="10">
+          <label>Max depth</label>
+          <input
+            type="number"
+            v-model.number="settings.maxDepth"
+            min="1"
+            max="10"
+          >
         </div>
 
         <div class="setting-group">
           <label>
             <input type="checkbox" v-model="settings.sameDomainOnly">
-            Nur Same-Domain
+            Same domain only
           </label>
         </div>
       </template>
 
       <div class="setting-group">
         <label>Rate Limit (Req/s)</label>
-        <input type="number" v-model.number="settings.rateLimit" min="0.5" max="10" step="0.5">
+        <input
+          type="number"
+          v-model.number="settings.rateLimit"
+          min="0.1"
+          max="10"
+          step="0.1"
+        >
       </div>
     </template>
   </div>
@@ -126,57 +146,38 @@ const customSelector = ref('')
 
 <style scoped>
 .settings-panel {
-  background: #1a1a1a;
-  border: 1px solid #333;
-  border-radius: 4px;
-  padding: 16px;
-}
-
-.settings-panel h3 {
-  margin: 0 0 16px 0;
-  font-size: 14px;
-  color: #888;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  margin-bottom: 1rem;
 }
 
 .setting-group {
-  margin-bottom: 12px;
+  margin-bottom: 0.75rem;
 }
 
 .setting-group label {
   display: block;
-  margin-bottom: 4px;
-  color: #ccc;
-  font-size: 13px;
+  font-size: 0.85rem;
+  color: var(--text-secondary, #888);
+  margin-bottom: 0.3rem;
+}
+
+.setting-group input[type="text"],
+.setting-group input[type="number"],
+.setting-group select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--border, #333);
+  border-radius: 4px;
+  background: var(--bg-primary, #0f0f1a);
+  color: var(--text-primary, #fff);
 }
 
 .setting-group input[type="checkbox"] {
-  margin-right: 8px;
-}
-
-.setting-group input[type="number"],
-.setting-group input[type="text"],
-.setting-group select {
-  width: 100%;
-  padding: 8px;
-  background: #0a0a0a;
-  border: 1px solid #333;
-  border-radius: 4px;
-  color: #fff;
-  font-family: inherit;
-}
-
-.setting-group input[type="number"]:focus,
-.setting-group input[type="text"]:focus,
-.setting-group select:focus {
-  outline: none;
-  border-color: #0066cc;
+  margin-right: 0.5rem;
 }
 
 .setting-hint {
-  margin-top: 4px;
-  font-size: 11px;
-  color: #666;
+  font-size: 0.75rem;
+  color: var(--text-secondary, #666);
+  margin-top: 0.25rem;
 }
 </style>

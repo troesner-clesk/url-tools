@@ -1,9 +1,17 @@
 import { defineEventHandler, readBody } from 'h3'
 import * as cheerio from 'cheerio'
 
+interface RequestSettings {
+    timeout: number      // Sekunden
+    retries: number      // 0-3
+    proxy?: string       // Optional: http://host:port
+    headers?: Record<string, string>  // Custom Headers
+}
+
 interface ScrapeHtmlRequest {
     urls: string[]
     cssSelector?: string
+    settings?: RequestSettings
 }
 
 interface ScrapeHtmlResult {
@@ -13,6 +21,57 @@ interface ScrapeHtmlResult {
     size: number
     html: string
     error?: string
+    retryCount?: number
+}
+
+// Fetch mit Retry-Logik
+async function fetchWithRetry(
+    url: string,
+    settings: RequestSettings
+): Promise<{ response: Response; retryCount: number }> {
+    const { timeout, retries, proxy, headers } = settings
+    let lastError: Error | null = null
+
+    for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+            const controller = new AbortController()
+            const timeoutId = setTimeout(() => controller.abort(), timeout * 1000)
+
+            const fetchOptions: RequestInit = {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (compatible; HTMLScraper/1.0)',
+                    ...headers
+                },
+                signal: controller.signal
+            }
+
+            // Proxy-Unterstützung (nur für Server-Side)
+            // Hinweis: Native fetch unterstützt kein Proxy direkt,
+            // bei Bedarf könnte man undici oder node-fetch-with-proxy nutzen
+
+            const response = await fetch(url, fetchOptions)
+            clearTimeout(timeoutId)
+
+            // Bei 5xx-Fehlern: Retry
+            if (response.status >= 500 && attempt < retries) {
+                lastError = new Error(`Server error: ${response.status}`)
+                await new Promise(r => setTimeout(r, 1000 * (attempt + 1))) // Exponential backoff
+                continue
+            }
+
+            return { response, retryCount: attempt }
+        } catch (error) {
+            lastError = error instanceof Error ? error : new Error('Unknown error')
+
+            // Timeout oder Netzwerkfehler: Retry
+            if (attempt < retries) {
+                await new Promise(r => setTimeout(r, 1000 * (attempt + 1)))
+                continue
+            }
+        }
+    }
+
+    throw lastError
 }
 
 export default defineEventHandler(async (event) => {
@@ -23,6 +82,14 @@ export default defineEventHandler(async (event) => {
             statusCode: 400,
             message: 'urls array required'
         })
+    }
+
+    // Default-Settings
+    const settings: RequestSettings = {
+        timeout: body.settings?.timeout ?? 30,
+        retries: body.settings?.retries ?? 1,
+        proxy: body.settings?.proxy,
+        headers: body.settings?.headers
     }
 
     const results: ScrapeHtmlResult[] = []
@@ -36,12 +103,7 @@ export default defineEventHandler(async (event) => {
         const batchResults = await Promise.all(
             batch.map(async (url): Promise<ScrapeHtmlResult> => {
                 try {
-                    const response = await fetch(url, {
-                        headers: {
-                            'User-Agent': 'Mozilla/5.0 (compatible; HTMLScraper/1.0)'
-                        },
-                        signal: AbortSignal.timeout(30000) // 30s timeout
-                    })
+                    const { response, retryCount } = await fetchWithRetry(url, settings)
 
                     let html = await response.text()
 
@@ -50,10 +112,8 @@ export default defineEventHandler(async (event) => {
                         const $ = cheerio.load(html)
                         const selected = $(cssSelector)
                         if (selected.length > 0) {
-                            // Alle gefundenen Elemente sammeln
                             html = selected.map((_, el) => $.html(el)).get().join('\n')
                         } else {
-                            // Kein Match gefunden
                             html = `<!-- Kein Element gefunden für Selector: ${cssSelector} -->\n${html}`
                         }
                     }
@@ -63,7 +123,8 @@ export default defineEventHandler(async (event) => {
                         status: response.status,
                         contentType: response.headers.get('content-type') || 'unknown',
                         size: html.length,
-                        html
+                        html,
+                        retryCount
                     }
                 } catch (error) {
                     return {

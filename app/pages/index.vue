@@ -1,4 +1,12 @@
 <script setup lang="ts">
+interface RequestSettings {
+  timeout: number
+  retries: number
+  proxy: string
+  headers: Record<string, string>
+  parallelRequests: number
+}
+
 interface Settings {
   recursive: boolean
   maxUrls: number
@@ -7,7 +15,8 @@ interface Settings {
   sameDomainOnly: boolean
   saveFormat: 'json' | 'csv' | 'both'
   cssSelector: string
-  parallelRequests: number
+  urlFilter: string
+  requestSettings: RequestSettings
 }
 
 interface HtmlResult {
@@ -48,10 +57,18 @@ const settings = ref<Settings>({
   sameDomainOnly: true,
   saveFormat: 'json',
   cssSelector: '',
-  parallelRequests: 5
+  urlFilter: '',
+  requestSettings: {
+    timeout: 30,
+    retries: 1,
+    proxy: '',
+    headers: {},
+    parallelRequests: 5
+  }
 })
 
 const isRunning = ref(false)
+const isPaused = ref(false)
 const progress = ref({ done: 0, total: 0 })
 const htmlResults = ref<HtmlResult[]>([])
 const linkResults = ref<LinkResult[]>([])
@@ -59,21 +76,20 @@ const savedFiles = ref<string[]>([])
 const error = ref<string | null>(null)
 const logs = ref<LogEntry[]>([])
 const currentUrl = ref<string | null>(null)
-const activeTab = ref<'scraper' | 'output'>('scraper')
-const outputDir = ref('')
+const activeTab = ref<'scraper' | 'seo' | 'screenshots' | 'images'>('scraper')
 
-// Log-Funktion
+// Log function
 function addLog(message: string, type: LogEntry['type'] = 'info') {
   const now = new Date()
-  const timestamp = now.toLocaleTimeString('de-DE')
+  const timestamp = now.toLocaleTimeString('en-US')
   logs.value.push({ timestamp, message, type })
-  // Max 100 Log-Einträge behalten
+  // Keep max 100 log entries
   if (logs.value.length > 100) {
     logs.value.shift()
   }
 }
 
-// URLs parsen
+// Parse URLs
 function parseUrls(input: string): string[] {
   return input
     .split(/[\n,]+/)
@@ -92,7 +108,7 @@ function parseUrls(input: string): string[] {
 const parsedUrls = computed(() => parseUrls(urlInput.value))
 const hasValidUrls = computed(() => parsedUrls.value.length > 0)
 
-// Scraping starten
+// Start scraping
 async function startScraping() {
   if (!hasValidUrls.value || isRunning.value) return
 
@@ -104,7 +120,7 @@ async function startScraping() {
   logs.value = []
   progress.value = { done: 0, total: parsedUrls.value.length }
 
-  addLog(`Starte ${mode.value === 'html' ? 'HTML' : 'Links'}-Scraping für ${parsedUrls.value.length} URL(s)`, 'info')
+  addLog(`Starting ${mode.value === 'html' ? 'HTML' : 'Links'} scraping for ${parsedUrls.value.length} URL(s)`, 'info')
 
   try {
     if (mode.value === 'html') {
@@ -112,9 +128,9 @@ async function startScraping() {
     } else {
       await scrapeLinks()
     }
-    addLog('Fertig!', 'success')
+    addLog('Done!', 'success')
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Ein Fehler ist aufgetreten'
+    const msg = e instanceof Error ? e.message : 'An error occurred'
     error.value = msg
     addLog(msg, 'error')
   } finally {
@@ -126,22 +142,22 @@ async function startScraping() {
 async function scrapeHtml() {
   const urls = parsedUrls.value
   const results: HtmlResult[] = []
-  const batchSize = settings.value.parallelRequests || 5
-  
-  addLog(`Starte paralleles Scraping (${batchSize} gleichzeitig)...`, 'info')
-  
+  const batchSize = settings.value.requestSettings.parallelRequests || 5
+
+  addLog(`Starting parallel scraping (${batchSize} concurrent)...`, 'info')
+
   for (let i = 0; i < urls.length; i += batchSize) {
     const batch = urls.slice(i, i + batchSize)
     currentUrl.value = `Batch ${Math.floor(i / batchSize) + 1}: ${batch.length} URLs...`
-    
-    addLog(`[${i + 1}-${Math.min(i + batchSize, urls.length)}/${urls.length}] Lade ${batch.length} URLs...`, 'progress')
-    
+
+    addLog(`[${i + 1}-${Math.min(i + batchSize, urls.length)}/${urls.length}] Loading ${batch.length} URLs...`, 'progress')
+
     try {
       const response = await $fetch('/api/scrape-html', {
         method: 'POST',
         body: { urls: batch, cssSelector: settings.value.cssSelector }
       })
-      
+
       for (const result of response.results) {
         results.push(result)
         if (result.error) {
@@ -151,32 +167,32 @@ async function scrapeHtml() {
         }
       }
     } catch (e) {
-      // Bei Batch-Fehler: alle URLs als Fehler markieren
+      // On batch error: mark all URLs as failed
       for (const url of batch) {
-        addLog(`✗ ${url}: ${e instanceof Error ? e.message : 'Fehler'}`, 'error')
+        addLog(`✗ ${url}: ${e instanceof Error ? e.message : 'Error'}`, 'error')
         results.push({
           url,
           status: 0,
           contentType: 'error',
           size: 0,
           html: '',
-          error: e instanceof Error ? e.message : 'Fehler'
+          error: e instanceof Error ? e.message : 'Error'
         })
       }
     }
-    
+
     progress.value.done = Math.min(i + batchSize, urls.length)
     htmlResults.value = [...results]
   }
 
   // Auto-Save
-  addLog('Speichere Dateien...', 'info')
+  addLog('Saving files...', 'info')
   await saveResults(results)
 }
 
 async function scrapeLinks() {
-  addLog('Starte Link-Analyse...', 'info')
-  
+  addLog('Starting link analysis...', 'info')
+
   const response = await $fetch('/api/scrape-links', {
     method: 'POST',
     body: {
@@ -192,11 +208,11 @@ async function scrapeLinks() {
   linkResults.value = response.results
   progress.value.done = response.stats.totalLinks
   progress.value.total = response.stats.totalLinks
-  
-  addLog(`${response.stats.totalLinks} Links gefunden`, 'success')
+
+  addLog(`${response.stats.totalLinks} links found`, 'success')
 
   // Auto-Save
-  addLog('Speichere Dateien...', 'info')
+  addLog('Saving files...', 'info')
   await saveResults(response.results)
 }
 
@@ -213,31 +229,14 @@ async function saveResults(results: unknown[]) {
   })
 
   savedFiles.value = response.files
-  addLog(`${response.files.length} Datei(en) gespeichert`, 'success')
+  addLog(`${response.files.length} file(s) saved`, 'success')
 }
 
 function stopScraping() {
   isRunning.value = false
-  addLog('Abgebrochen', 'error')
+  addLog('Cancelled', 'error')
 }
 
-async function openOutputFolder() {
-  try {
-    await $fetch('/api/open-folder', {
-      query: { path: outputDir.value || process.cwd() + '/output' }
-    })
-  } catch (error) {
-    console.error('Failed to open folder:', error)
-  }
-}
-
-// Output-Dir laden für den Button
-onMounted(async () => {
-  try {
-    const response = await $fetch('/api/get-output-dir')
-    outputDir.value = response.outputDir
-  } catch {}
-})
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
@@ -259,34 +258,47 @@ watch(logs, () => {
 <template>
   <div class="app">
     <header>
-      <h1>HTML/JSON Scraper</h1>
+      <h1>🌐 URL Tools <span class="subtitle">(Scraping, SEO, Screenshots, Images)</span></h1>
       <nav class="tabs">
-        <button 
-          :class="['tab', { active: activeTab === 'scraper' }]" 
+        <button
+          :class="['tab', { active: activeTab === 'scraper' }]"
           @click="activeTab = 'scraper'"
         >
-          Scraper
+          🌐 Scraper
         </button>
-        <button 
-          :class="['tab', { active: activeTab === 'output' }]" 
-          @click="activeTab = 'output'"
+        <button
+          :class="['tab', { active: activeTab === 'seo' }]"
+          @click="activeTab = 'seo'"
         >
-          📁 Output
+          🔍 SEO Audit
+        </button>
+        <button
+          :class="['tab', { active: activeTab === 'screenshots' }]"
+          @click="activeTab = 'screenshots'"
+        >
+          📸 Screenshots
+        </button>
+        <button
+          :class="['tab', { active: activeTab === 'images' }]"
+          @click="activeTab = 'images'"
+        >
+          🖼️ Images
         </button>
       </nav>
     </header>
 
-    <main>
+    <!-- Scraper Tab -->
+    <main v-if="activeTab === 'scraper'">
       <div class="input-section">
         <!-- URL Input -->
         <div class="url-input">
-          <label>URLs (eine pro Zeile oder mit Komma getrennt)</label>
-          <textarea 
-            v-model="urlInput" 
+          <label>URLs (one per line or comma-separated)</label>
+          <textarea
+            v-model="urlInput"
             placeholder="https://example.com&#10;https://example.org"
             :disabled="isRunning"
           ></textarea>
-          <div class="url-count">{{ parsedUrls.length }} gültige URL(s)</div>
+          <div class="url-count">{{ parsedUrls.length }} valid URL(s)</div>
         </div>
 
         <!-- Mode Selection -->
@@ -306,27 +318,41 @@ watch(logs, () => {
 
         <!-- Actions -->
         <div class="actions">
-          <button 
-            class="btn-primary" 
-            @click="startScraping" 
+          <button
+            class="btn-primary"
+            @click="startScraping"
             :disabled="!hasValidUrls || isRunning"
           >
-            {{ isRunning ? 'Läuft...' : 'Go' }}
+            {{ isRunning ? (isPaused ? '⏸ Paused' : '⏳ Running...') : '▶ Start' }}
           </button>
-          <button 
-            v-if="isRunning" 
-            class="btn-secondary" 
+          <button
+            v-if="isRunning && !isPaused"
+            class="btn-secondary"
+            @click="isPaused = true"
+          >
+            ⏸ Pause
+          </button>
+          <button
+            v-if="isRunning && isPaused"
+            class="btn-secondary"
+            @click="isPaused = false"
+          >
+            ▶ Resume
+          </button>
+          <button
+            v-if="isRunning"
+            class="btn-danger"
             @click="stopScraping"
           >
-            Stop
+            ⏹ Stop
           </button>
         </div>
 
         <!-- Progress -->
         <div v-if="isRunning || progress.done > 0" class="progress">
           <div class="progress-bar">
-            <div 
-              class="progress-fill" 
+            <div
+              class="progress-fill"
               :style="{ width: `${(progress.done / Math.max(progress.total, 1)) * 100}%` }"
             ></div>
           </div>
@@ -340,9 +366,9 @@ watch(logs, () => {
 
         <!-- Live Log -->
         <div v-if="logs.length" class="log-container" ref="logContainer">
-          <div 
-            v-for="(log, index) in logs" 
-            :key="index" 
+          <div
+            v-for="(log, index) in logs"
+            :key="index"
             :class="['log-entry', `log-${log.type}`]"
           >
             <span class="log-time">{{ log.timestamp }}</span>
@@ -353,8 +379,8 @@ watch(logs, () => {
         <!-- Saved Files -->
         <div v-if="savedFiles.length" class="saved-files">
           <div class="saved-header">
-            <span>✓ Gespeichert:</span>
-            <button class="btn-folder" @click="openOutputFolder">📂 Ordner öffnen</button>
+            <span>✓ Saved:</span>
+            <RecentJobsMenu :tool-type="mode === 'html' ? 'html' : 'links'" />
           </div>
           <ul>
             <li v-for="file in savedFiles" :key="file">{{ file }}</li>
@@ -367,18 +393,29 @@ watch(logs, () => {
 
       <!-- Results -->
       <div class="results-section">
-        <ResultsTable 
-          :mode="mode" 
-          :html-results="htmlResults" 
-          :link-results="linkResults" 
+        <ResultsTable
+          :mode="mode"
+          :html-results="htmlResults"
+          :link-results="linkResults"
         />
       </div>
     </main>
 
-    <!-- Output Browser Tab -->
-    <div v-if="activeTab === 'output'" class="output-tab">
-      <OutputBrowser />
-    </div>
+    <!-- SEO Audit Tab -->
+    <main v-else-if="activeTab === 'seo'" class="full-page">
+      <SeoAudit />
+    </main>
+
+    <!-- Screenshots Tab -->
+    <main v-else-if="activeTab === 'screenshots'" class="full-page">
+      <Screenshots />
+    </main>
+
+    <!-- Image Scraper Tab -->
+    <main v-else-if="activeTab === 'images'" class="full-page">
+      <ImageScraper />
+    </main>
+
   </div>
 </template>
 
@@ -408,11 +445,22 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: sticky;
+  top: 0;
+  background: #0a0a0a;
+  z-index: 100;
 }
 
 header h1 {
   font-size: 18px;
   font-weight: 600;
+}
+
+header h1 .subtitle {
+  font-size: 12px;
+  font-weight: 400;
+  color: #666;
+  margin-left: 8px;
 }
 
 .tabs {
@@ -444,11 +492,20 @@ main {
   display: grid;
   grid-template-columns: 360px 1fr;
   flex: 1;
+  overflow: hidden;
+  height: calc(100vh - 60px);
 }
 
 .output-tab {
   flex: 1;
   overflow: hidden;
+}
+
+.full-page {
+  display: block;
+  height: calc(100vh - 60px);
+  overflow-y: auto;
+  background: #0a0a0a;
 }
 
 .input-section {
@@ -458,7 +515,6 @@ main {
   flex-direction: column;
   gap: 12px;
   overflow-y: auto;
-  max-height: calc(100vh - 60px);
 }
 
 .url-input label {
@@ -663,5 +719,48 @@ main {
 .results-section {
   padding: 16px;
   overflow: auto;
+}
+
+.btn-danger {
+  padding: 12px 16px;
+  background: #cc3333;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+}
+
+.btn-danger:hover {
+  background: #dd4444;
+}
+
+.coming-soon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: calc(100vh - 60px);
+  background: #0a0a0a;
+}
+
+.placeholder {
+  text-align: center;
+  padding: 40px;
+}
+
+.placeholder h2 {
+  font-size: 24px;
+  margin-bottom: 12px;
+  color: #fff;
+}
+
+.placeholder p {
+  color: #888;
+  margin-bottom: 8px;
+}
+
+.placeholder .hint {
+  color: #666;
+  font-size: 14px;
+  margin-top: 16px;
 }
 </style>

@@ -1,4 +1,4 @@
-i# Nuxt dev/build outputs
+# Nuxt dev/build outputs
 .output
 .data
 .nuxt
@@ -25,3 +25,11 @@ logs
 
 # Scraped data (local only)
 output/
+
+# Local dev documentation
+DEV.md
+
+# Planning files (planning-with-files skill)
+task_plan.md
+findings.md
+progress.md

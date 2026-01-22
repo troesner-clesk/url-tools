@@ -16,7 +16,7 @@ interface SaveResultsRequest {
     results: Record<string, unknown>[]
     format: 'csv' | 'json' | 'both'
     mode: 'html' | 'links'
-    outputDir?: string
+    baseOutputDir?: string
 }
 
 function getTimestamp(): string {
@@ -53,7 +53,8 @@ export default defineEventHandler(async (event) => {
         })
     }
 
-    const outputDir = body.outputDir || join(process.cwd(), 'output')
+    // Scraper-Ergebnisse in output/scraper/ speichern
+    const baseOutputDir = body.baseOutputDir || join(process.cwd(), 'output', 'scraper')
     const timestamp = getTimestamp()
     const baseFilename = `${timestamp}_${body.mode}`
 
@@ -61,11 +62,11 @@ export default defineEventHandler(async (event) => {
 
     try {
         // Ordner erstellen falls nicht vorhanden
-        await mkdir(outputDir, { recursive: true })
+        await mkdir(baseOutputDir, { recursive: true })
 
         // HTML Mode: Einzelne HTML-Dateien speichern
         if (body.mode === 'html') {
-            const htmlDir = join(outputDir, `${timestamp}_html_files`)
+            const htmlDir = join(baseOutputDir, `${timestamp}_html_files`)
             await mkdir(htmlDir, { recursive: true })
 
             for (const result of body.results as HtmlResult[]) {
@@ -88,27 +89,27 @@ export default defineEventHandler(async (event) => {
             }))
 
             if (body.format === 'csv' || body.format === 'both') {
-                const csvPath = join(outputDir, `${baseFilename}_meta.csv`)
+                const csvPath = join(baseOutputDir, `${baseFilename}_meta.csv`)
                 const csv = Papa.unparse(metaResults)
                 await writeFile(csvPath, csv, 'utf-8')
                 savedFiles.push(csvPath)
             }
 
             if (body.format === 'json' || body.format === 'both') {
-                const jsonPath = join(outputDir, `${baseFilename}_meta.json`)
+                const jsonPath = join(baseOutputDir, `${baseFilename}_meta.json`)
                 await writeFile(jsonPath, JSON.stringify(metaResults, null, 2), 'utf-8')
                 savedFiles.push(jsonPath)
             }
         } else {
             // Links Mode: wie bisher JSON/CSV
             if (body.format === 'json' || body.format === 'both') {
-                const jsonPath = join(outputDir, `${baseFilename}.json`)
+                const jsonPath = join(baseOutputDir, `${baseFilename}.json`)
                 await writeFile(jsonPath, JSON.stringify(body.results, null, 2), 'utf-8')
                 savedFiles.push(jsonPath)
             }
 
             if (body.format === 'csv' || body.format === 'both') {
-                const csvPath = join(outputDir, `${baseFilename}.csv`)
+                const csvPath = join(baseOutputDir, `${baseFilename}.csv`)
                 const csv = Papa.unparse(body.results)
                 await writeFile(csvPath, csv, 'utf-8')
                 savedFiles.push(csvPath)
