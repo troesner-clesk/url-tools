@@ -1,6 +1,6 @@
 # URL Tools
 
-A collection of web scraping and analysis tools with a browser-based UI. Built with Nuxt 3.
+A collection of web scraping and analysis tools with a browser-based UI. Built with Nuxt 4.
 
 ## Why?
 
@@ -72,7 +72,7 @@ All data is saved locally in the `output/` directory:
 
 ## Tech Stack
 
-- [Nuxt 3](https://nuxt.com/) - Vue framework
+- [Nuxt 4](https://nuxt.com/) - Vue framework
 - [Cheerio](https://cheerio.js.org/) - HTML parsing
 - [Puppeteer](https://pptr.dev/) - Screenshots and PDF generation
 - [PapaParse](https://www.papaparse.com/) - CSV generation

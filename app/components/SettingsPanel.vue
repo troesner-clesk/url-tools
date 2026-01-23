@@ -53,16 +53,6 @@ const customSelector = ref('')
     <!-- Common Request Settings -->
     <RequestSettings v-model:settings="settings.requestSettings" />
 
-    <!-- Auto-Save Format -->
-    <div class="setting-group">
-      <label>Auto-Save Format</label>
-      <select v-model="settings.saveFormat">
-        <option value="json">JSON</option>
-        <option value="csv">CSV</option>
-        <option value="both">Both</option>
-      </select>
-    </div>
-
     <!-- HTML-specific Settings -->
     <template v-if="mode === 'html'">
       <div class="setting-group">
@@ -94,6 +84,15 @@ const customSelector = ref('')
 
     <!-- Link-specific Settings -->
     <template v-if="mode === 'links'">
+      <div class="setting-group">
+        <label>Export Format</label>
+        <select v-model="settings.saveFormat">
+          <option value="json">JSON</option>
+          <option value="csv">CSV</option>
+          <option value="both">Both</option>
+        </select>
+      </div>
+
       <div class="setting-group">
         <label>
           <input type="checkbox" v-model="settings.recursive">
