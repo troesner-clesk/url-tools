@@ -29,6 +29,9 @@ output/
 # Local dev documentation
 DEV.md
 
+# Local start script
+start.command
+
 # Planning files (planning-with-files skill)
 task_plan.md
 findings.md
