@@ -101,7 +101,7 @@ export default defineEventHandler(async (event) => {
                 savedFiles.push(jsonPath)
             }
         } else {
-            // Links Mode: wie bisher JSON/CSV
+            // Links Mode: JSON/CSV + TXT (nur Links)
             if (body.format === 'json' || body.format === 'both') {
                 const jsonPath = join(baseOutputDir, `${baseFilename}.json`)
                 await writeFile(jsonPath, JSON.stringify(body.results, null, 2), 'utf-8')
@@ -114,6 +114,13 @@ export default defineEventHandler(async (event) => {
                 await writeFile(csvPath, csv, 'utf-8')
                 savedFiles.push(csvPath)
             }
+
+            // TXT mit nur den Links (eine URL pro Zeile)
+            const linkResults = body.results as Array<{ targetUrl?: string }>
+            const uniqueLinks = [...new Set(linkResults.map(r => r.targetUrl).filter(Boolean))]
+            const txtPath = join(baseOutputDir, `${baseFilename}.txt`)
+            await writeFile(txtPath, uniqueLinks.join('\n'), 'utf-8')
+            savedFiles.push(txtPath)
         }
 
         return {

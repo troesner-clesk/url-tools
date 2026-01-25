@@ -77,6 +77,8 @@ const error = ref<string | null>(null)
 const logs = ref<LogEntry[]>([])
 const currentUrl = ref<string | null>(null)
 const activeTab = ref<'scraper' | 'seo' | 'screenshots' | 'images'>('scraper')
+const showClearConfirm = ref(false)
+const isClearing = ref(false)
 
 // Log function
 function addLog(message: string, type: LogEntry['type'] = 'info') {
@@ -237,6 +239,20 @@ function stopScraping() {
   addLog('Cancelled', 'error')
 }
 
+async function clearOutputFolder() {
+  isClearing.value = true
+  try {
+    await $fetch('/api/clear-output', { method: 'POST' })
+    savedFiles.value = []
+    addLog('Output folder cleared', 'success')
+  } catch (e) {
+    addLog(`Failed to clear: ${e instanceof Error ? e.message : 'Error'}`, 'error')
+  } finally {
+    isClearing.value = false
+    showClearConfirm.value = false
+  }
+}
+
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
@@ -385,6 +401,25 @@ watch(logs, () => {
           <ul>
             <li v-for="file in savedFiles" :key="file">{{ file }}</li>
           </ul>
+        </div>
+
+        <!-- Clear Output -->
+        <button class="btn-clear-output" @click="showClearConfirm = true" :disabled="isClearing">
+          🗑 Clear Output Folder
+        </button>
+
+        <!-- Clear Confirmation Modal -->
+        <div v-if="showClearConfirm" class="modal-overlay" @click.self="showClearConfirm = false">
+          <div class="modal">
+            <h3>Clear Output Folder?</h3>
+            <p>This will delete all scraped data, screenshots and exports.</p>
+            <div class="modal-actions">
+              <button class="btn-secondary" @click="showClearConfirm = false">Cancel</button>
+              <button class="btn-danger" @click="clearOutputFolder" :disabled="isClearing">
+                {{ isClearing ? 'Clearing...' : 'Yes, Delete All' }}
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- Error -->
@@ -762,5 +797,66 @@ main {
   color: #666;
   font-size: 14px;
   margin-top: 16px;
+}
+
+.btn-clear-output {
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  border: 1px dashed #444;
+  border-radius: 4px;
+  color: #888;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.btn-clear-output:hover:not(:disabled) {
+  border-color: #f87171;
+  color: #f87171;
+  background: #4d1a1a33;
+}
+
+.btn-clear-output:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+}
+
+.modal h3 {
+  margin-bottom: 12px;
+  color: #fff;
+}
+
+.modal p {
+  color: #888;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
 }
 </style>

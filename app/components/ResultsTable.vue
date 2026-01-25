@@ -30,6 +30,73 @@ const props = defineProps<Props>()
 
 const expandedHtml = ref<string | null>(null)
 const copiedColumn = ref<string | null>(null)
+const selectedRows = ref<Set<number>>(new Set())
+const showCopiedFeedback = ref(false)
+
+// Select all toggle
+const allSelected = computed(() => {
+  const total = props.mode === 'html' ? props.htmlResults?.length : props.linkResults?.length
+  return total && total > 0 && selectedRows.value.size === total
+})
+
+function toggleSelectAll() {
+  const total = props.mode === 'html' ? props.htmlResults?.length : props.linkResults?.length
+  if (!total) return
+
+  if (allSelected.value) {
+    selectedRows.value.clear()
+  } else {
+    selectedRows.value = new Set(Array.from({ length: total }, (_, i) => i))
+  }
+}
+
+function toggleRow(index: number) {
+  if (selectedRows.value.has(index)) {
+    selectedRows.value.delete(index)
+  } else {
+    selectedRows.value.add(index)
+  }
+  // Trigger reactivity
+  selectedRows.value = new Set(selectedRows.value)
+}
+
+// Copy selected rows as TSV (tab-separated)
+function copySelectedRows() {
+  if (selectedRows.value.size === 0) return
+
+  let rows: string[] = []
+
+  if (props.mode === 'html' && props.htmlResults) {
+    // Header
+    rows.push(['URL', 'Status', 'Content-Type', 'Size'].join('\t'))
+    // Data
+    for (const idx of Array.from(selectedRows.value).sort((a, b) => a - b)) {
+      const r = props.htmlResults[idx]
+      if (r) {
+        rows.push([r.url, String(r.status), r.contentType, formatSize(r.size)].join('\t'))
+      }
+    }
+  } else if (props.mode === 'links' && props.linkResults) {
+    // Header
+    rows.push(['Source', 'Target', 'Status', 'Redirects', 'Type', 'Anchor', 'Rel'].join('\t'))
+    // Data
+    for (const idx of Array.from(selectedRows.value).sort((a, b) => a - b)) {
+      const r = props.linkResults[idx]
+      if (r) {
+        rows.push([r.sourceUrl, r.targetUrl, String(r.status), r.redirectChain || '', r.type, r.anchorText || '', r.rel || ''].join('\t'))
+      }
+    }
+  }
+
+  navigator.clipboard.writeText(rows.join('\n'))
+  showCopiedFeedback.value = true
+  setTimeout(() => { showCopiedFeedback.value = false }, 1500)
+}
+
+// Clear selection when results change
+watch(() => [props.htmlResults, props.linkResults], () => {
+  selectedRows.value.clear()
+})
 
 function getStatusClass(status: number): string {
   if (status >= 200 && status < 300) return 'status-ok'
@@ -111,11 +178,23 @@ const linkStats = computed(() => {
       <span class="stat type-external">External: {{ linkStats.external }}</span>
     </div>
 
+    <!-- Selection Actions -->
+    <div v-if="selectedRows.size > 0" class="selection-bar">
+      <span>{{ selectedRows.size }} row(s) selected</span>
+      <button class="btn-copy-selection" @click="copySelectedRows">
+        {{ showCopiedFeedback ? '✓ Copied!' : '⧉ Copy Selection' }}
+      </button>
+      <button class="btn-clear-selection" @click="selectedRows.clear()">Clear</button>
+    </div>
+
     <!-- HTML Results -->
     <template v-if="mode === 'html' && htmlResults?.length">
       <table>
         <thead>
           <tr>
+            <th class="th-checkbox">
+              <input type="checkbox" :checked="allSelected" @change="toggleSelectAll" title="Select all">
+            </th>
             <th @click="copyColumn('url')" :class="['th-copy', { copied: copiedColumn === 'url' }]" title="Click to copy column">
               {{ copiedColumn === 'url' ? '✓ Copied!' : 'URL ⧉' }}
             </th>
@@ -132,7 +211,10 @@ const linkStats = computed(() => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="result in htmlResults" :key="result.url">
+          <tr v-for="(result, index) in htmlResults" :key="result.url" :class="{ 'row-selected': selectedRows.has(index) }" @click="toggleRow(index)">
+            <td class="td-checkbox" @click.stop>
+              <input type="checkbox" :checked="selectedRows.has(index)" @change="toggleRow(index)">
+            </td>
             <td class="url-cell" :title="result.url">{{ result.url }}</td>
             <td>
               <span :class="['status-badge', getStatusClass(result.status)]">
@@ -161,7 +243,7 @@ const linkStats = computed(() => {
           </tr>
           <!-- Expanded HTML View -->
           <tr v-if="expandedHtml">
-            <td colspan="5">
+            <td colspan="6">
               <pre class="html-preview">{{ htmlResults?.find(r => r.url === expandedHtml)?.html }}</pre>
             </td>
           </tr>
@@ -174,6 +256,9 @@ const linkStats = computed(() => {
       <table>
         <thead>
           <tr>
+            <th class="th-checkbox">
+              <input type="checkbox" :checked="allSelected" @change="toggleSelectAll" title="Select all">
+            </th>
             <th @click="copyColumn('sourceUrl')" :class="['th-copy', { copied: copiedColumn === 'sourceUrl' }]" title="Click to copy column">
               {{ copiedColumn === 'sourceUrl' ? '✓ Copied!' : 'Source ⧉' }}
             </th>
@@ -198,7 +283,10 @@ const linkStats = computed(() => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(result, index) in linkResults" :key="index">
+          <tr v-for="(result, index) in linkResults" :key="index" :class="{ 'row-selected': selectedRows.has(index) }" @click="toggleRow(index)">
+            <td class="td-checkbox" @click.stop>
+              <input type="checkbox" :checked="selectedRows.has(index)" @change="toggleRow(index)">
+            </td>
             <td class="url-cell" :title="result.sourceUrl">{{ result.sourceUrl }}</td>
             <td class="url-cell" :title="result.targetUrl">{{ result.targetUrl }}</td>
             <td>
@@ -395,5 +483,76 @@ th {
   padding: 40px;
   text-align: center;
   color: #666;
+}
+
+/* Selection */
+.selection-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: #1a2a4d;
+  border-bottom: 1px solid #333;
+  font-size: 13px;
+  color: #38bdf8;
+}
+
+.btn-copy-selection {
+  padding: 4px 12px;
+  background: #0066cc;
+  border: none;
+  border-radius: 3px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.btn-copy-selection:hover {
+  background: #0077ee;
+}
+
+.btn-clear-selection {
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px solid #444;
+  border-radius: 3px;
+  color: #888;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.btn-clear-selection:hover {
+  background: #333;
+  color: #fff;
+}
+
+.th-checkbox,
+.td-checkbox {
+  width: 40px;
+  text-align: center;
+  padding: 10px 8px;
+}
+
+.th-checkbox input,
+.td-checkbox input {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+tr.row-selected {
+  background: #1a2a3d;
+}
+
+tr.row-selected:hover {
+  background: #1a3a4d;
+}
+
+tbody tr {
+  cursor: pointer;
+}
+
+tbody tr:hover {
+  background: #222;
 }
 </style>

@@ -48,7 +48,7 @@ export function normalizeUrl(url: string, baseUrl?: string): string | null {
 /**
  * Folgt Redirects und gibt die Kette zurück
  */
-export async function getRedirectChain(url: string, maxRedirects = 10): Promise<{
+export async function getRedirectChain(url: string, maxRedirects = 10, timeoutMs = 10000): Promise<{
     chain: RedirectStep[]
     finalUrl: string
     finalStatus: number
@@ -60,13 +60,19 @@ export async function getRedirectChain(url: string, maxRedirects = 10): Promise<
 
     while (redirectCount < maxRedirects) {
         try {
+            const controller = new AbortController()
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+
             const response = await fetch(currentUrl, {
                 method: 'HEAD',
                 redirect: 'manual',
                 headers: {
                     'User-Agent': 'Mozilla/5.0 (compatible; HTMLScraper/1.0)'
-                }
+                },
+                signal: controller.signal
             })
+
+            clearTimeout(timeoutId)
 
             chain.push({ url: currentUrl, status: response.status })
 
@@ -87,11 +93,14 @@ export async function getRedirectChain(url: string, maxRedirects = 10): Promise<
                 finalStatus: response.status
             }
         } catch (error) {
+            const errorMsg = error instanceof Error
+                ? (error.name === 'AbortError' ? 'Timeout' : error.message)
+                : 'Unknown error'
             return {
                 chain,
                 finalUrl: currentUrl,
                 finalStatus: 0,
-                error: error instanceof Error ? error.message : 'Unknown error'
+                error: errorMsg
             }
         }
     }
