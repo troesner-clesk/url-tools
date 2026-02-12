@@ -1,5 +1,6 @@
 import { defineEventHandler, readBody } from 'h3'
 import * as cheerio from 'cheerio'
+import { filterAllowedUrls } from '../utils/url-validator'
 
 interface RequestSettings {
     timeout: number      // Sekunden
@@ -83,6 +84,8 @@ export default defineEventHandler(async (event) => {
             message: 'urls array required'
         })
     }
+
+    body.urls = filterAllowedUrls(body.urls)
 
     // Default-Settings
     const settings: RequestSettings = {

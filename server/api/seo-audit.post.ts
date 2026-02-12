@@ -3,6 +3,7 @@ import * as cheerio from 'cheerio'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 import Papa from 'papaparse'
+import { filterAllowedUrls } from '../utils/url-validator'
 
 interface RequestSettings {
     timeout: number
@@ -374,7 +375,7 @@ export default defineEventHandler(async (event) => {
     const body = await readBody<SeoAuditRequest>(event)
 
     // URLs sammeln (Legacy-Support für einzelne URL)
-    const urls = body.urls || (body.url ? [body.url] : [])
+    const urls = filterAllowedUrls(body.urls || (body.url ? [body.url] : []))
 
     if (urls.length === 0) {
         throw createError({

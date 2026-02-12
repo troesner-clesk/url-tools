@@ -1,5 +1,6 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import { extractLinks, getRedirectChain, formatRedirectChain, normalizeUrl } from '../utils/link-analyzer'
+import { isAllowedUrl } from '../utils/url-validator'
 
 interface RequestSettings {
     timeout: number      // Sekunden
@@ -107,17 +108,20 @@ export default defineEventHandler(async (event) => {
         res.write(`event: ${eventName}\ndata: ${JSON.stringify(data)}\n\n`)
     }
 
-    // Default-Settings
+    // Default-Settings mit Clamping
     const settings: RequestSettings = {
-        timeout: body.settings?.timeout ?? 30,
-        retries: body.settings?.retries ?? 1,
+        timeout: Math.min(Math.max(body.settings?.timeout ?? 30, 1), 120),
+        retries: Math.min(Math.max(body.settings?.retries ?? 1, 0), 5),
         proxy: body.settings?.proxy,
         headers: body.settings?.headers
     }
 
-    // URL-Filter (Regex)
+    const maxUrls = Math.min(Math.max(body.maxUrls || 100, 1), 10000)
+    const rateLimit = Math.max(body.rateLimit || 2, 0.1)
+
+    // URL-Filter (Regex) - Länge limitieren gegen ReDoS
     let urlFilterRegex: RegExp | null = null
-    if (body.urlFilter) {
+    if (body.urlFilter && body.urlFilter.length <= 200) {
         try {
             urlFilterRegex = new RegExp(body.urlFilter)
         } catch {
@@ -157,10 +161,10 @@ export default defineEventHandler(async (event) => {
         const visited = new Set<string>()
         const queue: Array<{ url: string; depth: number; sourceUrl?: string }> = []
 
-        // Seed URLs zur Queue
+        // Seed URLs zur Queue (mit SSRF-Check)
         for (const url of body.urls) {
             const normalized = normalizeUrl(url)
-            if (normalized && !visited.has(normalized)) {
+            if (normalized && !visited.has(normalized) && isAllowedUrl(normalized)) {
                 queue.push({ url: normalized, depth: 0 })
                 visited.add(normalized)
             }
@@ -177,11 +181,11 @@ export default defineEventHandler(async (event) => {
             }).filter(Boolean)
         )
 
-        const delayMs = 1000 / body.rateLimit
+        const delayMs = 1000 / rateLimit
 
         emit('log', { message: `Starting crawl with ${queue.length} seed URL(s)`, type: 'info' })
 
-        while (queue.length > 0 && results.length < body.maxUrls && !isClosed) {
+        while (queue.length > 0 && results.length < maxUrls && !isClosed) {
             const item = queue.shift()!
 
             // URL-Filter prüfen
@@ -208,7 +212,7 @@ export default defineEventHandler(async (event) => {
                 emit('log', { message: `Found ${links.length} links on ${item.url}`, type: 'success' })
 
                 for (const link of links) {
-                    if (results.length >= body.maxUrls || isClosed) break
+                    if (results.length >= maxUrls || isClosed) break
 
                     // URL-Filter auch auf Target-URLs anwenden
                     if (urlFilterRegex && !urlFilterRegex.test(link.targetUrl)) {

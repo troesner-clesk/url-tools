@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
     const outputDir = resolve(process.cwd(), 'output')
     const resolvedPath = resolve(inputPath)
 
-    if (!resolvedPath.startsWith(outputDir)) {
+    if (!resolvedPath.startsWith(outputDir + '/') && resolvedPath !== outputDir) {
         throw createError({
             statusCode: 403,
             message: 'Access denied: path must be within output directory'

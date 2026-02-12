@@ -2,6 +2,8 @@ import { defineEventHandler, readBody } from 'h3'
 import puppeteer, { Browser, Page } from 'puppeteer'
 import { writeFile, mkdir } from 'fs/promises'
 import { resolve, join } from 'path'
+import { assertWithinOutput } from '../utils/path-guard'
+import { isAllowedUrl } from '../utils/url-validator'
 
 interface ScreenshotRequest {
     urls: string[]
@@ -114,9 +116,11 @@ export default defineEventHandler(async (event) => {
         })
     }
 
+    body.urls = filterAllowedUrls(body.urls)
+
     // Output folder - reuse existing or create new
     const timestamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-')
-    const outputDir = body.outputDir || resolve(process.cwd(), 'output', 'screenshots', timestamp)
+    const outputDir = assertWithinOutput(body.outputDir || resolve(process.cwd(), 'output', 'screenshots', timestamp))
     await mkdir(outputDir, { recursive: true })
 
     const results: ScreenshotResult[] = []
