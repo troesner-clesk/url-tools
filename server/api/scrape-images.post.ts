@@ -2,6 +2,8 @@ import { defineEventHandler, readBody } from 'h3'
 import * as cheerio from 'cheerio'
 import { writeFile, mkdir } from 'fs/promises'
 import { join, extname } from 'path'
+import { assertWithinOutput } from '../utils/path-guard'
+import { isAllowedUrl } from '../utils/url-validator'
 
 interface ImageResult {
     src: string
@@ -92,9 +94,10 @@ function isValidImageFormat(imageUrl: string, formats?: string[]): boolean {
 
 export default defineEventHandler(async (event) => {
     const body = await readBody<RequestBody>(event)
-    const { urls, download = false, minWidth = 0, minHeight = 0, formats, outputDir: existingOutputDir, subfolderPerUrl = false } = body
+    const { download = false, minWidth = 0, minHeight = 0, formats, outputDir: existingOutputDir, subfolderPerUrl = false } = body
+    const urls = filterAllowedUrls(body.urls || [])
 
-    if (!urls || !Array.isArray(urls) || urls.length === 0) {
+    if (urls.length === 0) {
         throw createError({
             statusCode: 400,
             message: 'urls array is required'
@@ -103,7 +106,7 @@ export default defineEventHandler(async (event) => {
 
     const results: ScrapeResult[] = []
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
-    const outputDir = existingOutputDir || join(process.cwd(), 'output', 'images', timestamp)
+    const outputDir = assertWithinOutput(existingOutputDir || join(process.cwd(), 'output', 'images', timestamp))
 
     // Create output directory if downloading
     if (download) {

@@ -2,6 +2,7 @@ import { defineEventHandler, readBody } from 'h3'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 import Papa from 'papaparse'
+import { assertWithinOutput } from '../utils/path-guard'
 
 interface HtmlResult {
     url: string
@@ -54,7 +55,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Scraper-Ergebnisse in output/scraper/ speichern
-    const baseOutputDir = body.baseOutputDir || join(process.cwd(), 'output', 'scraper')
+    const baseOutputDir = assertWithinOutput(body.baseOutputDir || join(process.cwd(), 'output', 'scraper'))
     const timestamp = getTimestamp()
     const baseFilename = `${timestamp}_${body.mode}`
 
