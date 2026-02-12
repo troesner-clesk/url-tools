@@ -79,6 +79,7 @@ const currentUrl = ref<string | null>(null)
 const activeTab = ref<'scraper' | 'seo' | 'screenshots' | 'images'>('scraper')
 const showClearConfirm = ref(false)
 const isClearing = ref(false)
+const abortController = ref<AbortController | null>(null)
 
 // Log function
 function addLog(message: string, type: LogEntry['type'] = 'info') {
@@ -115,6 +116,7 @@ async function startScraping() {
   if (!hasValidUrls.value || isRunning.value) return
 
   isRunning.value = true
+  isPaused.value = false
   error.value = null
   htmlResults.value = []
   linkResults.value = []
@@ -130,7 +132,7 @@ async function startScraping() {
     } else {
       await scrapeLinks()
     }
-    addLog('Done!', 'success')
+    if (isRunning.value) addLog('Done!', 'success')
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'An error occurred'
     error.value = msg
@@ -195,27 +197,100 @@ async function scrapeHtml() {
 async function scrapeLinks() {
   addLog('Starting link analysis...', 'info')
 
-  const response = await $fetch('/api/scrape-links', {
+  const controller = new AbortController()
+  abortController.value = controller
+
+  const response = await fetch('/api/scrape-links-stream', {
     method: 'POST',
-    body: {
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
       urls: parsedUrls.value,
       recursive: settings.value.recursive,
       maxUrls: settings.value.maxUrls,
       maxDepth: settings.value.maxDepth,
       rateLimit: settings.value.rateLimit,
-      sameDomainOnly: settings.value.sameDomainOnly
-    }
+      sameDomainOnly: settings.value.sameDomainOnly,
+      urlFilter: settings.value.urlFilter,
+      settings: settings.value.requestSettings
+    }),
+    signal: controller.signal
   })
 
-  linkResults.value = response.results
-  progress.value.done = response.stats.totalLinks
-  progress.value.total = response.stats.totalLinks
+  if (!response.ok || !response.body) {
+    throw new Error(`Server error: ${response.status}`)
+  }
 
-  addLog(`${response.stats.totalLinks} links found`, 'success')
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+
+  try {
+    while (true) {
+      while (isPaused.value) {
+        await new Promise(resolve => setTimeout(resolve, 100))
+      }
+
+      const { done, value } = await reader.read()
+      if (done) break
+
+      buffer += decoder.decode(value, { stream: true })
+
+      // Parse SSE messages from buffer
+      const parts = buffer.split('\n\n')
+      buffer = parts.pop() || ''
+
+      for (const part of parts) {
+        if (!part.trim()) continue
+        let eventName = 'message'
+        let data = ''
+        for (const line of part.split('\n')) {
+          if (line.startsWith('event:')) eventName = line.slice(6).trim()
+          else if (line.startsWith('data:')) data = line.slice(5).trim()
+        }
+        if (!data) continue
+
+        try {
+          const parsed = JSON.parse(data)
+          switch (eventName) {
+            case 'result':
+              linkResults.value.push(parsed)
+              break
+            case 'progress':
+              progress.value.done = parsed.done
+              progress.value.total = parsed.total
+              currentUrl.value = parsed.currentUrl
+              break
+            case 'log':
+              addLog(parsed.message, parsed.type)
+              break
+            case 'done':
+              progress.value.done = parsed.totalLinks
+              progress.value.total = parsed.totalLinks
+              addLog(`${parsed.totalLinks} links found (${parsed.visited} pages visited)`, 'success')
+              break
+            case 'error':
+              addLog(parsed.message, 'error')
+              break
+          }
+        } catch {
+          // Skip malformed events
+        }
+      }
+    }
+  } catch (e) {
+    if ((e as Error).name === 'AbortError') {
+      return
+    }
+    throw e
+  } finally {
+    abortController.value = null
+  }
 
   // Auto-Save
-  addLog('Saving files...', 'info')
-  await saveResults(response.results)
+  if (linkResults.value.length > 0) {
+    addLog('Saving files...', 'info')
+    await saveResults(linkResults.value)
+  }
 }
 
 async function saveResults(results: unknown[]) {
@@ -235,7 +310,11 @@ async function saveResults(results: unknown[]) {
 }
 
 function stopScraping() {
+  if (abortController.value) {
+    abortController.value.abort()
+  }
   isRunning.value = false
+  isPaused.value = false
   addLog('Cancelled', 'error')
 }
 
