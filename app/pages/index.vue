@@ -16,6 +16,8 @@ interface Settings {
   saveFormat: 'json' | 'csv' | 'both'
   cssSelector: string
   urlFilter: string
+  pathInclude: string
+  pathExclude: string
   requestSettings: RequestSettings
 }
 
@@ -58,6 +60,8 @@ const settings = ref<Settings>({
   saveFormat: 'json',
   cssSelector: '',
   urlFilter: '',
+  pathInclude: '',
+  pathExclude: '',
   requestSettings: {
     timeout: 30,
     retries: 1,
@@ -211,6 +215,8 @@ async function scrapeLinks() {
       rateLimit: settings.value.rateLimit,
       sameDomainOnly: settings.value.sameDomainOnly,
       urlFilter: settings.value.urlFilter,
+      pathInclude: settings.value.pathInclude,
+      pathExclude: settings.value.pathExclude,
       settings: settings.value.requestSettings
     }),
     signal: controller.signal

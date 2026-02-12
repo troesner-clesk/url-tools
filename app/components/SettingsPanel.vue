@@ -20,6 +20,8 @@ interface Settings {
   saveFormat: 'json' | 'csv' | 'both'
   cssSelector: string
   urlFilter: string
+  pathInclude: string
+  pathExclude: string
   requestSettings: RequestSettings
 }
 
@@ -35,6 +37,8 @@ const settings = defineModel<Settings>('settings', {
     saveFormat: 'json' as const,
     cssSelector: '',
     urlFilter: '',
+    pathInclude: '',
+    pathExclude: '',
     requestSettings: {
       timeout: 30,
       retries: 1,
@@ -138,6 +142,30 @@ const customSelector = ref('')
           max="10"
           step="0.1"
         >
+      </div>
+
+      <div class="setting-group">
+        <label>Include paths</label>
+        <input
+          type="text"
+          v-model="settings.pathInclude"
+          placeholder="e.g. /de/, /blog/"
+        >
+        <div class="setting-hint">
+          Only crawl URLs containing these paths (comma-separated)
+        </div>
+      </div>
+
+      <div class="setting-group">
+        <label>Exclude paths</label>
+        <input
+          type="text"
+          v-model="settings.pathExclude"
+          placeholder="e.g. /en/, /fr/, /es/"
+        >
+        <div class="setting-hint">
+          Skip URLs containing these paths (comma-separated)
+        </div>
       </div>
     </template>
   </div>
