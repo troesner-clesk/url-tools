@@ -17,10 +17,13 @@ Is it perfect? No. Is it feature-complete? Definitely not. But it does exactly w
 - Sitemap support (auto-detects XML sitemaps)
 
 ### Link Analysis
+- Live streaming results (Screaming Frog style) — links appear in the table as they are discovered
 - Extract and validate all links from a page
-- Follow redirect chains
-- Check link status codes
-- View anchor texts
+- Follow redirect chains with full status tracking
+- Recursive crawling with configurable depth and rate limiting
+- Path filters: include/exclude specific URL paths (e.g. only `/de/`, skip `/en/, /fr/`)
+- Row selection with copy-to-clipboard
+- Export as JSON, CSV, or plain URL list (TXT)
 
 ### SEO Audit
 - Analyze page titles, meta descriptions, headings
