@@ -16,6 +16,8 @@ interface ScrapeLinksRequest {
     rateLimit: number
     sameDomainOnly: boolean
     urlFilter?: string   // Regex-Filter für URLs
+    pathInclude?: string // Komma-getrennte Pfade die enthalten sein müssen
+    pathExclude?: string // Komma-getrennte Pfade die ausgeschlossen werden
     settings?: RequestSettings
 }
 
@@ -123,6 +125,33 @@ export default defineEventHandler(async (event) => {
         }
     }
 
+    // Pfad-Filter (Include/Exclude)
+    const pathIncludes = body.pathInclude
+        ? body.pathInclude.split(',').map(p => p.trim()).filter(Boolean)
+        : []
+    const pathExcludes = body.pathExclude
+        ? body.pathExclude.split(',').map(p => p.trim()).filter(Boolean)
+        : []
+
+    function matchesPathFilter(url: string): boolean {
+        try {
+            const path = new URL(url).pathname
+            for (const ex of pathExcludes) {
+                const p = ex.replace(/\/+$/, '')
+                if (path === p || path.startsWith(p + '/')) return false
+            }
+            if (pathIncludes.length > 0) {
+                return pathIncludes.some(inc => {
+                    const p = inc.replace(/\/+$/, '')
+                    return path === p || path.startsWith(p + '/')
+                })
+            }
+            return true
+        } catch {
+            return true
+        }
+    }
+
     try {
         const results: LinkResult[] = []
         const visited = new Set<string>()
@@ -159,6 +188,9 @@ export default defineEventHandler(async (event) => {
             if (urlFilterRegex && !urlFilterRegex.test(item.url)) {
                 continue
             }
+            if (!matchesPathFilter(item.url)) {
+                continue
+            }
 
             emit('progress', { done: results.length, total: results.length + queue.length + 1, currentUrl: item.url })
             emit('log', { message: `Fetching ${item.url} (depth: ${item.depth})`, type: 'progress' })
@@ -180,6 +212,9 @@ export default defineEventHandler(async (event) => {
 
                     // URL-Filter auch auf Target-URLs anwenden
                     if (urlFilterRegex && !urlFilterRegex.test(link.targetUrl)) {
+                        continue
+                    }
+                    if (!matchesPathFilter(link.targetUrl)) {
                         continue
                     }
 
