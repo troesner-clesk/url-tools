@@ -324,6 +324,14 @@ function stopScraping() {
   addLog('Cancelled', 'error')
 }
 
+async function openOutputFolder() {
+  try {
+    await $fetch('/api/open-output', { method: 'POST' })
+  } catch {
+    // ignore
+  }
+}
+
 async function clearOutputFolder() {
   isClearing.value = true
   try {
@@ -384,6 +392,9 @@ watch(logs, () => {
           @click="activeTab = 'images'"
         >
           🖼️ Images
+        </button>
+        <button class="tab tab-output" @click="openOutputFolder">
+          📂 Output
         </button>
       </nav>
     </header>
@@ -586,6 +597,10 @@ header h1 .subtitle {
 .tabs {
   display: flex;
   gap: 4px;
+}
+
+.tab-output {
+  margin-left: auto;
 }
 
 .tab {
