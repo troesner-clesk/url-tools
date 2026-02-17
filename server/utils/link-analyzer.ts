@@ -14,7 +14,7 @@ export interface RedirectStep {
 }
 
 /**
- * Prüft ob ein Link intern ist (same domain)
+ * Checks if a link is internal (same domain)
  */
 export function isInternalLink(baseUrl: string, targetUrl: string): boolean {
     try {
@@ -27,14 +27,14 @@ export function isInternalLink(baseUrl: string, targetUrl: string): boolean {
 }
 
 /**
- * Normalisiert eine URL (entfernt Fragment, trailing slash)
+ * Normalizes a URL (removes fragment, trailing slash)
  */
 export function normalizeUrl(url: string, baseUrl?: string): string | null {
     try {
         const parsed = new URL(url, baseUrl)
-        // Fragment entfernen
+        // Remove fragment
         parsed.hash = ''
-        // Trailing slash normalisieren (außer bei root)
+        // Normalize trailing slash (except for root)
         let normalized = parsed.href
         if (normalized.endsWith('/') && parsed.pathname !== '/') {
             normalized = normalized.slice(0, -1)
@@ -46,7 +46,7 @@ export function normalizeUrl(url: string, baseUrl?: string): string | null {
 }
 
 /**
- * Folgt Redirects und gibt die Kette zurück
+ * Follows redirects and returns the chain
  */
 export async function getRedirectChain(url: string, maxRedirects = 10, timeoutMs = 10000): Promise<{
     chain: RedirectStep[]
@@ -67,7 +67,7 @@ export async function getRedirectChain(url: string, maxRedirects = 10, timeoutMs
                 method: 'HEAD',
                 redirect: 'manual',
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (compatible; HTMLScraper/1.0)'
+                    'User-Agent': 'Mozilla/5.0 (compatible; URLTools/1.0)'
                 },
                 signal: controller.signal
             })
@@ -86,7 +86,7 @@ export async function getRedirectChain(url: string, maxRedirects = 10, timeoutMs
                 }
             }
 
-            // Kein Redirect mehr
+            // No more redirects
             return {
                 chain,
                 finalUrl: currentUrl,
@@ -114,7 +114,7 @@ export async function getRedirectChain(url: string, maxRedirects = 10, timeoutMs
 }
 
 /**
- * Prüft ob es sich um eine XML-Sitemap handelt
+ * Checks if the content is an XML sitemap
  */
 export function isSitemap(html: string): boolean {
     const trimmed = html.trim().toLowerCase()
@@ -124,14 +124,14 @@ export function isSitemap(html: string): boolean {
 }
 
 /**
- * Extrahiert URLs aus einer XML-Sitemap
+ * Extracts URLs from an XML sitemap
  */
 export function extractLinksFromSitemap(xml: string, baseUrl: string): LinkInfo[] {
     const $ = cheerio.load(xml, { xmlMode: true })
     const links: LinkInfo[] = []
     const seenUrls = new Set<string>()
 
-    // URLs aus <loc> Tags extrahieren (urlset Sitemaps)
+    // Extract URLs from <loc> tags (urlset sitemaps)
     $('loc').each((_, element) => {
         const url = $(element).text().trim()
         if (!url) return
@@ -155,15 +155,15 @@ export function extractLinksFromSitemap(xml: string, baseUrl: string): LinkInfo[
 }
 
 /**
- * Extrahiert alle Links aus HTML oder Sitemap
+ * Extracts all links from HTML or sitemap
  */
 export function extractLinks(html: string, baseUrl: string): LinkInfo[] {
-    // Prüfen ob es eine Sitemap ist
+    // Check if it's a sitemap
     if (isSitemap(html)) {
         return extractLinksFromSitemap(html, baseUrl)
     }
 
-    // Normale HTML-Extraktion
+    // Standard HTML extraction
     const $ = cheerio.load(html)
     const links: LinkInfo[] = []
     const seenUrls = new Set<string>()
@@ -172,7 +172,7 @@ export function extractLinks(html: string, baseUrl: string): LinkInfo[] {
         const href = $(element).attr('href')
         if (!href) return
 
-        // Ignoriere javascript:, mailto:, tel:, etc.
+        // Ignore javascript:, mailto:, tel:, etc.
         if (href.startsWith('javascript:') || href.startsWith('mailto:') ||
             href.startsWith('tel:') || href.startsWith('#')) {
             return
@@ -181,7 +181,7 @@ export function extractLinks(html: string, baseUrl: string): LinkInfo[] {
         const normalizedUrl = normalizeUrl(href, baseUrl)
         if (!normalizedUrl) return
 
-        // Duplikate vermeiden
+        // Avoid duplicates
         if (seenUrls.has(normalizedUrl)) return
         seenUrls.add(normalizedUrl)
 
@@ -201,7 +201,7 @@ export function extractLinks(html: string, baseUrl: string): LinkInfo[] {
 }
 
 /**
- * Formatiert Redirect-Kette als String
+ * Formats redirect chain as string
  */
 export function formatRedirectChain(chain: RedirectStep[]): string {
     return chain.map(step => step.status.toString()).join(' → ')

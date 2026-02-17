@@ -3,10 +3,10 @@ import * as cheerio from 'cheerio'
 import { filterAllowedUrls } from '../utils/url-validator'
 
 interface RequestSettings {
-    timeout: number      // Sekunden
+    timeout: number      // seconds
     retries: number      // 0-3
-    proxy?: string       // Optional: http://host:port
-    headers?: Record<string, string>  // Custom Headers
+    proxy?: string       // optional: http://host:port
+    headers?: Record<string, string>  // custom headers
 }
 
 interface ScrapeHtmlRequest {
@@ -25,7 +25,7 @@ interface ScrapeHtmlResult {
     retryCount?: number
 }
 
-// Fetch mit Retry-Logik
+// Fetch with retry logic
 async function fetchWithRetry(
     url: string,
     settings: RequestSettings
@@ -40,20 +40,20 @@ async function fetchWithRetry(
 
             const fetchOptions: RequestInit = {
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (compatible; HTMLScraper/1.0)',
+                    'User-Agent': 'Mozilla/5.0 (compatible; URLTools/1.0)',
                     ...headers
                 },
                 signal: controller.signal
             }
 
-            // Proxy-Unterstützung (nur für Server-Side)
-            // Hinweis: Native fetch unterstützt kein Proxy direkt,
-            // bei Bedarf könnte man undici oder node-fetch-with-proxy nutzen
+            // Proxy support (server-side only)
+            // Note: Native fetch doesn't support proxy directly,
+            // could use undici or node-fetch-with-proxy if needed
 
             const response = await fetch(url, fetchOptions)
             clearTimeout(timeoutId)
 
-            // Bei 5xx-Fehlern: Retry
+            // Retry on 5xx errors
             if (response.status >= 500 && attempt < retries) {
                 lastError = new Error(`Server error: ${response.status}`)
                 await new Promise(r => setTimeout(r, 1000 * (attempt + 1))) // Exponential backoff
@@ -64,7 +64,7 @@ async function fetchWithRetry(
         } catch (error) {
             lastError = error instanceof Error ? error : new Error('Unknown error')
 
-            // Timeout oder Netzwerkfehler: Retry
+            // Timeout or network error: retry
             if (attempt < retries) {
                 await new Promise(r => setTimeout(r, 1000 * (attempt + 1)))
                 continue
@@ -87,7 +87,7 @@ export default defineEventHandler(async (event) => {
 
     body.urls = filterAllowedUrls(body.urls)
 
-    // Default-Settings
+    // Default settings
     const settings: RequestSettings = {
         timeout: body.settings?.timeout ?? 30,
         retries: body.settings?.retries ?? 1,
@@ -98,7 +98,7 @@ export default defineEventHandler(async (event) => {
     const results: ScrapeHtmlResult[] = []
     const cssSelector = body.cssSelector?.trim() || ''
 
-    // Parallel mit Limit (5 gleichzeitig)
+    // Parallel with limit (5 concurrent)
     const batchSize = 5
     for (let i = 0; i < body.urls.length; i += batchSize) {
         const batch = body.urls.slice(i, i + batchSize)
@@ -110,14 +110,14 @@ export default defineEventHandler(async (event) => {
 
                     let html = await response.text()
 
-                    // CSS-Selector anwenden wenn vorhanden
+                    // Apply CSS selector if provided
                     if (cssSelector) {
                         const $ = cheerio.load(html)
                         const selected = $(cssSelector)
                         if (selected.length > 0) {
                             html = selected.map((_, el) => $.html(el)).get().join('\n')
                         } else {
-                            html = `<!-- Kein Element gefunden für Selector: ${cssSelector} -->\n${html}`
+                            html = `<!-- No element found for selector: ${cssSelector} -->\n${html}`
                         }
                     }
 

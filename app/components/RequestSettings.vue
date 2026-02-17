@@ -50,15 +50,15 @@ function removeHeader(key: string) {
       <div class="setting-group">
         <label>Retries</label>
         <select v-model.number="settings.retries">
-          <option :value="0">Kein Retry</option>
-          <option :value="1">1x wiederholen</option>
-          <option :value="2">2x wiederholen</option>
-          <option :value="3">3x wiederholen</option>
+          <option :value="0">No retry</option>
+          <option :value="1">Retry 1x</option>
+          <option :value="2">Retry 2x</option>
+          <option :value="3">Retry 3x</option>
         </select>
       </div>
 
       <div class="setting-group">
-        <label>Parallele Requests</label>
+        <label>Parallel Requests</label>
         <input 
           type="number" 
           v-model.number="settings.parallelRequests" 
@@ -73,7 +73,7 @@ function removeHeader(key: string) {
       class="toggle-advanced"
       @click="showAdvanced = !showAdvanced"
     >
-      {{ showAdvanced ? '▼' : '▶' }} Erweiterte Optionen
+      {{ showAdvanced ? '▼' : '▶' }} Advanced Options
     </button>
 
     <div v-if="showAdvanced" class="advanced-settings">
@@ -85,7 +85,7 @@ function removeHeader(key: string) {
           placeholder="http://host:port"
         >
         <div class="setting-hint">
-          HTTP-Proxy für alle Requests
+          HTTP proxy for all requests
         </div>
       </div>
 
@@ -111,7 +111,7 @@ function removeHeader(key: string) {
           <input 
             type="text" 
             v-model="customHeaderValue" 
-            placeholder="Wert"
+            placeholder="Value"
           >
           <button type="button" @click="addHeader">+</button>
         </div>

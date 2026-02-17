@@ -31,13 +31,13 @@ function getTimestamp(): string {
 function sanitizeFilename(url: string): string {
     try {
         const parsed = new URL(url)
-        // Domain + Path, ohne Protokoll
+        // Domain + path, without protocol
         let filename = parsed.hostname + parsed.pathname
-        // Ungültige Zeichen ersetzen
+        // Replace invalid characters
         filename = filename.replace(/[^a-zA-Z0-9.-]/g, '_')
-        // Doppelte Unterstriche entfernen
+        // Remove duplicate underscores
         filename = filename.replace(/_+/g, '_')
-        // Max 100 Zeichen
+        // Max 100 characters
         return filename.slice(0, 100)
     } catch {
         return 'unknown'
@@ -54,7 +54,7 @@ export default defineEventHandler(async (event) => {
         })
     }
 
-    // Scraper-Ergebnisse in output/scraper/ speichern
+    // Save scraper results to output/scraper/
     const baseOutputDir = assertWithinOutput(body.baseOutputDir || join(process.cwd(), 'output', 'scraper'))
     const timestamp = getTimestamp()
     const baseFilename = `${timestamp}_${body.mode}`
@@ -62,10 +62,10 @@ export default defineEventHandler(async (event) => {
     const savedFiles: string[] = []
 
     try {
-        // Ordner erstellen falls nicht vorhanden
+        // Create directory if it doesn't exist
         await mkdir(baseOutputDir, { recursive: true })
 
-        // HTML Mode: Einzelne HTML-Dateien speichern
+        // HTML mode: save individual HTML files
         if (body.mode === 'html') {
             const htmlDir = join(baseOutputDir, `${timestamp}_html_files`)
             await mkdir(htmlDir, { recursive: true })
@@ -79,7 +79,7 @@ export default defineEventHandler(async (event) => {
                 }
             }
 
-            // Auch eine Übersichts-CSV mit Metadaten speichern
+            // Also save a summary CSV with metadata
             const metaResults = (body.results as HtmlResult[]).map(r => ({
                 url: r.url,
                 status: r.status,

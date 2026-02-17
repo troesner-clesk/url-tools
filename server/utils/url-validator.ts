@@ -1,23 +1,23 @@
-// Prüft ob eine URL sicher zum Fetchen ist (SSRF-Schutz)
+// Checks if a URL is safe to fetch (SSRF protection)
 export function isAllowedUrl(url: string): boolean {
     try {
         const parsed = new URL(url)
 
-        // Nur http/https erlauben
+        // Only allow http/https
         if (!['http:', 'https:'].includes(parsed.protocol)) return false
 
         const hostname = parsed.hostname.toLowerCase()
 
-        // Localhost blockieren
+        // Block localhost
         if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') return false
         if (hostname.endsWith('.localhost')) return false
 
-        // Private IP-Ranges blockieren
+        // Block private IP ranges
         if (hostname.startsWith('10.')) return false
         if (hostname.startsWith('192.168.')) return false
         if (/^172\.(1[6-9]|2\d|3[01])\./.test(hostname)) return false
 
-        // Link-local und Cloud-Metadata blockieren
+        // Block link-local and cloud metadata
         if (hostname.startsWith('169.254.')) return false
         if (hostname === '0.0.0.0') return false
 
@@ -27,7 +27,7 @@ export function isAllowedUrl(url: string): boolean {
     }
 }
 
-// Validiert ein Array von URLs und gibt nur erlaubte zurück
+// Validates an array of URLs and returns only allowed ones
 export function filterAllowedUrls(urls: string[]): string[] {
     return urls.filter(isAllowedUrl)
 }

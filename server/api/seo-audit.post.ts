@@ -12,8 +12,8 @@ interface RequestSettings {
 }
 
 interface SeoAuditRequest {
-    urls: string[]  // Bulk-Modus: Array von URLs
-    url?: string    // Legacy: Einzelne URL (wird zu urls konvertiert)
+    urls: string[]  // Bulk mode: array of URLs
+    url?: string    // Legacy: single URL (converted to urls)
     checkLinks?: boolean
     settings?: RequestSettings
     saveResults?: boolean
@@ -99,7 +99,7 @@ async function fetchWithRetry(
 
             const response = await fetch(url, {
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (compatible; HTMLScraper/1.0)',
+                    'User-Agent': 'Mozilla/5.0 (compatible; URLTools/1.0)',
                     ...headers
                 },
                 signal: controller.signal
@@ -138,7 +138,7 @@ async function checkLinkStatus(url: string): Promise<number> {
     }
 }
 
-// Einzelne URL auditieren
+// Audit a single URL
 async function auditUrl(
     url: string,
     checkLinks: boolean,
@@ -156,13 +156,13 @@ async function auditUrl(
         const titleLength = titleText.length
         const titleIsGood = titleLength >= 30 && titleLength <= 60
         if (!titleText) {
-            issues.push('Kein Title-Tag gefunden')
+            issues.push('No title tag found')
             score -= 15
         } else if (titleLength < 30) {
-            issues.push('Title zu kurz (< 30 Zeichen)')
+            issues.push('Title too short (< 30 characters)')
             score -= 5
         } else if (titleLength > 60) {
-            issues.push('Title zu lang (> 60 Zeichen)')
+            issues.push('Title too long (> 60 characters)')
             score -= 5
         }
 
@@ -171,20 +171,20 @@ async function auditUrl(
         const descLength = descText.length
         const descIsGood = descLength >= 120 && descLength <= 160
         if (!descText) {
-            issues.push('Keine Meta-Description gefunden')
+            issues.push('No meta description found')
             score -= 10
         } else if (descLength < 120) {
-            issues.push('Meta-Description zu kurz (< 120 Zeichen)')
+            issues.push('Meta description too short (< 120 characters)')
             score -= 3
         } else if (descLength > 160) {
-            issues.push('Meta-Description zu lang (> 160 Zeichen)')
+            issues.push('Meta description too long (> 160 characters)')
             score -= 3
         }
 
         // Canonical
         const canonical = $('link[rel="canonical"]').attr('href') || null
         if (!canonical) {
-            issues.push('Kein Canonical-Tag gefunden')
+            issues.push('No canonical tag found')
             score -= 5
         }
 
@@ -204,10 +204,10 @@ async function auditUrl(
 
         const h1Count = headingCounts['h1'] || 0
         if (h1Count === 0) {
-            issues.push('Kein H1-Tag gefunden')
+            issues.push('No H1 tag found')
             score -= 10
         } else if (h1Count > 1) {
-            issues.push(`Mehrere H1-Tags gefunden (${h1Count})`)
+            issues.push(`Multiple H1 tags found (${h1Count})`)
             score -= 5
         }
 
@@ -221,7 +221,7 @@ async function auditUrl(
             }
         })
         if (imagesWithoutAlt > 0) {
-            issues.push(`${imagesWithoutAlt} Bilder ohne Alt-Text`)
+            issues.push(`${imagesWithoutAlt} images without alt text`)
             score -= Math.min(imagesWithoutAlt * 2, 10)
         }
 
@@ -274,7 +274,7 @@ async function auditUrl(
                 }
             }
             if (brokenLinks.length > 0) {
-                issues.push(`${brokenLinks.length} fehlerhafte Links gefunden`)
+                issues.push(`${brokenLinks.length} broken links found`)
                 score -= Math.min(brokenLinks.length * 3, 15)
             }
         }
@@ -285,7 +285,7 @@ async function auditUrl(
         const hasFavicon = $('link[rel="icon"], link[rel="shortcut icon"]').length > 0
 
         if (!hasViewport) {
-            issues.push('Kein Viewport-Meta-Tag')
+            issues.push('No viewport meta tag')
             score -= 5
         }
 
@@ -295,11 +295,11 @@ async function auditUrl(
         const hasTwitterCard = $('meta[name^="twitter:"]').length > 0
 
         if (!hasJsonLd) {
-            issues.push('Kein JSON-LD Schema gefunden')
+            issues.push('No JSON-LD schema found')
             score -= 3
         }
         if (!hasOpenGraph) {
-            issues.push('Keine Open Graph Tags')
+            issues.push('No Open Graph tags')
             score -= 3
         }
 
@@ -374,7 +374,7 @@ function getTimestamp(): string {
 export default defineEventHandler(async (event) => {
     const body = await readBody<SeoAuditRequest>(event)
 
-    // URLs sammeln (Legacy-Support für einzelne URL)
+    // Collect URLs (legacy support for single URL)
     const urls = filterAllowedUrls(body.urls || (body.url ? [body.url] : []))
 
     if (urls.length === 0) {
@@ -392,25 +392,25 @@ export default defineEventHandler(async (event) => {
 
     const results: SeoAuditResult[] = []
 
-    // Alle URLs auditieren
+    // Audit all URLs
     for (const url of urls) {
         const result = await auditUrl(url, body.checkLinks ?? false, settings)
         results.push(result)
     }
 
-    // Ergebnisse speichern wenn gewünscht
+    // Save results if requested
     let savedFiles: string[] = []
     if (body.saveResults && results.length > 0) {
         const timestamp = getTimestamp()
         const outputDir = join(process.cwd(), 'output', 'seo-audit')
         await mkdir(outputDir, { recursive: true })
 
-        // JSON speichern
+        // Save JSON
         const jsonPath = join(outputDir, `${timestamp}_seo-audit.json`)
         await writeFile(jsonPath, JSON.stringify(results, null, 2), 'utf-8')
         savedFiles.push(jsonPath)
 
-        // CSV für Übersicht
+        // CSV overview
         const csvData = results.map(r => ({
             url: r.url,
             status: r.status,
@@ -437,12 +437,12 @@ export default defineEventHandler(async (event) => {
         savedFiles.push(csvPath)
     }
 
-    // Bei einzelner URL: direkt das Ergebnis zurückgeben (Legacy-Kompatibilität)
+    // Single URL: return result directly (legacy compatibility)
     if (urls.length === 1 && !body.urls) {
         return results[0]
     }
 
-    // Bei Bulk: Array + Stats zurückgeben
+    // Bulk: return array + stats
     return {
         results,
         savedFiles,

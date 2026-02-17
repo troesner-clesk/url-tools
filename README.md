@@ -67,6 +67,26 @@ All data is saved locally in the `output/` directory:
 - `screenshots/{timestamp}/` - Screenshot and PDF files
 - `images/{timestamp}/` - Downloaded images
 
+## Docker
+
+```bash
+# Build and run with docker-compose
+docker compose up -d
+
+# Or build manually
+docker build -t url-tools .
+docker run -p 3000:3000 -v ./output:/app/output url-tools
+```
+
+The `output/` directory is mounted as a volume so results persist between container restarts.
+
+## Testing
+
+```bash
+npm test          # Run all tests
+npm run test:watch  # Watch mode
+```
+
 ## Limitations
 
 - **Localhost only**: Designed to run locally. No authentication for the web interface.

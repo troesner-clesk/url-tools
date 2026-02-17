@@ -2,7 +2,7 @@ import { resolve } from 'path'
 
 const OUTPUT_ROOT = resolve(process.cwd(), 'output')
 
-// Prüft ob ein Pfad innerhalb des output-Ordners liegt
+// Checks if a path is within the output directory
 export function assertWithinOutput(path: string): string {
     const resolved = resolve(path)
     if (resolved !== OUTPUT_ROOT && !resolved.startsWith(OUTPUT_ROOT + '/')) {

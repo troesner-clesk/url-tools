@@ -3,10 +3,10 @@ import { extractLinks, getRedirectChain, formatRedirectChain, normalizeUrl } fro
 import { isAllowedUrl } from '../utils/url-validator'
 
 interface RequestSettings {
-    timeout: number      // Sekunden
+    timeout: number      // seconds
     retries: number      // 0-3
-    proxy?: string       // Optional: http://host:port
-    headers?: Record<string, string>  // Custom Headers
+    proxy?: string       // optional: http://host:port
+    headers?: Record<string, string>  // custom headers
 }
 
 interface ScrapeLinksRequest {
@@ -16,9 +16,9 @@ interface ScrapeLinksRequest {
     maxDepth: number
     rateLimit: number
     sameDomainOnly: boolean
-    urlFilter?: string   // Regex-Filter für URLs
-    pathInclude?: string // Komma-getrennte Pfade die enthalten sein müssen
-    pathExclude?: string // Komma-getrennte Pfade die ausgeschlossen werden
+    urlFilter?: string   // Regex filter for URLs
+    pathInclude?: string // Comma-separated paths that must be included
+    pathExclude?: string // Comma-separated paths to exclude
     settings?: RequestSettings
 }
 
@@ -39,7 +39,7 @@ function sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-// Fetch mit Retry-Logik
+// Fetch with retry logic
 async function fetchWithRetry(
     url: string,
     settings: RequestSettings
@@ -54,7 +54,7 @@ async function fetchWithRetry(
 
             const response = await fetch(url, {
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (compatible; HTMLScraper/1.0)',
+                    'User-Agent': 'Mozilla/5.0 (compatible; URLTools/1.0)',
                     ...headers
                 },
                 signal: controller.signal
@@ -90,7 +90,7 @@ export default defineEventHandler(async (event) => {
         })
     }
 
-    // SSE Headers direkt setzen
+    // Set SSE headers
     const res = event.node.res
     res.writeHead(200, {
         'Content-Type': 'text/event-stream',
@@ -102,13 +102,13 @@ export default defineEventHandler(async (event) => {
     let isClosed = false
     res.on('close', () => { isClosed = true })
 
-    // Helper: SSE-Event senden
+    // Helper: send SSE event
     function emit(eventName: string, data: unknown) {
         if (isClosed) return
         res.write(`event: ${eventName}\ndata: ${JSON.stringify(data)}\n\n`)
     }
 
-    // Default-Settings mit Clamping
+    // Default settings with clamping
     const settings: RequestSettings = {
         timeout: Math.min(Math.max(body.settings?.timeout ?? 30, 1), 120),
         retries: Math.min(Math.max(body.settings?.retries ?? 1, 0), 5),
@@ -119,17 +119,17 @@ export default defineEventHandler(async (event) => {
     const maxUrls = Math.min(Math.max(body.maxUrls || 100, 1), 10000)
     const rateLimit = Math.max(body.rateLimit || 2, 0.1)
 
-    // URL-Filter (Regex) - Länge limitieren gegen ReDoS
+    // URL filter (regex) - limit length to prevent ReDoS
     let urlFilterRegex: RegExp | null = null
     if (body.urlFilter && body.urlFilter.length <= 200) {
         try {
             urlFilterRegex = new RegExp(body.urlFilter)
         } catch {
-            // Ungültiger Regex - ignorieren
+            // Invalid regex - ignore
         }
     }
 
-    // Pfad-Filter (Include/Exclude)
+    // Path filter (include/exclude)
     const pathIncludes = body.pathInclude
         ? body.pathInclude.split(',').map(p => p.trim()).filter(Boolean)
         : []
@@ -170,7 +170,7 @@ export default defineEventHandler(async (event) => {
             }
         }
 
-        // Basis-Domain für Same-Domain-Check
+        // Base domain for same-domain check
         const baseDomains = new Set(
             body.urls.map(url => {
                 try {
@@ -188,7 +188,7 @@ export default defineEventHandler(async (event) => {
         while (queue.length > 0 && results.length < maxUrls && !isClosed) {
             const item = queue.shift()!
 
-            // URL-Filter prüfen
+            // Check URL filter
             if (urlFilterRegex && !urlFilterRegex.test(item.url)) {
                 continue
             }
@@ -214,7 +214,7 @@ export default defineEventHandler(async (event) => {
                 for (const link of links) {
                     if (results.length >= maxUrls || isClosed) break
 
-                    // URL-Filter auch auf Target-URLs anwenden
+                    // Apply URL filter to target URLs as well
                     if (urlFilterRegex && !urlFilterRegex.test(link.targetUrl)) {
                         continue
                     }
@@ -239,7 +239,7 @@ export default defineEventHandler(async (event) => {
 
                     results.push(result)
 
-                    // Ergebnis sofort streamen
+                    // Stream result immediately
                     emit('result', result)
 
                     if (body.recursive &&

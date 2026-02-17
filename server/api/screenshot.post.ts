@@ -47,19 +47,19 @@ async function takeScreenshot(
     index: number
 ): Promise<ScreenshotResult> {
     try {
-        // Viewport setzen
+        // Set viewport
         await page.setViewport({
             width: options.viewport.width,
             height: options.viewport.height
         })
 
-        // Seite laden
+        // Load page
         await page.goto(url, {
             waitUntil: 'networkidle2',
             timeout: (options.timeout || 30) * 1000
         })
 
-        // Dateiname generieren
+        // Generate filename
         const urlObj = new URL(url)
         const safeName = urlObj.hostname.replace(/[^a-z0-9]/gi, '_')
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
@@ -70,7 +70,7 @@ async function takeScreenshot(
         let fileSize = 0
 
         if (options.format === 'pdf') {
-            // PDF erstellen
+            // Create PDF
             const pdfBuffer = await page.pdf({
                 format: 'A4',
                 printBackground: true,
@@ -79,7 +79,7 @@ async function takeScreenshot(
             await writeFile(filepath, pdfBuffer)
             fileSize = pdfBuffer.length
         } else {
-            // Screenshot erstellen
+            // Take screenshot
             const screenshotOptions = {
                 path: filepath,
                 type: options.format === 'jpg' ? 'jpeg' as const : 'png' as const,
@@ -146,7 +146,7 @@ export default defineEventHandler(async (event) => {
 
         await page.close()
     } catch (error) {
-        // Bei Browser-Fehler: Browser zurücksetzen
+        // On browser error: reset browser instance
         if (browser) {
             try {
                 await browser.close()

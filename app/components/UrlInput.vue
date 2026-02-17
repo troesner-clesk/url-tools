@@ -9,7 +9,7 @@ const emit = defineEmits<{
 const fileInput = ref<HTMLInputElement | null>(null)
 const showFilter = ref(false)
 
-// URL-Zähler
+// URL counter
 const urlCount = computed(() => {
   const urls = modelValue.value
     .split(/[\n,]+/)
@@ -38,11 +38,11 @@ async function handleFileImport(event: Event) {
 
   const text = await file.text()
   
-  // CSV oder TXT parsen
+  // Parse CSV or TXT
   let urls: string[] = []
   
   if (file.name.endsWith('.csv')) {
-    // CSV: Erste Spalte nehmen oder URL-Spalte suchen
+    // CSV: take first column or find URL column
     const lines = text.split('\n')
     const header = lines[0]?.toLowerCase() || ''
     const urlColIndex = header.split(',').findIndex(col => 
@@ -59,20 +59,20 @@ async function handleFileImport(event: Event) {
       }
     }
   } else {
-    // TXT: Jede Zeile ist eine URL
+    // TXT: each line is a URL
     urls = text.split('\n')
       .map(l => l.trim())
       .filter(l => l && isValidUrl(l))
   }
 
   if (urls.length > 0) {
-    // Zu bestehenden URLs hinzufügen
+    // Add to existing URLs
     const existing = modelValue.value.split(/[\n,]+/).map(u => u.trim()).filter(Boolean)
     const combined = [...new Set([...existing, ...urls])]
     modelValue.value = combined.join('\n')
   }
 
-  // Input zurücksetzen
+  // Reset input
   target.value = ''
 }
 </script>
@@ -80,7 +80,7 @@ async function handleFileImport(event: Event) {
 <template>
   <div class="url-input">
     <div class="url-header">
-      <label>URLs eingeben</label>
+      <label>Enter URLs</label>
       <div class="url-actions">
         <span class="url-count">{{ urlCount }} URL{{ urlCount !== 1 ? 's' : '' }}</span>
         <button type="button" class="import-btn" @click="triggerImport">
@@ -99,19 +99,19 @@ async function handleFileImport(event: Event) {
 
     <textarea
       v-model="modelValue"
-      placeholder="https://example.com&#10;https://another-site.com&#10;...oder per Import laden"
+      placeholder="https://example.com&#10;https://another-site.com&#10;...or load via import"
       rows="6"
     ></textarea>
 
     <div v-if="showFilter" class="filter-section">
-      <label>URL-Filter (Regex)</label>
+      <label>URL Filter (Regex)</label>
       <input 
         type="text"
         v-model="urlFilter"
-        placeholder="z.B. /blog/.*  oder  \.html$"
+        placeholder="e.g. /blog/.*  or  \.html$"
       >
       <div class="filter-hint">
-        Nur URLs die diesem Muster entsprechen werden verarbeitet
+        Only URLs matching this pattern will be processed
       </div>
     </div>
 

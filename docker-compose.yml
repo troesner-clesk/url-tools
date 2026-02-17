@@ -1,0 +1,11 @@
+services:
+  url-tools:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./output:/app/output
+    environment:
+      - HOST=0.0.0.0
+      - PORT=3000
+    restart: unless-stopped

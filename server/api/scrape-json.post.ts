@@ -53,7 +53,7 @@ interface ScrapeJsonResult {
     error?: string
 }
 
-// Fetch mit Retry-Logik
+// Fetch with retry logic
 async function fetchWithRetry(
     url: string,
     settings: RequestSettings
@@ -68,7 +68,7 @@ async function fetchWithRetry(
 
             const response = await fetch(url, {
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (compatible; HTMLScraper/1.0)',
+                    'User-Agent': 'Mozilla/5.0 (compatible; URLTools/1.0)',
                     ...headers
                 },
                 signal: controller.signal
@@ -114,7 +114,7 @@ export default defineEventHandler(async (event) => {
 
     const results: ScrapeJsonResult[] = []
 
-    // Parallel mit Limit (5 gleichzeitig)
+    // Parallel with limit (5 concurrent)
     const batchSize = 5
     for (let i = 0; i < body.urls.length; i += batchSize) {
         const batch = body.urls.slice(i, i + batchSize)
@@ -126,7 +126,7 @@ export default defineEventHandler(async (event) => {
                     const html = await response.text()
                     const $ = cheerio.load(html)
 
-                    // JSON-LD extrahieren
+                    // Extract JSON-LD
                     const jsonLd: JsonLdData[] = []
                     $('script[type="application/ld+json"]').each((_, el) => {
                         try {
@@ -144,7 +144,7 @@ export default defineEventHandler(async (event) => {
                         }
                     })
 
-                    // Open Graph extrahieren
+                    // Extract Open Graph
                     const openGraph: OpenGraphData = {}
                     $('meta[property^="og:"]').each((_, el) => {
                         const property = $(el).attr('property')?.replace('og:', '')
@@ -154,7 +154,7 @@ export default defineEventHandler(async (event) => {
                         }
                     })
 
-                    // Twitter Card extrahieren
+                    // Extract Twitter Card
                     const twitterCard: TwitterCardData = {}
                     $('meta[name^="twitter:"]').each((_, el) => {
                         const name = $(el).attr('name')?.replace('twitter:', '')
@@ -164,7 +164,7 @@ export default defineEventHandler(async (event) => {
                         }
                     })
 
-                    // Standard Meta-Tags
+                    // Standard meta tags
                     const meta = {
                         title: $('title').first().text() || undefined,
                         description: $('meta[name="description"]').attr('content') || undefined,
