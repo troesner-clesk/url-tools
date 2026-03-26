@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Globe, Search, Camera, Image, FolderOpen, Loader, Pause, Play, Square, Trash2, Check, Hourglass } from 'lucide-vue-next'
 interface RequestSettings {
   timeout: number
   retries: number
@@ -367,34 +368,34 @@ watch(logs, () => {
 <template>
   <div class="app">
     <header>
-      <h1>🌐 URL Tools <span class="subtitle">(Scraping, SEO, Screenshots, Images)</span></h1>
+      <h1><Globe :size="18" /> URL Tools <span class="subtitle">(Scraping, SEO, Screenshots, Images)</span></h1>
       <nav class="tabs">
         <button
           :class="['tab', { active: activeTab === 'scraper' }]"
           @click="activeTab = 'scraper'"
         >
-          🌐 Scraper
+          <Globe :size="14" /> Scraper
         </button>
         <button
           :class="['tab', { active: activeTab === 'seo' }]"
           @click="activeTab = 'seo'"
         >
-          🔍 SEO Audit
+          <Search :size="14" /> SEO Audit
         </button>
         <button
           :class="['tab', { active: activeTab === 'screenshots' }]"
           @click="activeTab = 'screenshots'"
         >
-          📸 Screenshots
+          <Camera :size="14" /> Screenshots
         </button>
         <button
           :class="['tab', { active: activeTab === 'images' }]"
           @click="activeTab = 'images'"
         >
-          🖼️ Images
+          <Image :size="14" /> Images
         </button>
         <button class="tab tab-output" @click="openOutputFolder">
-          📂 Output
+          <FolderOpen :size="14" /> Output
         </button>
       </nav>
     </header>
@@ -435,28 +436,30 @@ watch(logs, () => {
             @click="startScraping"
             :disabled="!hasValidUrls || isRunning"
           >
-            {{ isRunning ? (isPaused ? '⏸ Paused' : '⏳ Running...') : '▶ Start' }}
+            <template v-if="isRunning && isPaused"><Pause :size="14" /> Paused</template>
+            <template v-else-if="isRunning"><Loader :size="14" class="spin" /> Running...</template>
+            <template v-else><Play :size="14" /> Start</template>
           </button>
           <button
             v-if="isRunning && !isPaused"
             class="btn-secondary"
             @click="isPaused = true"
           >
-            ⏸ Pause
+            <Pause :size="14" /> Pause
           </button>
           <button
             v-if="isRunning && isPaused"
             class="btn-secondary"
             @click="isPaused = false"
           >
-            ▶ Resume
+            <Play :size="14" /> Resume
           </button>
           <button
             v-if="isRunning"
             class="btn-danger"
             @click="stopScraping"
           >
-            ⏹ Stop
+            <Square :size="14" /> Stop
           </button>
         </div>
 
@@ -473,7 +476,7 @@ watch(logs, () => {
 
         <!-- Current URL -->
         <div v-if="currentUrl" class="current-url">
-          ⏳ {{ currentUrl }}
+          <Loader :size="14" class="spin" /> {{ currentUrl }}
         </div>
 
         <!-- Live Log -->
@@ -491,7 +494,7 @@ watch(logs, () => {
         <!-- Saved Files -->
         <div v-if="savedFiles.length" class="saved-files">
           <div class="saved-header">
-            <span>✓ Saved:</span>
+            <span><Check :size="14" /> Saved:</span>
             <RecentJobsMenu :tool-type="mode === 'html' ? 'html' : 'links'" />
           </div>
           <ul>
@@ -501,7 +504,7 @@ watch(logs, () => {
 
         <!-- Clear Output -->
         <button class="btn-clear-output" @click="showClearConfirm = true" :disabled="isClearing">
-          🗑 Clear Output Folder
+          <Trash2 :size="14" /> Clear Output Folder
         </button>
 
         <!-- Clear Confirmation Modal -->
@@ -958,5 +961,13 @@ main {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 </style>

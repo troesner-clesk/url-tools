@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ChevronDown, ChevronRight, X } from 'lucide-vue-next'
+
 interface RequestSettings {
   timeout: number
   retries: number
@@ -73,7 +75,7 @@ function removeHeader(key: string) {
       class="toggle-advanced"
       @click="showAdvanced = !showAdvanced"
     >
-      {{ showAdvanced ? '▼' : '▶' }} Advanced Options
+      <ChevronDown v-if="showAdvanced" :size="14" /><ChevronRight v-else :size="14" /> Advanced Options
     </button>
 
     <div v-if="showAdvanced" class="advanced-settings">
@@ -99,7 +101,7 @@ function removeHeader(key: string) {
           >
             <span class="header-key">{{ key }}:</span>
             <span class="header-value">{{ value }}</span>
-            <button type="button" class="remove-btn" @click="removeHeader(key as string)">×</button>
+            <button type="button" class="remove-btn" @click="removeHeader(key as string)"><X :size="14" /></button>
           </div>
         </div>
         <div class="header-input">

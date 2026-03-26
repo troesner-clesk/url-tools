@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { FolderOpen, ChevronUp, ChevronDown } from 'lucide-vue-next'
+
 interface OutputFile {
   name: string
   path: string
@@ -110,8 +112,8 @@ onMounted(() => {
 <template>
   <div class="recent-jobs-menu">
     <button class="btn-folder" @click.stop="toggleMenu">
-      📂 Open
-      <span class="arrow">{{ isOpen ? '▲' : '▼' }}</span>
+      <FolderOpen :size="12" /> Open
+      <ChevronUp v-if="isOpen" :size="12" /><ChevronDown v-else :size="12" />
     </button>
 
     <div v-if="isOpen" class="dropdown">

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { Camera, Loader, FileText, Image, Check, X } from 'lucide-vue-next'
+
 interface LogEntry {
   timestamp: string
   message: string
@@ -224,7 +226,7 @@ function formatBytes(bytes: number): string {
   <div class="screenshots-container">
     <!-- Left: Input Section -->
     <div class="input-section">
-      <h2>📸 Screenshots & PDF</h2>
+      <h2><Camera :size="18" /> Screenshots & PDF</h2>
       <p class="subtitle">Create screenshots or PDFs of web pages</p>
 
       <div class="url-input">
@@ -273,7 +275,8 @@ function formatBytes(bytes: number): string {
           @click="takeScreenshots"
           :disabled="parsedUrls.length === 0 || isLoading"
         >
-          {{ isLoading ? '⏳ Creating...' : '📸 Create' }}
+          <template v-if="isLoading"><Loader :size="14" class="spin" /> Creating...</template>
+          <template v-else><Camera :size="14" /> Create</template>
         </button>
         <button v-if="isLoading" class="btn-stop" @click="stopScreenshots">
           Stop
@@ -319,7 +322,7 @@ function formatBytes(bytes: number): string {
               :class="['result-item', { active: selectedResult?.url === result.url, success: result.success, failed: !result.success }]"
               @click="selectResult(result)"
             >
-              <span class="result-status">{{ result.success ? '✓' : '✗' }}</span>
+              <span class="result-status"><Check v-if="result.success" :size="16" /><X v-else :size="16" /></span>
               <div class="result-info">
                 <div class="result-url">{{ result.url }}</div>
                 <div v-if="result.success" class="result-meta">
@@ -354,12 +357,12 @@ function formatBytes(bytes: number): string {
               <img :src="previewUrl" :alt="selectedResult.filename">
             </div>
             <div v-else-if="format === 'pdf'" class="preview-placeholder">
-              <span class="preview-icon">📄</span>
+              <span class="preview-icon"><FileText :size="48" /></span>
               <p>PDF preview not available</p>
               <p class="hint">Click "Open" to view in Finder</p>
             </div>
             <div v-else class="preview-placeholder">
-              <span class="preview-icon">🖼️</span>
+              <span class="preview-icon"><Image :size="48" /></span>
               <p>Loading preview...</p>
             </div>
           </div>
@@ -764,4 +767,7 @@ function formatBytes(bytes: number): string {
   font-size: 12px;
   margin-top: 4px;
 }
+
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 </style>

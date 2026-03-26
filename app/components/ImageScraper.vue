@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { Image, Loader, AlertTriangle, Check } from 'lucide-vue-next'
+
 interface LogEntry {
   timestamp: string
   message: string
@@ -256,7 +258,7 @@ const selectedPage = computed(() => {
   <div class="image-scraper-container">
     <!-- Left: Input Section -->
     <div class="input-section">
-      <h2>🖼️ Image Scraper</h2>
+      <h2><Image :size="18" /> Image Scraper</h2>
       <p class="subtitle">Extract and download images from web pages</p>
 
       <div class="url-input">
@@ -331,7 +333,8 @@ const selectedPage = computed(() => {
           @click="scrapeImages"
           :disabled="parsedUrls.length === 0 || isLoading"
         >
-          {{ isLoading ? '⏳ Scanning...' : '🖼️ Scrape Images' }}
+          <template v-if="isLoading"><Loader :size="14" class="spin" /> Scanning...</template>
+          <template v-else><Image :size="14" /> Scrape Images</template>
         </button>
         <button v-if="isLoading" class="btn-stop" @click="stopScraping">
           Stop
@@ -408,7 +411,7 @@ const selectedPage = computed(() => {
                   @error="($event.target as HTMLImageElement).style.display = 'none'"
                 >
                 <span v-if="image.error" class="thumb-error">!</span>
-                <span v-if="image.filename" class="thumb-check">✓</span>
+                <span v-if="image.filename" class="thumb-check"><Check :size="10" /></span>
               </div>
             </div>
           </div>
@@ -442,11 +445,11 @@ const selectedPage = computed(() => {
               <img :src="previewUrl || ''" :alt="selectedImage.alt || ''">
             </div>
             <div v-else-if="selectedImage.error" class="preview-error">
-              <span class="preview-icon">⚠️</span>
+              <span class="preview-icon"><AlertTriangle :size="48" /></span>
               <p>{{ selectedImage.error }}</p>
             </div>
             <div v-else class="preview-placeholder">
-              <span class="preview-icon">🖼️</span>
+              <span class="preview-icon"><Image :size="48" /></span>
               <p>Loading preview...</p>
             </div>
           </div>
@@ -943,4 +946,7 @@ const selectedPage = computed(() => {
 .preview-error {
   color: #f87171;
 }
+
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 </style>

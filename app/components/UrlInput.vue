@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { Download, Search } from 'lucide-vue-next'
+
 const modelValue = defineModel<string>({ required: true })
 const urlFilter = defineModel<string>('filter', { default: '' })
 
@@ -84,7 +86,7 @@ async function handleFileImport(event: Event) {
       <div class="url-actions">
         <span class="url-count">{{ urlCount }} URL{{ urlCount !== 1 ? 's' : '' }}</span>
         <button type="button" class="import-btn" @click="triggerImport">
-          📥 Import
+          <Download :size="14" /> Import
         </button>
         <button 
           type="button" 
@@ -92,7 +94,7 @@ async function handleFileImport(event: Event) {
           :class="{ active: showFilter }"
           @click="showFilter = !showFilter"
         >
-          🔍 Filter
+          <Search :size="14" /> Filter
         </button>
       </div>
     </div>

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { Check, Copy } from 'lucide-vue-next'
+
 interface HtmlResult {
   url: string
   status: number
@@ -182,7 +184,7 @@ const linkStats = computed(() => {
     <div v-if="selectedRows.size > 0" class="selection-bar">
       <span>{{ selectedRows.size }} row(s) selected</span>
       <button class="btn-copy-selection" @click="copySelectedRows">
-        {{ showCopiedFeedback ? '✓ Copied!' : '⧉ Copy Selection' }}
+        <template v-if="showCopiedFeedback"><Check :size="12" /> Copied!</template><template v-else><Copy :size="12" /> Copy Selection</template>
       </button>
       <button class="btn-clear-selection" @click="selectedRows.clear()">Clear</button>
     </div>
@@ -196,16 +198,16 @@ const linkStats = computed(() => {
               <input type="checkbox" :checked="allSelected" @change="toggleSelectAll" title="Select all">
             </th>
             <th @click="copyColumn('url')" :class="['th-copy', { copied: copiedColumn === 'url' }]" title="Click to copy column">
-              {{ copiedColumn === 'url' ? '✓ Copied!' : 'URL ⧉' }}
+              <template v-if="copiedColumn === 'url'"><Check :size="12" /> Copied!</template><template v-else>URL <Copy :size="10" /></template>
             </th>
             <th @click="copyColumn('status')" :class="['th-copy', { copied: copiedColumn === 'status' }]" title="Click to copy column">
-              {{ copiedColumn === 'status' ? '✓ Copied!' : 'Status ⧉' }}
+              <template v-if="copiedColumn === 'status'"><Check :size="12" /> Copied!</template><template v-else>Status <Copy :size="10" /></template>
             </th>
             <th @click="copyColumn('contentType')" :class="['th-copy', { copied: copiedColumn === 'contentType' }]" title="Click to copy column">
-              {{ copiedColumn === 'contentType' ? '✓ Copied!' : 'Content-Type ⧉' }}
+              <template v-if="copiedColumn === 'contentType'"><Check :size="12" /> Copied!</template><template v-else>Content-Type <Copy :size="10" /></template>
             </th>
             <th @click="copyColumn('size')" :class="['th-copy', { copied: copiedColumn === 'size' }]" title="Click to copy column">
-              {{ copiedColumn === 'size' ? '✓ Copied!' : 'Size ⧉' }}
+              <template v-if="copiedColumn === 'size'"><Check :size="12" /> Copied!</template><template v-else>Size <Copy :size="10" /></template>
             </th>
             <th>HTML</th>
           </tr>
@@ -260,25 +262,25 @@ const linkStats = computed(() => {
               <input type="checkbox" :checked="allSelected" @change="toggleSelectAll" title="Select all">
             </th>
             <th @click="copyColumn('sourceUrl')" :class="['th-copy', { copied: copiedColumn === 'sourceUrl' }]" title="Click to copy column">
-              {{ copiedColumn === 'sourceUrl' ? '✓ Copied!' : 'Source ⧉' }}
+              <template v-if="copiedColumn === 'sourceUrl'"><Check :size="12" /> Copied!</template><template v-else>Source <Copy :size="10" /></template>
             </th>
             <th @click="copyColumn('targetUrl')" :class="['th-copy', { copied: copiedColumn === 'targetUrl' }]" title="Click to copy column">
-              {{ copiedColumn === 'targetUrl' ? '✓ Copied!' : 'Target ⧉' }}
+              <template v-if="copiedColumn === 'targetUrl'"><Check :size="12" /> Copied!</template><template v-else>Target <Copy :size="10" /></template>
             </th>
             <th @click="copyColumn('status')" :class="['th-copy', { copied: copiedColumn === 'status' }]" title="Click to copy column">
-              {{ copiedColumn === 'status' ? '✓ Copied!' : 'Status ⧉' }}
+              <template v-if="copiedColumn === 'status'"><Check :size="12" /> Copied!</template><template v-else>Status <Copy :size="10" /></template>
             </th>
             <th @click="copyColumn('redirectChain')" :class="['th-copy', { copied: copiedColumn === 'redirectChain' }]" title="Click to copy column">
-              {{ copiedColumn === 'redirectChain' ? '✓ Copied!' : 'Redirects ⧉' }}
+              <template v-if="copiedColumn === 'redirectChain'"><Check :size="12" /> Copied!</template><template v-else>Redirects <Copy :size="10" /></template>
             </th>
             <th @click="copyColumn('type')" :class="['th-copy', { copied: copiedColumn === 'type' }]" title="Click to copy column">
-              {{ copiedColumn === 'type' ? '✓ Copied!' : 'Type ⧉' }}
+              <template v-if="copiedColumn === 'type'"><Check :size="12" /> Copied!</template><template v-else>Type <Copy :size="10" /></template>
             </th>
             <th @click="copyColumn('anchorText')" :class="['th-copy', { copied: copiedColumn === 'anchorText' }]" title="Click to copy column">
-              {{ copiedColumn === 'anchorText' ? '✓ Copied!' : 'Anchor ⧉' }}
+              <template v-if="copiedColumn === 'anchorText'"><Check :size="12" /> Copied!</template><template v-else>Anchor <Copy :size="10" /></template>
             </th>
             <th @click="copyColumn('rel')" :class="['th-copy', { copied: copiedColumn === 'rel' }]" title="Click to copy column">
-              {{ copiedColumn === 'rel' ? '✓ Copied!' : 'Rel ⧉' }}
+              <template v-if="copiedColumn === 'rel'"><Check :size="12" /> Copied!</template><template v-else>Rel <Copy :size="10" /></template>
             </th>
           </tr>
         </thead>

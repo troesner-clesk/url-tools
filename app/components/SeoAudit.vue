@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { Search, Loader, Check, X, RotateCw } from 'lucide-vue-next'
+
 interface LogEntry {
   timestamp: string
   message: string
@@ -285,7 +287,7 @@ function formatBytes(bytes: number): string {
   <div class="seo-audit-container">
     <!-- Left: Input Section -->
     <div class="input-section">
-      <h2>🔍 SEO Audit</h2>
+      <h2><Search :size="18" /> SEO Audit</h2>
       <p class="subtitle">Analyze URLs for SEO factors</p>
 
       <div class="url-input">
@@ -313,7 +315,8 @@ function formatBytes(bytes: number): string {
 
       <div class="button-row">
         <button class="btn-primary" @click="runAudit" :disabled="parsedUrls.length === 0 || isLoading">
-          {{ isLoading ? '⏳ Analyzing...' : '🔍 Analyze' }}
+          <template v-if="isLoading"><Loader :size="14" class="spin" /> Analyzing...</template>
+          <template v-else><Search :size="14" /> Analyze</template>
         </button>
         <button v-if="isLoading" class="btn-stop" @click="stopAudit">
           Stop
@@ -332,7 +335,7 @@ function formatBytes(bytes: number): string {
       </div>
 
       <div v-if="savedFiles.length" class="saved-files">
-        <span>✓ Saved</span>
+        <span><Check :size="14" /> Saved</span>
         <RecentJobsMenu tool-type="seo" />
       </div>
 
@@ -355,7 +358,7 @@ function formatBytes(bytes: number): string {
                 <span class="history-time">{{ entry.timestamp }}</span>
               </div>
             </div>
-            <button class="btn-rerun" @click="rerunFromHistory(entry)" title="Re-run">↻</button>
+            <button class="btn-rerun" @click="rerunFromHistory(entry)" title="Re-run"><RotateCw :size="12" /></button>
           </div>
         </div>
       </div>
@@ -524,22 +527,22 @@ function formatBytes(bytes: number): string {
           <h3>Technical</h3>
           <div class="tech-checks">
             <div :class="['check', selectedResult.hasViewport ? 'check-pass' : 'check-fail']">
-              {{ selectedResult.hasViewport ? '✓' : '✗' }} Viewport Meta
+              <Check v-if="selectedResult.hasViewport" :size="14" /><X v-else :size="14" /> Viewport Meta
             </div>
             <div :class="['check', selectedResult.hasCharset ? 'check-pass' : 'check-fail']">
-              {{ selectedResult.hasCharset ? '✓' : '✗' }} Charset
+              <Check v-if="selectedResult.hasCharset" :size="14" /><X v-else :size="14" /> Charset
             </div>
             <div :class="['check', selectedResult.hasFavicon ? 'check-pass' : 'check-fail']">
-              {{ selectedResult.hasFavicon ? '✓' : '✗' }} Favicon
+              <Check v-if="selectedResult.hasFavicon" :size="14" /><X v-else :size="14" /> Favicon
             </div>
             <div :class="['check', selectedResult.hasJsonLd ? 'check-pass' : 'check-fail']">
-              {{ selectedResult.hasJsonLd ? '✓' : '✗' }} JSON-LD Schema
+              <Check v-if="selectedResult.hasJsonLd" :size="14" /><X v-else :size="14" /> JSON-LD Schema
             </div>
             <div :class="['check', selectedResult.hasOpenGraph ? 'check-pass' : 'check-fail']">
-              {{ selectedResult.hasOpenGraph ? '✓' : '✗' }} Open Graph
+              <Check v-if="selectedResult.hasOpenGraph" :size="14" /><X v-else :size="14" /> Open Graph
             </div>
             <div :class="['check', selectedResult.hasTwitterCard ? 'check-pass' : 'check-fail']">
-              {{ selectedResult.hasTwitterCard ? '✓' : '✗' }} Twitter Card
+              <Check v-if="selectedResult.hasTwitterCard" :size="14" /><X v-else :size="14" /> Twitter Card
             </div>
           </div>
         </div>
@@ -1219,4 +1222,7 @@ function formatBytes(bytes: number): string {
   background: #4d1a1a33;
   color: #f87171;
 }
+
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 </style>

@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "cheerio": "^1.1.2",
+    "lucide-vue-next": "^1.0.0",
     "nuxt": "^4.2.2",
     "papaparse": "^5.5.3",
     "puppeteer": "^24.35.0",
