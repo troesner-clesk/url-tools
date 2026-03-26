@@ -58,7 +58,7 @@ const settings = ref<Settings>({
   maxDepth: 3,
   rateLimit: 2,
   sameDomainOnly: true,
-  saveFormat: 'json',
+  saveFormat: 'csv',
   cssSelector: '',
   urlFilter: '',
   pathInclude: '',

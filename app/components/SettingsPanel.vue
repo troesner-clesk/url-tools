@@ -34,7 +34,7 @@ const settings = defineModel<Settings>('settings', {
     maxDepth: 3,
     rateLimit: 2,
     sameDomainOnly: true,
-    saveFormat: 'json' as const,
+    saveFormat: 'csv' as const,
     cssSelector: '',
     urlFilter: '',
     pathInclude: '',
