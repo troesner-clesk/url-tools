@@ -26,7 +26,7 @@ async function getFilesRecursive(
       if (entry.name.startsWith('.')) continue
 
       if (entry.isDirectory()) {
-        // Ordner anzeigen
+        // Show folder
         const subFiles = await getFilesRecursive(fullPath, baseDir)
         const folderStat = await stat(fullPath)
 
@@ -38,7 +38,7 @@ async function getFilesRecursive(
           type: 'folder',
         })
 
-        // Dateien im Ordner hinzufügen (mit Präfix)
+        // Add files from folder (with prefix)
         for (const subFile of subFiles) {
           files.push({
             ...subFile,
@@ -76,14 +76,14 @@ export default defineEventHandler(async () => {
   try {
     const files = await getFilesRecursive(outputDir, outputDir)
 
-    // Nach Datum sortieren (neueste zuerst), Ordner zuerst
+    // Sort by date (newest first), folders first
     files.sort((a, b) => {
-      // Ordner zuerst (nur Top-Level)
+      // Folders first (top-level only)
       if (a.type === 'folder' && b.type !== 'folder' && !a.name.includes('/'))
         return -1
       if (b.type === 'folder' && a.type !== 'folder' && !b.name.includes('/'))
         return 1
-      // Nach Datum
+      // By date
       return new Date(b.modified).getTime() - new Date(a.modified).getTime()
     })
 

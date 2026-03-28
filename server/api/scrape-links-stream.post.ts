@@ -127,7 +127,7 @@ export default defineEventHandler(async (event) => {
     const visited = new Set<string>()
     const queue: Array<{ url: string; depth: number; sourceUrl?: string }> = []
 
-    // Seed URLs zur Queue (mit SSRF-Check)
+    // Add seed URLs to queue (with SSRF check)
     for (const url of body.urls) {
       const normalized = normalizeUrl(url)
       if (normalized && !visited.has(normalized) && isAllowedUrl(normalized)) {
@@ -272,7 +272,7 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // Abschluss-Event senden
+    // Send completion event
     emit('done', { totalLinks: results.length, visited: visited.size })
     emit('log', {
       message: `Crawl complete: ${results.length} links found`,
