@@ -100,6 +100,16 @@ npm run test:watch  # Watch mode
 - [Puppeteer](https://pptr.dev/) - Screenshots and PDF generation
 - [PapaParse](https://www.papaparse.com/) - CSV generation
 
+## Documentation
+
+Detailed documentation lives in the [`docs/`](docs/) directory:
+
+- [Architecture Overview](docs/ARCHITECTURE.md) — Tech stack, project structure, data flow
+- [Data Model & API Reference](docs/data-model.md) — All endpoints, request/response schemas
+- [Architecture Decision Records](docs/adr/) — Why things are built the way they are
+- [Modules](docs/modules/) — Feature documentation per module
+- [Runbooks](docs/runbooks/) — Deployment, troubleshooting
+
 ## License
 
 MIT
