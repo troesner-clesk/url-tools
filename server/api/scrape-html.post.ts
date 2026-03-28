@@ -1,6 +1,7 @@
 import { defineEventHandler, readBody } from 'h3'
 import * as cheerio from 'cheerio'
 import { filterAllowedUrls } from '../utils/url-validator'
+import { sanitizeHeaders } from '../utils/sanitize-headers'
 
 interface RequestSettings {
     timeout: number      // seconds
@@ -92,7 +93,7 @@ export default defineEventHandler(async (event) => {
         timeout: body.settings?.timeout ?? 30,
         retries: body.settings?.retries ?? 1,
         proxy: body.settings?.proxy,
-        headers: body.settings?.headers
+        headers: sanitizeHeaders(body.settings?.headers)
     }
 
     const results: ScrapeHtmlResult[] = []
@@ -107,6 +108,11 @@ export default defineEventHandler(async (event) => {
             batch.map(async (url): Promise<ScrapeHtmlResult> => {
                 try {
                     const { response, retryCount } = await fetchWithRetry(url, settings)
+
+                    const contentLength = parseInt(response.headers.get('content-length') || '0')
+                    if (contentLength > 10 * 1024 * 1024) {
+                        throw new Error('Response too large (>10MB)')
+                    }
 
                     let html = await response.text()
 

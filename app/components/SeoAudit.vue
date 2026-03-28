@@ -74,7 +74,14 @@ onMounted(() => {
   const stored = localStorage.getItem('seo-audit-history')
   if (stored) {
     try {
-      history.value = JSON.parse(stored)
+      const parsed = JSON.parse(stored)
+      if (Array.isArray(parsed)) {
+        history.value = parsed.filter((entry: unknown) => {
+          if (!entry || typeof entry !== 'object') return false
+          const e = entry as Record<string, unknown>
+          return typeof e.id === 'string' && Array.isArray(e.urls) && typeof e.avgScore === 'number'
+        })
+      }
     } catch {}
   }
 })
@@ -234,17 +241,21 @@ async function runAudit() {
 
     if (saveResults.value && results.value.length > 0) {
       addLog('Saving results...', 'info')
-      const saveResponse = await $fetch<BulkResponse>('/api/seo-audit', {
-        method: 'POST',
-        body: {
-          urls: parsedUrls.value,
-          checkLinks: false,
-          saveResults: true
+      try {
+        const saveResponse = await $fetch<{ files: string[] }>('/api/save-results', {
+          method: 'POST',
+          body: {
+            results: results.value,
+            format: 'both',
+            mode: 'seo'
+          }
+        })
+        savedFiles.value = saveResponse.files || []
+        if (savedFiles.value.length > 0) {
+          addLog(`${savedFiles.value.length} file(s) saved`, 'success')
         }
-      })
-      savedFiles.value = saveResponse.savedFiles || []
-      if (savedFiles.value.length > 0) {
-        addLog(`${savedFiles.value.length} file(s) saved`, 'success')
+      } catch (e) {
+        addLog('Failed to save results', 'error')
       }
     }
 

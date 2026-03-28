@@ -1,6 +1,7 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import { extractLinks, getRedirectChain, formatRedirectChain, normalizeUrl } from '../utils/link-analyzer'
 import { isAllowedUrl } from '../utils/url-validator'
+import { sanitizeHeaders } from '../utils/sanitize-headers'
 
 interface RequestSettings {
     timeout: number      // seconds
@@ -113,7 +114,7 @@ export default defineEventHandler(async (event) => {
         timeout: Math.min(Math.max(body.settings?.timeout ?? 30, 1), 120),
         retries: Math.min(Math.max(body.settings?.retries ?? 1, 0), 5),
         proxy: body.settings?.proxy,
-        headers: body.settings?.headers
+        headers: sanitizeHeaders(body.settings?.headers)
     }
 
     const maxUrls = Math.min(Math.max(body.maxUrls || 100, 1), 10000)
@@ -206,6 +207,11 @@ export default defineEventHandler(async (event) => {
 
                 const { response, retryCount } = await fetchWithRetry(item.url, settings)
 
+                const contentLength = parseInt(response.headers.get('content-length') || '0')
+                if (contentLength > 10 * 1024 * 1024) {
+                    throw new Error('Response too large (>10MB)')
+                }
+
                 const html = await response.text()
                 const links = extractLinks(html, item.url)
 
@@ -222,7 +228,8 @@ export default defineEventHandler(async (event) => {
                         continue
                     }
 
-                    const redirectInfo = await getRedirectChain(link.targetUrl)
+                    await sleep(delayMs / 4)
+                    const redirectInfo = await getRedirectChain(link.targetUrl, 3, 5000)
 
                     const result: LinkResult = {
                         sourceUrl: item.url,

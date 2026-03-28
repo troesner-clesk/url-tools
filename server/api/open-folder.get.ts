@@ -1,6 +1,15 @@
 import { defineEventHandler, getQuery } from 'h3'
 import { spawn } from 'child_process'
 import { resolve } from 'path'
+import { platform } from 'os'
+
+function getOpenCommand(): string {
+    switch (platform()) {
+        case 'darwin': return 'open'
+        case 'win32': return 'explorer'
+        default: return 'xdg-open'
+    }
+}
 
 export default defineEventHandler(async (event) => {
     const query = getQuery(event)
@@ -26,7 +35,7 @@ export default defineEventHandler(async (event) => {
 
     return new Promise((resolvePromise, reject) => {
         // Use spawn with arguments array to prevent command injection
-        const child = spawn('open', [resolvedPath], { stdio: 'ignore' })
+        const child = spawn(getOpenCommand(), [resolvedPath], { stdio: 'ignore' })
 
         child.on('close', (code) => {
             if (code === 0) {

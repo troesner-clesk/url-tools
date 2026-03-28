@@ -3,7 +3,8 @@ import * as cheerio from 'cheerio'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 import Papa from 'papaparse'
-import { filterAllowedUrls } from '../utils/url-validator'
+import { filterAllowedUrls, isAllowedUrl } from '../utils/url-validator'
+import { sanitizeHeaders } from '../utils/sanitize-headers'
 
 interface RequestSettings {
     timeout: number
@@ -127,6 +128,7 @@ async function fetchWithRetry(
 }
 
 async function checkLinkStatus(url: string): Promise<number> {
+    if (!isAllowedUrl(url)) return 0
     try {
         const response = await fetch(url, {
             method: 'HEAD',
@@ -146,6 +148,12 @@ async function auditUrl(
 ): Promise<SeoAuditResult> {
     try {
         const { response, loadTime } = await fetchWithRetry(url, settings)
+
+        const contentLength = parseInt(response.headers.get('content-length') || '0')
+        if (contentLength > 10 * 1024 * 1024) {
+            throw new Error('Response too large (>10MB)')
+        }
+
         const html = await response.text()
         const $ = cheerio.load(html)
         const issues: string[] = []
@@ -387,7 +395,7 @@ export default defineEventHandler(async (event) => {
     const settings: RequestSettings = {
         timeout: body.settings?.timeout ?? 30,
         retries: body.settings?.retries ?? 1,
-        headers: body.settings?.headers
+        headers: sanitizeHeaders(body.settings?.headers)
     }
 
     const results: SeoAuditResult[] = []

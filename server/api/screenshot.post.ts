@@ -49,8 +49,8 @@ async function takeScreenshot(
     try {
         // Set viewport
         await page.setViewport({
-            width: options.viewport.width,
-            height: options.viewport.height
+            width: Math.min(Math.max(options.viewport.width || 1280, 100), 3840),
+            height: Math.min(Math.max(options.viewport.height || 800, 100), 4096)
         })
 
         // Load page

@@ -47,4 +47,7 @@ EXPOSE 3000
 ENV HOST=0.0.0.0
 ENV PORT=3000
 
+RUN useradd -m -u 1001 appuser && chown -R appuser:appuser /app
+USER appuser
+
 CMD ["node", ".output/server/index.mjs"]

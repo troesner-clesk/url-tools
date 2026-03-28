@@ -1,4 +1,5 @@
 import * as cheerio from 'cheerio'
+import { isAllowedUrl } from './url-validator'
 
 export interface LinkInfo {
     sourceUrl: string
@@ -48,7 +49,7 @@ export function normalizeUrl(url: string, baseUrl?: string): string | null {
 /**
  * Follows redirects and returns the chain
  */
-export async function getRedirectChain(url: string, maxRedirects = 10, timeoutMs = 10000): Promise<{
+export async function getRedirectChain(url: string, maxRedirects = 5, timeoutMs = 5000): Promise<{
     chain: RedirectStep[]
     finalUrl: string
     finalStatus: number
@@ -81,6 +82,9 @@ export async function getRedirectChain(url: string, maxRedirects = 10, timeoutMs
                 const location = response.headers.get('location')
                 if (location) {
                     currentUrl = new URL(location, currentUrl).href
+                    if (!isAllowedUrl(currentUrl)) {
+                        return { chain, finalUrl: currentUrl, finalStatus: 0, error: 'Redirect to blocked URL' }
+                    }
                     redirectCount++
                     continue
                 }

@@ -99,13 +99,19 @@ function formatSize(bytes: number): string {
 }
 
 // Close on outside click
+function handleOutsideClick(e: MouseEvent) {
+  const target = e.target as HTMLElement
+  if (!target.closest('.recent-jobs-menu')) {
+    isOpen.value = false
+  }
+}
+
 onMounted(() => {
-  document.addEventListener('click', (e) => {
-    const target = e.target as HTMLElement
-    if (!target.closest('.recent-jobs-menu')) {
-      isOpen.value = false
-    }
-  })
+  document.addEventListener('click', handleOutsideClick)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleOutsideClick)
 })
 </script>
 
