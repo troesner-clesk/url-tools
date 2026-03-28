@@ -241,12 +241,7 @@ async function selectImage(image: ImageResult) {
   }
 }
 
-function formatBytes(bytes: number): string {
-  if (!bytes) return '-'
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`
-}
+const { formatSize } = useFormatters()
 
 const selectedPage = computed(() => {
   if (selectedPageIndex.value === null) return null
@@ -426,7 +421,7 @@ const selectedPage = computed(() => {
           <div v-else class="detail-content">
             <div class="detail-header">
               <h3>{{ selectedImage.filename || 'Preview' }}</h3>
-              <span v-if="selectedImage.size" class="detail-size">{{ formatBytes(selectedImage.size) }}</span>
+              <span v-if="selectedImage.size" class="detail-size">{{ formatSize(selectedImage.size) }}</span>
             </div>
 
             <div class="detail-meta">

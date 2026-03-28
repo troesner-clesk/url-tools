@@ -1,12 +1,6 @@
 <script setup lang="ts">
 import { Search, Loader, Check, X, RotateCw } from 'lucide-vue-next'
 
-interface LogEntry {
-  timestamp: string
-  message: string
-  type: 'info' | 'success' | 'error' | 'progress'
-}
-
 interface SeoAuditResult {
   url: string
   status: number
@@ -56,6 +50,9 @@ interface HistoryEntry {
 }
 
 const urlInput = ref('')
+const { logs, addLog, logContainer } = useLogger()
+const { parsedUrls } = useUrlParser(urlInput)
+const { formatSize } = useFormatters()
 const checkLinks = ref(false)
 const saveResults = ref(true)
 const isLoading = ref(false)
@@ -63,8 +60,6 @@ const isCancelled = ref(false)
 const results = ref<SeoAuditResult[]>([])
 const selectedResult = ref<SeoAuditResult | null>(null)
 const error = ref<string | null>(null)
-const logs = ref<LogEntry[]>([])
-const logContainer = ref<HTMLElement | null>(null)
 const savedFiles = ref<string[]>([])
 const stats = ref<BulkResponse['stats'] | null>(null)
 const history = ref<HistoryEntry[]>([])
@@ -139,40 +134,6 @@ function clearHistory() {
   history.value = []
   saveHistory()
 }
-
-function parseUrls(input: string): string[] {
-  return input
-    .split(/[\n,]+/)
-    .map(url => url.trim())
-    .filter(url => {
-      if (!url) return false
-      try {
-        new URL(url)
-        return true
-      } catch {
-        return false
-      }
-    })
-}
-
-const parsedUrls = computed(() => parseUrls(urlInput.value))
-
-function addLog(message: string, type: LogEntry['type'] = 'info') {
-  const now = new Date()
-  const timestamp = now.toLocaleTimeString('en-US')
-  logs.value.push({ timestamp, message, type })
-  if (logs.value.length > 100) {
-    logs.value.shift()
-  }
-}
-
-watch(logs, () => {
-  nextTick(() => {
-    if (logContainer.value) {
-      logContainer.value.scrollTop = logContainer.value.scrollHeight
-    }
-  })
-}, { deep: true })
 
 async function runAudit() {
   if (parsedUrls.value.length === 0) return
@@ -284,12 +245,6 @@ function getScoreColor(score: number): string {
   if (score >= 60) return '#eab308'
   if (score >= 40) return '#f97316'
   return '#ef4444'
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`
 }
 
 </script>
@@ -438,7 +393,7 @@ function formatBytes(bytes: number): string {
             <span class="score-label">/ 100</span>
           </div>
           <div class="score-info">
-            <div class="score-status">{{ selectedResult.status }} • {{ selectedResult.loadTime }}ms • {{ formatBytes(selectedResult.size) }}</div>
+            <div class="score-status">{{ selectedResult.status }} • {{ selectedResult.loadTime }}ms • {{ formatSize(selectedResult.size) }}</div>
             <div v-if="selectedResult.issues.length" class="issues-count">
               {{ selectedResult.issues.length }} issue{{ selectedResult.issues.length !== 1 ? 's' : '' }} found
             </div>

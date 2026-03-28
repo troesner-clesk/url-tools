@@ -1,14 +1,7 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import { extractLinks, getRedirectChain, formatRedirectChain, normalizeUrl } from '../utils/link-analyzer'
 import { isAllowedUrl } from '../utils/url-validator'
-import { sanitizeHeaders } from '../utils/sanitize-headers'
-
-interface RequestSettings {
-    timeout: number      // seconds
-    retries: number      // 0-3
-    proxy?: string       // optional: http://host:port
-    headers?: Record<string, string>  // custom headers
-}
+import { fetchWithRetry, type RequestSettings } from '../utils/fetch-with-retry'
 
 interface ScrapeLinksRequest {
     urls: string[]
@@ -38,47 +31,6 @@ interface LinkResult {
 
 function sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms))
-}
-
-// Fetch with retry logic
-async function fetchWithRetry(
-    url: string,
-    settings: RequestSettings
-): Promise<{ response: Response; retryCount: number }> {
-    const { timeout, retries, headers } = settings
-    let lastError: Error | null = null
-
-    for (let attempt = 0; attempt <= retries; attempt++) {
-        try {
-            const controller = new AbortController()
-            const timeoutId = setTimeout(() => controller.abort(), timeout * 1000)
-
-            const response = await fetch(url, {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (compatible; URLTools/1.0)',
-                    ...headers
-                },
-                signal: controller.signal
-            })
-            clearTimeout(timeoutId)
-
-            if (response.status >= 500 && attempt < retries) {
-                lastError = new Error(`Server error: ${response.status}`)
-                await sleep(1000 * (attempt + 1))
-                continue
-            }
-
-            return { response, retryCount: attempt }
-        } catch (error) {
-            lastError = error instanceof Error ? error : new Error('Unknown error')
-            if (attempt < retries) {
-                await sleep(1000 * (attempt + 1))
-                continue
-            }
-        }
-    }
-
-    throw lastError
 }
 
 export default defineEventHandler(async (event) => {
@@ -114,7 +66,7 @@ export default defineEventHandler(async (event) => {
         timeout: Math.min(Math.max(body.settings?.timeout ?? 30, 1), 120),
         retries: Math.min(Math.max(body.settings?.retries ?? 1, 0), 5),
         proxy: body.settings?.proxy,
-        headers: sanitizeHeaders(body.settings?.headers)
+        headers: body.settings?.headers
     }
 
     const maxUrls = Math.min(Math.max(body.maxUrls || 100, 1), 10000)

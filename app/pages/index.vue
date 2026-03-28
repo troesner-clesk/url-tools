@@ -43,14 +43,11 @@ interface LinkResult {
   error?: string
 }
 
-interface LogEntry {
-  timestamp: string
-  message: string
-  type: 'info' | 'success' | 'error' | 'progress'
-}
-
 // State
 const urlInput = ref('')
+const { logs, addLog, logContainer } = useLogger()
+const { parsedUrls, hasValidUrls } = useUrlParser(urlInput)
+const { formatSize } = useFormatters()
 const mode = ref<'html' | 'links'>('html')
 const settings = ref<Settings>({
   recursive: false,
@@ -79,42 +76,11 @@ const htmlResults = ref<HtmlResult[]>([])
 const linkResults = ref<LinkResult[]>([])
 const savedFiles = ref<string[]>([])
 const error = ref<string | null>(null)
-const logs = ref<LogEntry[]>([])
 const currentUrl = ref<string | null>(null)
 const activeTab = ref<'scraper' | 'seo' | 'screenshots' | 'images'>('scraper')
 const showClearConfirm = ref(false)
 const isClearing = ref(false)
 const abortController = ref<AbortController | null>(null)
-
-// Log function
-function addLog(message: string, type: LogEntry['type'] = 'info') {
-  const now = new Date()
-  const timestamp = now.toLocaleTimeString('en-US')
-  logs.value.push({ timestamp, message, type })
-  // Keep max 100 log entries
-  if (logs.value.length > 100) {
-    logs.value.shift()
-  }
-}
-
-// Parse URLs
-function parseUrls(input: string): string[] {
-  return input
-    .split(/[\n,]+/)
-    .map(url => url.trim())
-    .filter(url => {
-      if (!url) return false
-      try {
-        new URL(url)
-        return true
-      } catch {
-        return false
-      }
-    })
-}
-
-const parsedUrls = computed(() => parseUrls(urlInput.value))
-const hasValidUrls = computed(() => parsedUrls.value.length > 0)
 
 // Start scraping
 async function startScraping() {
@@ -348,21 +314,6 @@ async function clearOutputFolder() {
 }
 
 
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`
-}
-
-// Auto-scroll Log
-const logContainer = ref<HTMLElement | null>(null)
-watch(logs, () => {
-  nextTick(() => {
-    if (logContainer.value) {
-      logContainer.value.scrollTop = logContainer.value.scrollHeight
-    }
-  })
-}, { deep: true })
 </script>
 
 <template>

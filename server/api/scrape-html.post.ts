@@ -1,14 +1,7 @@
 import { defineEventHandler, readBody } from 'h3'
 import * as cheerio from 'cheerio'
 import { filterAllowedUrls } from '../utils/url-validator'
-import { sanitizeHeaders } from '../utils/sanitize-headers'
-
-interface RequestSettings {
-    timeout: number      // seconds
-    retries: number      // 0-3
-    proxy?: string       // optional: http://host:port
-    headers?: Record<string, string>  // custom headers
-}
+import { fetchWithRetry, type RequestSettings } from '../utils/fetch-with-retry'
 
 interface ScrapeHtmlRequest {
     urls: string[]
@@ -24,56 +17,6 @@ interface ScrapeHtmlResult {
     html: string
     error?: string
     retryCount?: number
-}
-
-// Fetch with retry logic
-async function fetchWithRetry(
-    url: string,
-    settings: RequestSettings
-): Promise<{ response: Response; retryCount: number }> {
-    const { timeout, retries, proxy, headers } = settings
-    let lastError: Error | null = null
-
-    for (let attempt = 0; attempt <= retries; attempt++) {
-        try {
-            const controller = new AbortController()
-            const timeoutId = setTimeout(() => controller.abort(), timeout * 1000)
-
-            const fetchOptions: RequestInit = {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (compatible; URLTools/1.0)',
-                    ...headers
-                },
-                signal: controller.signal
-            }
-
-            // Proxy support (server-side only)
-            // Note: Native fetch doesn't support proxy directly,
-            // could use undici or node-fetch-with-proxy if needed
-
-            const response = await fetch(url, fetchOptions)
-            clearTimeout(timeoutId)
-
-            // Retry on 5xx errors
-            if (response.status >= 500 && attempt < retries) {
-                lastError = new Error(`Server error: ${response.status}`)
-                await new Promise(r => setTimeout(r, 1000 * (attempt + 1))) // Exponential backoff
-                continue
-            }
-
-            return { response, retryCount: attempt }
-        } catch (error) {
-            lastError = error instanceof Error ? error : new Error('Unknown error')
-
-            // Timeout or network error: retry
-            if (attempt < retries) {
-                await new Promise(r => setTimeout(r, 1000 * (attempt + 1)))
-                continue
-            }
-        }
-    }
-
-    throw lastError
 }
 
 export default defineEventHandler(async (event) => {
@@ -93,7 +36,7 @@ export default defineEventHandler(async (event) => {
         timeout: body.settings?.timeout ?? 30,
         retries: body.settings?.retries ?? 1,
         proxy: body.settings?.proxy,
-        headers: sanitizeHeaders(body.settings?.headers)
+        headers: body.settings?.headers
     }
 
     const results: ScrapeHtmlResult[] = []

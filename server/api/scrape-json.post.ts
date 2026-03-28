@@ -1,13 +1,7 @@
 import { defineEventHandler, readBody } from 'h3'
 import * as cheerio from 'cheerio'
 import { filterAllowedUrls } from '../utils/url-validator'
-import { sanitizeHeaders } from '../utils/sanitize-headers'
-
-interface RequestSettings {
-    timeout: number
-    retries: number
-    headers?: Record<string, string>
-}
+import { fetchWithRetry, type RequestSettings } from '../utils/fetch-with-retry'
 
 interface ScrapeJsonRequest {
     urls: string[]
@@ -54,47 +48,6 @@ interface ScrapeJsonResult {
     error?: string
 }
 
-// Fetch with retry logic
-async function fetchWithRetry(
-    url: string,
-    settings: RequestSettings
-): Promise<Response> {
-    const { timeout, retries, headers } = settings
-    let lastError: Error | null = null
-
-    for (let attempt = 0; attempt <= retries; attempt++) {
-        try {
-            const controller = new AbortController()
-            const timeoutId = setTimeout(() => controller.abort(), timeout * 1000)
-
-            const response = await fetch(url, {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (compatible; URLTools/1.0)',
-                    ...headers
-                },
-                signal: controller.signal
-            })
-            clearTimeout(timeoutId)
-
-            if (response.status >= 500 && attempt < retries) {
-                lastError = new Error(`Server error: ${response.status}`)
-                await new Promise(r => setTimeout(r, 1000 * (attempt + 1)))
-                continue
-            }
-
-            return response
-        } catch (error) {
-            lastError = error instanceof Error ? error : new Error('Unknown error')
-            if (attempt < retries) {
-                await new Promise(r => setTimeout(r, 1000 * (attempt + 1)))
-                continue
-            }
-        }
-    }
-
-    throw lastError
-}
-
 export default defineEventHandler(async (event) => {
     const body = await readBody<ScrapeJsonRequest>(event)
 
@@ -110,7 +63,7 @@ export default defineEventHandler(async (event) => {
     const settings: RequestSettings = {
         timeout: body.settings?.timeout ?? 30,
         retries: body.settings?.retries ?? 1,
-        headers: sanitizeHeaders(body.settings?.headers)
+        headers: body.settings?.headers
     }
 
     const results: ScrapeJsonResult[] = []
@@ -123,7 +76,7 @@ export default defineEventHandler(async (event) => {
         const batchResults = await Promise.all(
             batch.map(async (url): Promise<ScrapeJsonResult> => {
                 try {
-                    const response = await fetchWithRetry(url, settings)
+                    const { response } = await fetchWithRetry(url, settings)
 
                     const contentLength = parseInt(response.headers.get('content-length') || '0')
                     if (contentLength > 10 * 1024 * 1024) {

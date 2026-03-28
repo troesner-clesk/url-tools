@@ -1,12 +1,6 @@
 <script setup lang="ts">
 import { Camera, Loader, FileText, Image, Check, X } from 'lucide-vue-next'
 
-interface LogEntry {
-  timestamp: string
-  message: string
-  type: 'info' | 'success' | 'error' | 'progress'
-}
-
 interface ScreenshotResult {
   url: string
   success: boolean
@@ -27,6 +21,9 @@ interface ScreenshotResponse {
 }
 
 const urlInput = ref('')
+const { logs, addLog, logContainer } = useLogger()
+const { parsedUrls } = useUrlParser(urlInput)
+const { formatSize } = useFormatters()
 const format = ref<'png' | 'jpg' | 'pdf'>('png')
 const viewport = ref({ width: 1920, height: 1080 })
 const fullPage = ref(true)
@@ -38,27 +35,7 @@ const results = ref<ScreenshotResult[]>([])
 const selectedResult = ref<ScreenshotResult | null>(null)
 const outputDir = ref('')
 const error = ref<string | null>(null)
-const logs = ref<LogEntry[]>([])
-const logContainer = ref<HTMLElement | null>(null)
 const previewUrl = ref<string | null>(null)
-
-function addLog(message: string, type: LogEntry['type'] = 'info') {
-  const now = new Date()
-  const timestamp = now.toLocaleTimeString('en-US')
-  logs.value.push({ timestamp, message, type })
-  if (logs.value.length > 100) {
-    logs.value.shift()
-  }
-}
-
-// Auto-scroll Log
-watch(logs, () => {
-  nextTick(() => {
-    if (logContainer.value) {
-      logContainer.value.scrollTop = logContainer.value.scrollHeight
-    }
-  })
-}, { deep: true })
 
 const viewportPresets = [
   { label: 'Desktop (1920x1080)', width: 1920, height: 1080 },
@@ -67,20 +44,6 @@ const viewportPresets = [
   { label: 'Tablet (768x1024)', width: 768, height: 1024 },
   { label: 'Mobile (375x812)', width: 375, height: 812 }
 ]
-
-const parsedUrls = computed(() => {
-  return urlInput.value
-    .split(/[\n,]+/)
-    .map(u => u.trim())
-    .filter(u => {
-      try {
-        new URL(u)
-        return true
-      } catch {
-        return false
-      }
-    })
-})
 
 function stopScreenshots() {
   isCancelled.value = true
@@ -150,7 +113,7 @@ async function takeScreenshots() {
 
           if (result.success) {
             successCount++
-            addLog(`✓ ${url}: ${result.filename} (${formatBytes(result.size || 0)})`, 'success')
+            addLog(`✓ ${url}: ${result.filename} (${formatSize(result.size || 0)})`, 'success')
             // Auto-select first successful result
             if (!selectedResult.value) {
               selectResult(result)
@@ -213,12 +176,6 @@ const selectedPresetIndex = computed({
     }
   }
 })
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`
-}
 
 </script>
 
@@ -326,7 +283,7 @@ function formatBytes(bytes: number): string {
               <div class="result-info">
                 <div class="result-url">{{ result.url }}</div>
                 <div v-if="result.success" class="result-meta">
-                  {{ result.filename }} • {{ formatBytes(result.size || 0) }}
+                  {{ result.filename }} • {{ formatSize(result.size || 0) }}
                 </div>
                 <div v-else class="result-error">{{ result.error }}</div>
               </div>
@@ -348,7 +305,7 @@ function formatBytes(bytes: number): string {
           <div v-else class="detail-content">
             <div class="detail-header">
               <h3>{{ selectedResult.filename }}</h3>
-              <span class="detail-size">{{ formatBytes(selectedResult.size || 0) }}</span>
+              <span class="detail-size">{{ formatSize(selectedResult.size || 0) }}</span>
             </div>
             <div class="detail-url">{{ selectedResult.url }}</div>
 

@@ -4,13 +4,7 @@ import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 import Papa from 'papaparse'
 import { filterAllowedUrls, isAllowedUrl } from '../utils/url-validator'
-import { sanitizeHeaders } from '../utils/sanitize-headers'
-
-interface RequestSettings {
-    timeout: number
-    retries: number
-    headers?: Record<string, string>
-}
+import { fetchWithRetry, type RequestSettings } from '../utils/fetch-with-retry'
 
 interface SeoAuditRequest {
     urls: string[]  // Bulk mode: array of URLs
@@ -83,48 +77,6 @@ interface SeoAuditResult {
     issues: string[]
 
     error?: string
-}
-
-async function fetchWithRetry(
-    url: string,
-    settings: RequestSettings
-): Promise<{ response: Response; loadTime: number }> {
-    const { timeout, retries, headers } = settings
-    let lastError: Error | null = null
-
-    for (let attempt = 0; attempt <= retries; attempt++) {
-        try {
-            const startTime = Date.now()
-            const controller = new AbortController()
-            const timeoutId = setTimeout(() => controller.abort(), timeout * 1000)
-
-            const response = await fetch(url, {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (compatible; URLTools/1.0)',
-                    ...headers
-                },
-                signal: controller.signal
-            })
-            clearTimeout(timeoutId)
-            const loadTime = Date.now() - startTime
-
-            if (response.status >= 500 && attempt < retries) {
-                lastError = new Error(`Server error: ${response.status}`)
-                await new Promise(r => setTimeout(r, 1000 * (attempt + 1)))
-                continue
-            }
-
-            return { response, loadTime }
-        } catch (error) {
-            lastError = error instanceof Error ? error : new Error('Unknown error')
-            if (attempt < retries) {
-                await new Promise(r => setTimeout(r, 1000 * (attempt + 1)))
-                continue
-            }
-        }
-    }
-
-    throw lastError
 }
 
 async function checkLinkStatus(url: string): Promise<number> {
@@ -395,7 +347,7 @@ export default defineEventHandler(async (event) => {
     const settings: RequestSettings = {
         timeout: body.settings?.timeout ?? 30,
         retries: body.settings?.retries ?? 1,
-        headers: sanitizeHeaders(body.settings?.headers)
+        headers: body.settings?.headers
     }
 
     const results: SeoAuditResult[] = []
