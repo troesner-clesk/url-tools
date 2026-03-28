@@ -20,7 +20,7 @@ interface SaveResultsRequest {
     baseOutputDir?: string
 }
 
-function getTimestamp(): string {
+export function getTimestamp(): string {
     const now = new Date()
     return now.toISOString()
         .replace(/[:.]/g, '-')
@@ -28,7 +28,7 @@ function getTimestamp(): string {
         .slice(0, 19)
 }
 
-function sanitizeFilename(url: string): string {
+export function sanitizeFilename(url: string): string {
     try {
         const parsed = new URL(url)
         // Domain + path, without protocol

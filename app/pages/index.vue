@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Globe, Search, Camera, Image, FolderOpen, Loader, Pause, Play, Square, Trash2, Check, Hourglass } from 'lucide-vue-next'
+import { Globe, Search, Camera, Image, FolderOpen, Loader, Pause, Play, Square, Trash2, Check, Hourglass, Sun, Moon } from 'lucide-vue-next'
 interface RequestSettings {
   timeout: number
   retries: number
@@ -42,6 +42,10 @@ interface LinkResult {
   depth: number
   error?: string
 }
+
+// Theme
+const { theme, toggleTheme, initTheme } = useTheme()
+onMounted(() => initTheme())
 
 // State
 const urlInput = ref('')
@@ -348,6 +352,10 @@ async function clearOutputFolder() {
         <button class="tab tab-output" @click="openOutputFolder">
           <FolderOpen :size="14" /> Output
         </button>
+        <button class="tab tab-theme" @click="toggleTheme" :aria-label="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'">
+          <Sun v-if="theme === 'dark'" :size="14" />
+          <Moon v-else :size="14" />
+        </button>
       </nav>
     </header>
 
@@ -505,6 +513,45 @@ async function clearOutputFolder() {
 </template>
 
 <style>
+:root,
+[data-theme="dark"] {
+    --bg-primary: #0a0a0a;
+    --bg-secondary: #1a1a1a;
+    --bg-tertiary: #252525;
+    --text-primary: #e0e0e0;
+    --text-secondary: #888;
+    --text-muted: #666;
+    --border: #333;
+    --accent: #0066cc;
+    --accent-hover: #0077ee;
+    --success: #4ade80;
+    --success-bg: #1a3d1a;
+    --error: #f87171;
+    --error-bg: #4d1a1a;
+    --warning: #f97316;
+    --info: #38bdf8;
+    --info-bg: #1a1a3d;
+}
+
+[data-theme="light"] {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f5f5;
+    --bg-tertiary: #e8e8e8;
+    --text-primary: #1a1a1a;
+    --text-secondary: #555;
+    --text-muted: #888;
+    --border: #ddd;
+    --accent: #0066cc;
+    --accent-hover: #0055aa;
+    --success: #16a34a;
+    --success-bg: #dcfce7;
+    --error: #dc2626;
+    --error-bg: #fef2f2;
+    --warning: #ea580c;
+    --info: #0284c7;
+    --info-bg: #e0f2fe;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -513,8 +560,8 @@ async function clearOutputFolder() {
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #0a0a0a;
-  color: #e0e0e0;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   line-height: 1.5;
 }
 
@@ -526,13 +573,13 @@ body {
 
 header {
   padding: 16px 24px;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: center;
   position: sticky;
   top: 0;
-  background: #0a0a0a;
+  background: var(--bg-primary);
   z-index: 100;
 }
 
@@ -544,7 +591,7 @@ header h1 {
 header h1 .subtitle {
   font-size: 12px;
   font-weight: 400;
-  color: #666;
+  color: var(--text-muted);
   margin-left: 8px;
 }
 
@@ -562,18 +609,18 @@ header h1 .subtitle {
   background: transparent;
   border: none;
   border-radius: 4px;
-  color: #888;
+  color: var(--text-secondary);
   cursor: pointer;
   font-size: 13px;
 }
 
 .tab:hover {
-  background: #1a1a1a;
-  color: #fff;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .tab.active {
-  background: #0066cc;
+  background: var(--accent);
   color: #fff;
 }
 
@@ -594,12 +641,12 @@ main {
   display: block;
   height: calc(100vh - 60px);
   overflow-y: auto;
-  background: #0a0a0a;
+  background: var(--bg-primary);
 }
 
 .input-section {
   padding: 16px;
-  border-right: 1px solid #333;
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -610,17 +657,17 @@ main {
   display: block;
   margin-bottom: 6px;
   font-size: 13px;
-  color: #888;
+  color: var(--text-secondary);
 }
 
 .url-input textarea {
   width: 100%;
   height: 120px;
   padding: 12px;
-  background: #1a1a1a;
-  border: 1px solid #333;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
   border-radius: 4px;
-  color: #fff;
+  color: var(--text-primary);
   font-family: 'SF Mono', Monaco, monospace;
   font-size: 12px;
   resize: vertical;
@@ -628,13 +675,13 @@ main {
 
 .url-input textarea:focus {
   outline: none;
-  border-color: #0066cc;
+  border-color: var(--accent);
 }
 
 .url-count {
   margin-top: 4px;
   font-size: 12px;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .mode-selection {
@@ -657,7 +704,7 @@ main {
 .btn-primary {
   flex: 1;
   padding: 12px 24px;
-  background: #0066cc;
+  background: var(--accent);
   border: none;
   border-radius: 4px;
   color: #fff;
@@ -667,7 +714,7 @@ main {
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #0077ee;
+  background: var(--accent-hover);
 }
 
 .btn-primary:disabled {
@@ -677,15 +724,15 @@ main {
 
 .btn-secondary {
   padding: 12px 16px;
-  background: #333;
+  background: var(--border);
   border: none;
   border-radius: 4px;
-  color: #fff;
+  color: var(--text-primary);
   cursor: pointer;
 }
 
 .btn-secondary:hover {
-  background: #444;
+  background: var(--bg-tertiary);
 }
 
 .progress {
@@ -697,39 +744,39 @@ main {
 .progress-bar {
   flex: 1;
   height: 6px;
-  background: #333;
+  background: var(--border);
   border-radius: 3px;
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: #0066cc;
+  background: var(--accent);
   transition: width 0.3s ease;
 }
 
 .progress-text {
   font-size: 12px;
-  color: #888;
+  color: var(--text-secondary);
   min-width: 60px;
   text-align: right;
 }
 
 .current-url {
   padding: 8px 12px;
-  background: #1a1a3d;
+  background: var(--info-bg);
   border-radius: 4px;
   font-family: 'SF Mono', Monaco, monospace;
   font-size: 11px;
-  color: #818cf8;
+  color: var(--info);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .log-container {
-  background: #0a0a0a;
-  border: 1px solid #333;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
   border-radius: 4px;
   max-height: 200px;
   overflow-y: auto;
@@ -739,7 +786,7 @@ main {
 
 .log-entry {
   padding: 4px 8px;
-  border-bottom: 1px solid #1a1a1a;
+  border-bottom: 1px solid var(--bg-secondary);
   display: flex;
   gap: 8px;
 }
@@ -749,7 +796,7 @@ main {
 }
 
 .log-time {
-  color: #666;
+  color: var(--text-muted);
   flex-shrink: 0;
 }
 
@@ -757,17 +804,17 @@ main {
   word-break: break-all;
 }
 
-.log-info { color: #888; }
-.log-success { color: #4ade80; }
-.log-error { color: #f87171; }
-.log-progress { color: #38bdf8; }
+.log-info { color: var(--text-secondary); }
+.log-success { color: var(--success); }
+.log-error { color: var(--error); }
+.log-progress { color: var(--info); }
 
 .saved-files {
   padding: 12px;
-  background: #1a3d1a;
+  background: var(--success-bg);
   border-radius: 4px;
   font-size: 13px;
-  color: #4ade80;
+  color: var(--success);
 }
 
 .saved-header {
@@ -778,16 +825,16 @@ main {
 
 .btn-folder {
   padding: 4px 8px;
-  background: #2a5a2a;
+  background: var(--success-bg);
   border: none;
   border-radius: 3px;
-  color: #4ade80;
+  color: var(--success);
   cursor: pointer;
   font-size: 11px;
 }
 
 .btn-folder:hover {
-  background: #3a6a3a;
+  background: var(--bg-tertiary);
 }
 
 .saved-files ul {
@@ -799,9 +846,9 @@ main {
 
 .error {
   padding: 12px;
-  background: #4d1a1a;
+  background: var(--error-bg);
   border-radius: 4px;
-  color: #f87171;
+  color: var(--error);
   font-size: 13px;
 }
 
@@ -828,7 +875,7 @@ main {
   align-items: center;
   justify-content: center;
   height: calc(100vh - 60px);
-  background: #0a0a0a;
+  background: var(--bg-primary);
 }
 
 .placeholder {
@@ -839,16 +886,16 @@ main {
 .placeholder h2 {
   font-size: 24px;
   margin-bottom: 12px;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .placeholder p {
-  color: #888;
+  color: var(--text-secondary);
   margin-bottom: 8px;
 }
 
 .placeholder .hint {
-  color: #666;
+  color: var(--text-muted);
   font-size: 14px;
   margin-top: 16px;
 }
@@ -857,17 +904,17 @@ main {
   width: 100%;
   padding: 10px;
   background: transparent;
-  border: 1px dashed #444;
+  border: 1px dashed var(--border);
   border-radius: 4px;
-  color: #888;
+  color: var(--text-secondary);
   cursor: pointer;
   font-size: 13px;
 }
 
 .btn-clear-output:hover:not(:disabled) {
-  border-color: #f87171;
-  color: #f87171;
-  background: #4d1a1a33;
+  border-color: var(--error);
+  color: var(--error);
+  background: color-mix(in srgb, var(--error-bg) 30%, transparent);
 }
 
 .btn-clear-output:disabled {
@@ -889,8 +936,8 @@ main {
 }
 
 .modal {
-  background: #1a1a1a;
-  border: 1px solid #333;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 24px;
   max-width: 400px;
@@ -899,11 +946,11 @@ main {
 
 .modal h3 {
   margin-bottom: 12px;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .modal p {
-  color: #888;
+  color: var(--text-secondary);
   margin-bottom: 20px;
   font-size: 14px;
 }
@@ -920,5 +967,41 @@ main {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+    header {
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px 16px;
+    }
+
+    .tabs {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .tab {
+        flex: 1;
+        text-align: center;
+        min-width: 0;
+        padding: 8px 8px;
+        font-size: 12px;
+    }
+
+    .tab-output, .tab-theme {
+        flex: none;
+    }
+
+    main {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+
+    .input-section {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        max-height: 50vh;
+    }
 }
 </style>
