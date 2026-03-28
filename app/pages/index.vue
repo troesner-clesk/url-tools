@@ -1,5 +1,23 @@
 <script setup lang="ts">
-import { Globe, Search, Camera, Image, FolderOpen, Loader, Pause, Play, Square, Trash2, Check, Hourglass, Sun, Moon } from 'lucide-vue-next'
+import {
+  Camera,
+  Check,
+  FolderOpen,
+  Globe,
+  Hourglass,
+  Image,
+  Link2,
+  Loader,
+  Map,
+  Moon,
+  Pause,
+  Play,
+  Search,
+  Square,
+  Sun,
+  Trash2,
+} from 'lucide-vue-next'
+
 interface RequestSettings {
   timeout: number
   retries: number
@@ -69,8 +87,8 @@ const settings = ref<Settings>({
     retries: 1,
     proxy: '',
     headers: {},
-    parallelRequests: 5
-  }
+    parallelRequests: 5,
+  },
 })
 
 const isRunning = ref(false)
@@ -81,7 +99,9 @@ const linkResults = ref<LinkResult[]>([])
 const savedFiles = ref<string[]>([])
 const error = ref<string | null>(null)
 const currentUrl = ref<string | null>(null)
-const activeTab = ref<'scraper' | 'seo' | 'screenshots' | 'images'>('scraper')
+const activeTab = ref<
+  'scraper' | 'seo' | 'screenshots' | 'images' | 'sitemap' | 'broken-links'
+>('scraper')
 const showClearConfirm = ref(false)
 const isClearing = ref(false)
 const abortController = ref<AbortController | null>(null)
@@ -99,7 +119,10 @@ async function startScraping() {
   logs.value = []
   progress.value = { done: 0, total: parsedUrls.value.length }
 
-  addLog(`Starting ${mode.value === 'html' ? 'HTML' : 'Links'} scraping for ${parsedUrls.value.length} URL(s)`, 'info')
+  addLog(
+    `Starting ${mode.value === 'html' ? 'HTML' : 'Links'} scraping for ${parsedUrls.value.length} URL(s)`,
+    'info',
+  )
 
   try {
     if (mode.value === 'html') {
@@ -129,12 +152,15 @@ async function scrapeHtml() {
     const batch = urls.slice(i, i + batchSize)
     currentUrl.value = `Batch ${Math.floor(i / batchSize) + 1}: ${batch.length} URLs...`
 
-    addLog(`[${i + 1}-${Math.min(i + batchSize, urls.length)}/${urls.length}] Loading ${batch.length} URLs...`, 'progress')
+    addLog(
+      `[${i + 1}-${Math.min(i + batchSize, urls.length)}/${urls.length}] Loading ${batch.length} URLs...`,
+      'progress',
+    )
 
     try {
       const response = await $fetch('/api/scrape-html', {
         method: 'POST',
-        body: { urls: batch, cssSelector: settings.value.cssSelector }
+        body: { urls: batch, cssSelector: settings.value.cssSelector },
       })
 
       for (const result of response.results) {
@@ -142,7 +168,10 @@ async function scrapeHtml() {
         if (result.error) {
           addLog(`✗ ${result.url}: ${result.error}`, 'error')
         } else {
-          addLog(`✓ ${result.url}: ${result.status} (${formatSize(result.size)})`, 'success')
+          addLog(
+            `✓ ${result.url}: ${result.status} (${formatSize(result.size)})`,
+            'success',
+          )
         }
       }
     } catch (e) {
@@ -155,7 +184,7 @@ async function scrapeHtml() {
           contentType: 'error',
           size: 0,
           html: '',
-          error: e instanceof Error ? e.message : 'Error'
+          error: e instanceof Error ? e.message : 'Error',
         })
       }
     }
@@ -188,9 +217,9 @@ async function scrapeLinks() {
       urlFilter: settings.value.urlFilter,
       pathInclude: settings.value.pathInclude,
       pathExclude: settings.value.pathExclude,
-      settings: settings.value.requestSettings
+      settings: settings.value.requestSettings,
     }),
-    signal: controller.signal
+    signal: controller.signal,
   })
 
   if (!response.ok || !response.body) {
@@ -204,7 +233,7 @@ async function scrapeLinks() {
   try {
     while (true) {
       while (isPaused.value) {
-        await new Promise(resolve => setTimeout(resolve, 100))
+        await new Promise((resolve) => setTimeout(resolve, 100))
       }
 
       const { done, value } = await reader.read()
@@ -243,7 +272,10 @@ async function scrapeLinks() {
             case 'done':
               progress.value.done = parsed.totalLinks
               progress.value.total = parsed.totalLinks
-              addLog(`${parsed.totalLinks} links found (${parsed.visited} pages visited)`, 'success')
+              addLog(
+                `${parsed.totalLinks} links found (${parsed.visited} pages visited)`,
+                'success',
+              )
               break
             case 'error':
               addLog(parsed.message, 'error')
@@ -278,8 +310,8 @@ async function saveResults(results: unknown[]) {
     body: {
       results,
       format: settings.value.saveFormat,
-      mode: mode.value
-    }
+      mode: mode.value,
+    },
   })
 
   savedFiles.value = response.files
@@ -310,20 +342,21 @@ async function clearOutputFolder() {
     savedFiles.value = []
     addLog('Output folder cleared', 'success')
   } catch (e) {
-    addLog(`Failed to clear: ${e instanceof Error ? e.message : 'Error'}`, 'error')
+    addLog(
+      `Failed to clear: ${e instanceof Error ? e.message : 'Error'}`,
+      'error',
+    )
   } finally {
     isClearing.value = false
     showClearConfirm.value = false
   }
 }
-
-
 </script>
 
 <template>
   <div class="app">
     <header>
-      <h1><Globe :size="18" /> URL Tools <span class="subtitle">(Scraping, SEO, Screenshots, Images)</span></h1>
+      <h1><Globe :size="18" /> URL Tools <span class="subtitle">(Scraping, SEO, Screenshots, Images, Links)</span></h1>
       <nav class="tabs">
         <button
           :class="['tab', { active: activeTab === 'scraper' }]"
@@ -348,6 +381,18 @@ async function clearOutputFolder() {
           @click="activeTab = 'images'"
         >
           <Image :size="14" /> Images
+        </button>
+        <button
+          :class="['tab', { active: activeTab === 'sitemap' }]"
+          @click="activeTab = 'sitemap'"
+        >
+          <Map :size="14" /> Sitemap
+        </button>
+        <button
+          :class="['tab', { active: activeTab === 'broken-links' }]"
+          @click="activeTab = 'broken-links'"
+        >
+          <Link2 :size="14" /> Link Checker
         </button>
         <button class="tab tab-output" @click="openOutputFolder">
           <FolderOpen :size="14" /> Output
@@ -507,6 +552,17 @@ async function clearOutputFolder() {
     <!-- Image Scraper Tab -->
     <main v-else-if="activeTab === 'images'" class="full-page">
       <ImageScraper />
+    </main>
+
+    <!-- Broken Link Checker Tab -->
+    <!-- Sitemap Parser Tab -->
+    <main v-else-if="activeTab === 'sitemap'" class="full-page">
+      <SitemapParser />
+    </main>
+
+    <!-- Broken Link Checker Tab -->
+    <main v-else-if="activeTab === 'broken-links'" class="full-page">
+      <BrokenLinkChecker />
     </main>
 
   </div>

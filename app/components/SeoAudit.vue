@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Search, Loader, Check, X, RotateCw } from 'lucide-vue-next'
+import { Check, Loader, RotateCw, Search, X } from 'lucide-vue-next'
 
 interface SeoAuditResult {
   url: string
@@ -17,7 +17,13 @@ interface SeoAuditResult {
   totalImages: number
   internalLinks: number
   externalLinks: number
-  brokenLinks: { href: string; text: string; status: number; isInternal: boolean; isBroken: boolean }[]
+  brokenLinks: {
+    href: string
+    text: string
+    status: number
+    isInternal: boolean
+    isBroken: boolean
+  }[]
   hasViewport: boolean
   hasCharset: boolean
   hasFavicon: boolean
@@ -74,7 +80,11 @@ onMounted(() => {
         history.value = parsed.filter((entry: unknown) => {
           if (!entry || typeof entry !== 'object') return false
           const e = entry as Record<string, unknown>
-          return typeof e.id === 'string' && Array.isArray(e.urls) && typeof e.avgScore === 'number'
+          return (
+            typeof e.id === 'string' &&
+            Array.isArray(e.urls) &&
+            typeof e.avgScore === 'number'
+          )
         })
       }
     } catch {}
@@ -83,18 +93,28 @@ onMounted(() => {
 
 // Save history to localStorage
 function saveHistory() {
-  localStorage.setItem('seo-audit-history', JSON.stringify(history.value.slice(0, 20)))
+  localStorage.setItem(
+    'seo-audit-history',
+    JSON.stringify(history.value.slice(0, 20)),
+  )
 }
 
 // Add entry to history
-function addToHistory(urls: string[], avgScore: number, checkLinksEnabled: boolean) {
+function addToHistory(
+  urls: string[],
+  avgScore: number,
+  checkLinksEnabled: boolean,
+) {
   const entry: HistoryEntry = {
     id: Date.now().toString(),
     urls,
-    timestamp: new Date().toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' }),
+    timestamp: new Date().toLocaleString('en-US', {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    }),
     avgScore,
     urlCount: urls.length,
-    checkLinks: checkLinksEnabled
+    checkLinks: checkLinksEnabled,
   }
   history.value.unshift(entry)
   if (history.value.length > 20) {
@@ -125,7 +145,7 @@ function stopAudit() {
 
 // Delete from history
 function deleteFromHistory(id: string) {
-  history.value = history.value.filter(h => h.id !== id)
+  history.value = history.value.filter((h) => h.id !== id)
   saveHistory()
 }
 
@@ -164,14 +184,17 @@ async function runAudit() {
       const url = parsedUrls.value[i]
       addLog(`[${i + 1}/${urlCount}] Analyzing ${url}...`, 'progress')
 
-      const response = await $fetch<SeoAuditResult | BulkResponse>('/api/seo-audit', {
-        method: 'POST',
-        body: {
-          urls: [url],
-          checkLinks: checkLinks.value,
-          saveResults: false
-        }
-      })
+      const response = await $fetch<SeoAuditResult | BulkResponse>(
+        '/api/seo-audit',
+        {
+          method: 'POST',
+          body: {
+            urls: [url],
+            checkLinks: checkLinks.value,
+            saveResults: false,
+          },
+        },
+      )
 
       const result = 'results' in response ? response.results[0] : response
       if (!result) continue
@@ -181,20 +204,27 @@ async function runAudit() {
       if (result.error) {
         addLog(`✗ ${url}: ${result.error}`, 'error')
       } else {
-        addLog(`✓ ${url}: Score ${result.score}/100 (${result.loadTime}ms)`, result.score >= 70 ? 'success' : 'error')
+        addLog(
+          `✓ ${url}: Score ${result.score}/100 (${result.loadTime}ms)`,
+          result.score >= 70 ? 'success' : 'error',
+        )
       }
     }
 
-    const successResults = results.value.filter(r => !r.error)
-    const avgScore = successResults.length > 0
-      ? Math.round(successResults.reduce((sum, r) => sum + r.score, 0) / successResults.length)
-      : 0
+    const successResults = results.value.filter((r) => !r.error)
+    const avgScore =
+      successResults.length > 0
+        ? Math.round(
+            successResults.reduce((sum, r) => sum + r.score, 0) /
+              successResults.length,
+          )
+        : 0
 
     stats.value = {
       total: results.value.length,
       success: successResults.length,
-      failed: results.value.filter(r => r.error).length,
-      avgScore
+      failed: results.value.filter((r) => r.error).length,
+      avgScore,
     }
 
     // Add to history
@@ -203,14 +233,17 @@ async function runAudit() {
     if (saveResults.value && results.value.length > 0) {
       addLog('Saving results...', 'info')
       try {
-        const saveResponse = await $fetch<{ files: string[] }>('/api/save-results', {
-          method: 'POST',
-          body: {
-            results: results.value,
-            format: 'both',
-            mode: 'seo'
-          }
-        })
+        const saveResponse = await $fetch<{ files: string[] }>(
+          '/api/save-results',
+          {
+            method: 'POST',
+            body: {
+              results: results.value,
+              format: 'both',
+              mode: 'seo',
+            },
+          },
+        )
         savedFiles.value = saveResponse.files || []
         if (savedFiles.value.length > 0) {
           addLog(`${savedFiles.value.length} file(s) saved`, 'success')
@@ -226,7 +259,6 @@ async function runAudit() {
     if (results.value.length > 0 && results.value[0]) {
       selectedResult.value = results.value[0]
     }
-
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Error during audit'
     error.value = msg
@@ -246,7 +278,6 @@ function getScoreColor(score: number): string {
   if (score >= 40) return '#f97316'
   return '#ef4444'
 }
-
 </script>
 
 <template>

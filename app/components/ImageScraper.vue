@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Image, Loader, AlertTriangle, Check } from 'lucide-vue-next'
+import { AlertTriangle, Check, Image, Loader } from 'lucide-vue-next'
 
 interface LogEntry {
   timestamp: string
@@ -65,19 +65,23 @@ function addLog(message: string, type: LogEntry['type'] = 'info') {
   }
 }
 
-watch(logs, () => {
-  nextTick(() => {
-    if (logContainer.value) {
-      logContainer.value.scrollTop = logContainer.value.scrollHeight
-    }
-  })
-}, { deep: true })
+watch(
+  logs,
+  () => {
+    nextTick(() => {
+      if (logContainer.value) {
+        logContainer.value.scrollTop = logContainer.value.scrollHeight
+      }
+    })
+  },
+  { deep: true },
+)
 
 const parsedUrls = computed(() => {
   return urlInput.value
     .split(/[\n,]+/)
-    .map(u => u.trim())
-    .filter(u => {
+    .map((u) => u.trim())
+    .filter((u) => {
       try {
         new URL(u)
         return true
@@ -136,10 +140,13 @@ async function scrapeImages() {
             download: download.value,
             minWidth: minWidth.value > 0 ? minWidth.value : undefined,
             minHeight: minHeight.value > 0 ? minHeight.value : undefined,
-            formats: selectedFormats.value.length > 0 ? selectedFormats.value : undefined,
+            formats:
+              selectedFormats.value.length > 0
+                ? selectedFormats.value
+                : undefined,
             outputDir: currentOutputDir || undefined, // Reuse same folder for all URLs
-            subfolderPerUrl: subfolderPerUrl.value
-          }
+            subfolderPerUrl: subfolderPerUrl.value,
+          },
         })
 
         // Store the output dir from first response to reuse for subsequent URLs
@@ -154,8 +161,13 @@ async function scrapeImages() {
           if (result.error) {
             addLog(`✗ ${url}: ${result.error}`, 'error')
           } else {
-            const downloadInfo = download.value ? `, ${result.downloaded} downloaded` : ''
-            addLog(`✓ ${url}: ${result.total} images found${downloadInfo}`, 'success')
+            const downloadInfo = download.value
+              ? `, ${result.downloaded} downloaded`
+              : ''
+            addLog(
+              `✓ ${url}: ${result.total} images found${downloadInfo}`,
+              'success',
+            )
 
             // Auto-select first page
             if (selectedPageIndex.value === null) {
@@ -171,7 +183,7 @@ async function scrapeImages() {
           images: [],
           total: 0,
           downloaded: 0,
-          error: errMsg
+          error: errMsg,
         })
       }
     }
@@ -180,7 +192,7 @@ async function scrapeImages() {
     stats.value = {
       pages: results.value.length,
       totalImages: results.value.reduce((sum, r) => sum + r.total, 0),
-      downloaded: results.value.reduce((sum, r) => sum + r.downloaded, 0)
+      downloaded: results.value.reduce((sum, r) => sum + r.downloaded, 0),
     }
 
     if (!isCancelled.value) {
@@ -216,7 +228,7 @@ async function selectImage(image: ImageResult) {
   if (image.localPath) {
     try {
       const response = await $fetch<{ content: string }>('/api/read-file', {
-        query: { path: image.localPath, base64: true }
+        query: { path: image.localPath, base64: true },
       })
       if (response.content) {
         const ext = image.filename?.split('.').pop()?.toLowerCase() || 'jpg'
@@ -226,7 +238,7 @@ async function selectImage(image: ImageResult) {
           png: 'image/png',
           gif: 'image/gif',
           webp: 'image/webp',
-          svg: 'image/svg+xml'
+          svg: 'image/svg+xml',
         }
         const mimeType = mimeTypes[ext] || 'image/jpeg'
         previewUrl.value = `data:${mimeType};base64,${response.content}`

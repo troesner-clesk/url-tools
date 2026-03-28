@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { FolderOpen, ChevronUp, ChevronDown } from 'lucide-vue-next'
+import { ChevronDown, ChevronUp, FolderOpen } from 'lucide-vue-next'
 
 interface OutputFile {
   name: string
@@ -14,7 +14,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  toolType: 'all'
+  toolType: 'all',
 })
 
 const isOpen = ref(false)
@@ -26,10 +26,14 @@ async function loadFolders() {
 
   isLoading.value = true
   try {
-    const response = await $fetch<{ files: OutputFile[] }>('/api/get-output-dir')
+    const response = await $fetch<{ files: OutputFile[] }>(
+      '/api/get-output-dir',
+    )
 
     // Filter to only folders
-    let folderList = response.files.filter(f => f.type === 'folder' && !f.name.includes('/'))
+    let folderList = response.files.filter(
+      (f) => f.type === 'folder' && !f.name.includes('/'),
+    )
 
     // Filter by tool type if specified
     if (props.toolType !== 'all') {
@@ -38,18 +42,20 @@ async function loadFolders() {
         seo: ['seo_', 'seo-audit'],
         html: ['html_', 'scrape_html'],
         links: ['links_', 'scrape_links'],
-        json: ['json_', 'scrape_json']
+        json: ['json_', 'scrape_json'],
       }
       const patterns = prefixes[props.toolType] || []
       if (patterns.length > 0) {
-        folderList = folderList.filter(f =>
-          patterns.some(p => f.name.toLowerCase().includes(p))
+        folderList = folderList.filter((f) =>
+          patterns.some((p) => f.name.toLowerCase().includes(p)),
         )
       }
     }
 
     // Sort by date descending
-    folderList.sort((a, b) => new Date(b.modified).getTime() - new Date(a.modified).getTime())
+    folderList.sort(
+      (a, b) => new Date(b.modified).getTime() - new Date(a.modified).getTime(),
+    )
 
     // Take top 10
     folders.value = folderList.slice(0, 10)
@@ -76,7 +82,9 @@ async function openFolder(path: string) {
 
 async function openOutputDir() {
   try {
-    const outputDir = (await $fetch<{ outputDir: string }>('/api/get-output-dir')).outputDir
+    const outputDir = (
+      await $fetch<{ outputDir: string }>('/api/get-output-dir')
+    ).outputDir
     await $fetch('/api/open-folder', { query: { path: outputDir } })
     isOpen.value = false
   } catch {}
@@ -88,7 +96,7 @@ function formatDate(dateStr: string): string {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   })
 }
 

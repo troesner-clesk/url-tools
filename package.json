@@ -9,7 +9,10 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "lint": "biome check .",
+    "lint:fix": "biome check --fix .",
+    "format": "biome format --fix ."
   },
   "dependencies": {
     "cheerio": "^1.1.2",
@@ -21,6 +24,7 @@
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.9",
     "@types/node": "^25.0.9",
     "@types/papaparse": "^5.5.2",
     "vitest": "^4.1.1"

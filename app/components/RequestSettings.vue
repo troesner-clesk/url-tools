@@ -15,8 +15,8 @@ const settings = defineModel<RequestSettings>('settings', {
     retries: 1,
     proxy: '',
     headers: {},
-    parallelRequests: 5
-  })
+    parallelRequests: 5,
+  }),
 })
 
 const showAdvanced = ref(false)

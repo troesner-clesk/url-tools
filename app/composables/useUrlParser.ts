@@ -2,8 +2,8 @@ export function useUrlParser(input: Ref<string>) {
   function parseUrls(text: string): string[] {
     return text
       .split(/[\n,]+/)
-      .map(url => url.trim())
-      .filter(url => {
+      .map((url) => url.trim())
+      .filter((url) => {
         if (!url) return false
         try {
           new URL(url)

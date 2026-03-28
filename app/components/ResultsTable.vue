@@ -37,12 +37,18 @@ const showCopiedFeedback = ref(false)
 
 // Select all toggle
 const allSelected = computed(() => {
-  const total = props.mode === 'html' ? props.htmlResults?.length : props.linkResults?.length
+  const total =
+    props.mode === 'html'
+      ? props.htmlResults?.length
+      : props.linkResults?.length
   return total && total > 0 && selectedRows.value.size === total
 })
 
 function toggleSelectAll() {
-  const total = props.mode === 'html' ? props.htmlResults?.length : props.linkResults?.length
+  const total =
+    props.mode === 'html'
+      ? props.htmlResults?.length
+      : props.linkResults?.length
   if (!total) return
 
   if (allSelected.value) {
@@ -75,30 +81,53 @@ function copySelectedRows() {
     for (const idx of Array.from(selectedRows.value).sort((a, b) => a - b)) {
       const r = props.htmlResults[idx]
       if (r) {
-        rows.push([r.url, String(r.status), r.contentType, formatSize(r.size)].join('\t'))
+        rows.push(
+          [r.url, String(r.status), r.contentType, formatSize(r.size)].join(
+            '\t',
+          ),
+        )
       }
     }
   } else if (props.mode === 'links' && props.linkResults) {
     // Header
-    rows.push(['Source', 'Target', 'Status', 'Redirects', 'Type', 'Anchor', 'Rel'].join('\t'))
+    rows.push(
+      ['Source', 'Target', 'Status', 'Redirects', 'Type', 'Anchor', 'Rel'].join(
+        '\t',
+      ),
+    )
     // Data
     for (const idx of Array.from(selectedRows.value).sort((a, b) => a - b)) {
       const r = props.linkResults[idx]
       if (r) {
-        rows.push([r.sourceUrl, r.targetUrl, String(r.status), r.redirectChain || '', r.type, r.anchorText || '', r.rel || ''].join('\t'))
+        rows.push(
+          [
+            r.sourceUrl,
+            r.targetUrl,
+            String(r.status),
+            r.redirectChain || '',
+            r.type,
+            r.anchorText || '',
+            r.rel || '',
+          ].join('\t'),
+        )
       }
     }
   }
 
   navigator.clipboard.writeText(rows.join('\n'))
   showCopiedFeedback.value = true
-  setTimeout(() => { showCopiedFeedback.value = false }, 1500)
+  setTimeout(() => {
+    showCopiedFeedback.value = false
+  }, 1500)
 }
 
 // Clear selection when results change
-watch(() => [props.htmlResults, props.linkResults], () => {
-  selectedRows.value.clear()
-})
+watch(
+  () => [props.htmlResults, props.linkResults],
+  () => {
+    selectedRows.value.clear()
+  },
+)
 
 function getStatusClass(status: number): string {
   if (status >= 200 && status < 300) return 'status-ok'
@@ -122,20 +151,42 @@ function copyColumn(columnName: string) {
 
   if (props.mode === 'html' && props.htmlResults) {
     switch (columnName) {
-      case 'url': values = props.htmlResults.map(r => r.url); break
-      case 'status': values = props.htmlResults.map(r => String(r.status)); break
-      case 'contentType': values = props.htmlResults.map(r => r.contentType); break
-      case 'size': values = props.htmlResults.map(r => formatSize(r.size)); break
+      case 'url':
+        values = props.htmlResults.map((r) => r.url)
+        break
+      case 'status':
+        values = props.htmlResults.map((r) => String(r.status))
+        break
+      case 'contentType':
+        values = props.htmlResults.map((r) => r.contentType)
+        break
+      case 'size':
+        values = props.htmlResults.map((r) => formatSize(r.size))
+        break
     }
   } else if (props.mode === 'links' && props.linkResults) {
     switch (columnName) {
-      case 'sourceUrl': values = props.linkResults.map(r => r.sourceUrl); break
-      case 'targetUrl': values = props.linkResults.map(r => r.targetUrl); break
-      case 'status': values = props.linkResults.map(r => String(r.status)); break
-      case 'redirectChain': values = props.linkResults.map(r => r.redirectChain || ''); break
-      case 'type': values = props.linkResults.map(r => r.type); break
-      case 'anchorText': values = props.linkResults.map(r => r.anchorText || ''); break
-      case 'rel': values = props.linkResults.map(r => r.rel || ''); break
+      case 'sourceUrl':
+        values = props.linkResults.map((r) => r.sourceUrl)
+        break
+      case 'targetUrl':
+        values = props.linkResults.map((r) => r.targetUrl)
+        break
+      case 'status':
+        values = props.linkResults.map((r) => String(r.status))
+        break
+      case 'redirectChain':
+        values = props.linkResults.map((r) => r.redirectChain || '')
+        break
+      case 'type':
+        values = props.linkResults.map((r) => r.type)
+        break
+      case 'anchorText':
+        values = props.linkResults.map((r) => r.anchorText || '')
+        break
+      case 'rel':
+        values = props.linkResults.map((r) => r.rel || '')
+        break
     }
   }
 
@@ -153,15 +204,30 @@ const linkStats = computed(() => {
   if (!props.linkResults?.length) return null
 
   const total = props.linkResults.length
-  const status200 = props.linkResults.filter(r => r.status >= 200 && r.status < 300).length
-  const status3xx = props.linkResults.filter(r => r.status >= 300 && r.status < 400).length
-  const status4xx = props.linkResults.filter(r => r.status >= 400 && r.status < 500).length
-  const status5xx = props.linkResults.filter(r => r.status >= 500).length
-  const errors = props.linkResults.filter(r => r.status === 0).length
-  const internal = props.linkResults.filter(r => r.type === 'internal').length
-  const external = props.linkResults.filter(r => r.type === 'external').length
+  const status200 = props.linkResults.filter(
+    (r) => r.status >= 200 && r.status < 300,
+  ).length
+  const status3xx = props.linkResults.filter(
+    (r) => r.status >= 300 && r.status < 400,
+  ).length
+  const status4xx = props.linkResults.filter(
+    (r) => r.status >= 400 && r.status < 500,
+  ).length
+  const status5xx = props.linkResults.filter((r) => r.status >= 500).length
+  const errors = props.linkResults.filter((r) => r.status === 0).length
+  const internal = props.linkResults.filter((r) => r.type === 'internal').length
+  const external = props.linkResults.filter((r) => r.type === 'external').length
 
-  return { total, status200, status3xx, status4xx, status5xx, errors, internal, external }
+  return {
+    total,
+    status200,
+    status3xx,
+    status4xx,
+    status5xx,
+    errors,
+    internal,
+    external,
+  }
 })
 </script>
 

@@ -1,172 +1,174 @@
+import { mkdir, writeFile } from 'node:fs/promises'
+import { join, resolve } from 'node:path'
 import { defineEventHandler, readBody } from 'h3'
-import puppeteer, { Browser, Page } from 'puppeteer'
-import { writeFile, mkdir } from 'fs/promises'
-import { resolve, join } from 'path'
+import puppeteer, { type Browser, type Page } from 'puppeteer'
 import { assertWithinOutput } from '../utils/path-guard'
-import { isAllowedUrl } from '../utils/url-validator'
 
 interface ScreenshotRequest {
-    urls: string[]
-    format: 'png' | 'jpg' | 'pdf'
-    viewport: {
-        width: number
-        height: number
-    }
-    fullPage: boolean
-    quality?: number // 0-100 for jpg
-    timeout?: number // seconds
-    outputDir?: string // Use existing output dir (for multi-URL jobs)
-    startIndex?: number // Starting index for filename numbering
+  urls: string[]
+  format: 'png' | 'jpg' | 'pdf'
+  viewport: {
+    width: number
+    height: number
+  }
+  fullPage: boolean
+  quality?: number // 0-100 for jpg
+  timeout?: number // seconds
+  outputDir?: string // Use existing output dir (for multi-URL jobs)
+  startIndex?: number // Starting index for filename numbering
 }
 
 interface ScreenshotResult {
-    url: string
-    success: boolean
-    filename?: string
-    size?: number
-    error?: string
+  url: string
+  success: boolean
+  filename?: string
+  size?: number
+  error?: string
 }
 
 let browser: Browser | null = null
 
 async function getBrowser(): Promise<Browser> {
-    if (!browser) {
-        browser = await puppeteer.launch({
-            headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
-        })
-    }
-    return browser
+  if (!browser) {
+    browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    })
+  }
+  return browser
 }
 
 async function takeScreenshot(
-    page: Page,
-    url: string,
-    options: ScreenshotRequest,
-    outputDir: string,
-    index: number
+  page: Page,
+  url: string,
+  options: ScreenshotRequest,
+  outputDir: string,
+  index: number,
 ): Promise<ScreenshotResult> {
-    try {
-        // Set viewport
-        await page.setViewport({
-            width: Math.min(Math.max(options.viewport.width || 1280, 100), 3840),
-            height: Math.min(Math.max(options.viewport.height || 800, 100), 4096)
-        })
+  try {
+    // Set viewport
+    await page.setViewport({
+      width: Math.min(Math.max(options.viewport.width || 1280, 100), 3840),
+      height: Math.min(Math.max(options.viewport.height || 800, 100), 4096),
+    })
 
-        // Load page
-        await page.goto(url, {
-            waitUntil: 'networkidle2',
-            timeout: (options.timeout || 30) * 1000
-        })
+    // Load page
+    await page.goto(url, {
+      waitUntil: 'networkidle2',
+      timeout: (options.timeout || 30) * 1000,
+    })
 
-        // Generate filename
-        const urlObj = new URL(url)
-        const safeName = urlObj.hostname.replace(/[^a-z0-9]/gi, '_')
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
-        const ext = options.format === 'pdf' ? 'pdf' : options.format
-        const filename = `${String(index + 1).padStart(3, '0')}_${safeName}.${ext}`
-        const filepath = join(outputDir, filename)
+    // Generate filename
+    const urlObj = new URL(url)
+    const safeName = urlObj.hostname.replace(/[^a-z0-9]/gi, '_')
+    const _timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+    const ext = options.format === 'pdf' ? 'pdf' : options.format
+    const filename = `${String(index + 1).padStart(3, '0')}_${safeName}.${ext}`
+    const filepath = join(outputDir, filename)
 
-        let fileSize = 0
+    let fileSize = 0
 
-        if (options.format === 'pdf') {
-            // Create PDF
-            const pdfBuffer = await page.pdf({
-                format: 'A4',
-                printBackground: true,
-                margin: { top: '1cm', right: '1cm', bottom: '1cm', left: '1cm' }
-            })
-            await writeFile(filepath, pdfBuffer)
-            fileSize = pdfBuffer.length
-        } else {
-            // Take screenshot
-            const screenshotOptions = {
-                path: filepath,
-                type: options.format === 'jpg' ? 'jpeg' as const : 'png' as const,
-                fullPage: options.fullPage,
-                quality: options.format === 'jpg' ? options.quality : undefined
-            }
+    if (options.format === 'pdf') {
+      // Create PDF
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        margin: { top: '1cm', right: '1cm', bottom: '1cm', left: '1cm' },
+      })
+      await writeFile(filepath, pdfBuffer)
+      fileSize = pdfBuffer.length
+    } else {
+      // Take screenshot
+      const screenshotOptions = {
+        path: filepath,
+        type: options.format === 'jpg' ? ('jpeg' as const) : ('png' as const),
+        fullPage: options.fullPage,
+        quality: options.format === 'jpg' ? options.quality : undefined,
+      }
 
-            const buffer = await page.screenshot(screenshotOptions)
-            fileSize = buffer.length
-        }
-
-        return {
-            url,
-            success: true,
-            filename,
-            size: fileSize
-        }
-    } catch (error) {
-        return {
-            url,
-            success: false,
-            error: error instanceof Error ? error.message : 'Unknown error'
-        }
-    }
-}
-
-export default defineEventHandler(async (event) => {
-    const body = await readBody<ScreenshotRequest>(event)
-
-    if (!body.urls || !Array.isArray(body.urls) || body.urls.length === 0) {
-        throw createError({
-            statusCode: 400,
-            message: 'urls array required'
-        })
-    }
-
-    body.urls = filterAllowedUrls(body.urls)
-
-    // Output folder - reuse existing or create new
-    const timestamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-')
-    const outputDir = assertWithinOutput(body.outputDir || resolve(process.cwd(), 'output', 'screenshots', timestamp))
-    await mkdir(outputDir, { recursive: true })
-
-    const results: ScreenshotResult[] = []
-
-    try {
-        const browserInstance = await getBrowser()
-        const page = await browserInstance.newPage()
-
-        const startIndex = body.startIndex || 0
-        for (let i = 0; i < body.urls.length; i++) {
-            const url = body.urls[i]
-            if (!url) continue
-
-            const result = await takeScreenshot(
-                page,
-                url,
-                body,
-                outputDir,
-                startIndex + i
-            )
-            results.push(result)
-        }
-
-        await page.close()
-    } catch (error) {
-        // On browser error: reset browser instance
-        if (browser) {
-            try {
-                await browser.close()
-            } catch { }
-            browser = null
-        }
-
-        throw createError({
-            statusCode: 500,
-            message: error instanceof Error ? error.message : 'Browser error'
-        })
+      const buffer = await page.screenshot(screenshotOptions)
+      fileSize = buffer.length
     }
 
     return {
-        results,
-        outputDir,
-        stats: {
-            total: body.urls.length,
-            success: results.filter(r => r.success).length,
-            failed: results.filter(r => !r.success).length
-        }
+      url,
+      success: true,
+      filename,
+      size: fileSize,
     }
+  } catch (error) {
+    return {
+      url,
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    }
+  }
+}
+
+export default defineEventHandler(async (event) => {
+  const body = await readBody<ScreenshotRequest>(event)
+
+  if (!body.urls || !Array.isArray(body.urls) || body.urls.length === 0) {
+    throw createError({
+      statusCode: 400,
+      message: 'urls array required',
+    })
+  }
+
+  body.urls = filterAllowedUrls(body.urls)
+
+  // Output folder - reuse existing or create new
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-')
+  const outputDir = assertWithinOutput(
+    body.outputDir ||
+      resolve(process.cwd(), 'output', 'screenshots', timestamp),
+  )
+  await mkdir(outputDir, { recursive: true })
+
+  const results: ScreenshotResult[] = []
+
+  try {
+    const browserInstance = await getBrowser()
+    const page = await browserInstance.newPage()
+
+    const startIndex = body.startIndex || 0
+    for (let i = 0; i < body.urls.length; i++) {
+      const url = body.urls[i]
+      if (!url) continue
+
+      const result = await takeScreenshot(
+        page,
+        url,
+        body,
+        outputDir,
+        startIndex + i,
+      )
+      results.push(result)
+    }
+
+    await page.close()
+  } catch (error) {
+    // On browser error: reset browser instance
+    if (browser) {
+      try {
+        await browser.close()
+      } catch {}
+      browser = null
+    }
+
+    throw createError({
+      statusCode: 500,
+      message: error instanceof Error ? error.message : 'Browser error',
+    })
+  }
+
+  return {
+    results,
+    outputDir,
+    stats: {
+      total: body.urls.length,
+      success: results.filter((r) => r.success).length,
+      failed: results.filter((r) => !r.success).length,
+    },
+  }
 })

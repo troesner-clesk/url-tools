@@ -44,9 +44,9 @@ const settings = defineModel<Settings>('settings', {
       retries: 1,
       proxy: '',
       headers: {},
-      parallelRequests: 5
-    }
-  })
+      parallelRequests: 5,
+    },
+  }),
 })
 
 const customSelector = ref('')

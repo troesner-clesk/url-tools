@@ -18,13 +18,17 @@ export function useLogger() {
   }
 
   // Auto-scroll log container
-  watch(logs, () => {
-    nextTick(() => {
-      if (logContainer.value) {
-        logContainer.value.scrollTop = logContainer.value.scrollHeight
-      }
-    })
-  }, { deep: true })
+  watch(
+    logs,
+    () => {
+      nextTick(() => {
+        if (logContainer.value) {
+          logContainer.value.scrollTop = logContainer.value.scrollHeight
+        }
+      })
+    },
+    { deep: true },
+  )
 
   return { logs, addLog, logContainer }
 }

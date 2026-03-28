@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Camera, Loader, FileText, Image, Check, X } from 'lucide-vue-next'
+import { Camera, Check, FileText, Image, Loader, X } from 'lucide-vue-next'
 
 interface ScreenshotResult {
   url: string
@@ -42,7 +42,7 @@ const viewportPresets = [
   { label: '4K (3840x2160)', width: 3840, height: 2160 },
   { label: 'Laptop (1366x768)', width: 1366, height: 768 },
   { label: 'Tablet (768x1024)', width: 768, height: 1024 },
-  { label: 'Mobile (375x812)', width: 375, height: 812 }
+  { label: 'Mobile (375x812)', width: 375, height: 812 },
 ]
 
 function stopScreenshots() {
@@ -64,7 +64,10 @@ async function takeScreenshots() {
 
   const urlCount = parsedUrls.value.length
   addLog(`Starting screenshot creation for ${urlCount} URL(s)`, 'info')
-  addLog(`Format: ${format.value.toUpperCase()}, Viewport: ${viewport.value.width}x${viewport.value.height}`, 'info')
+  addLog(
+    `Format: ${format.value.toUpperCase()}, Viewport: ${viewport.value.width}x${viewport.value.height}`,
+    'info',
+  )
   if (fullPage.value && format.value !== 'pdf') {
     addLog('Full-page mode enabled', 'info')
   }
@@ -94,8 +97,8 @@ async function takeScreenshots() {
             quality: format.value === 'jpg' ? quality.value : undefined,
             timeout: 30,
             outputDir: currentOutputDir || undefined, // Reuse same folder for all URLs
-            startIndex: i // Continue numbering from current index
-          }
+            startIndex: i, // Continue numbering from current index
+          },
         })
 
         // Store the output dir from first response to reuse for subsequent URLs
@@ -113,7 +116,10 @@ async function takeScreenshots() {
 
           if (result.success) {
             successCount++
-            addLog(`✓ ${url}: ${result.filename} (${formatSize(result.size || 0)})`, 'success')
+            addLog(
+              `✓ ${url}: ${result.filename} (${formatSize(result.size || 0)})`,
+              'success',
+            )
             // Auto-select first successful result
             if (!selectedResult.value) {
               selectResult(result)
@@ -130,12 +136,15 @@ async function takeScreenshots() {
         results.value.push({
           url,
           success: false,
-          error: errMsg
+          error: errMsg,
         } as ScreenshotResult)
       }
     }
 
-    addLog(`${successCount}/${urlCount} successful`, failCount > 0 ? 'error' : 'success')
+    addLog(
+      `${successCount}/${urlCount} successful`,
+      failCount > 0 ? 'error' : 'success',
+    )
     if (!isCancelled.value) {
       addLog('Done!', 'success')
     }
@@ -155,7 +164,7 @@ async function selectResult(result: ScreenshotResult) {
   if (result.success && result.path && format.value !== 'pdf') {
     try {
       const response = await $fetch<{ content: string }>('/api/read-file', {
-        query: { path: result.path, base64: true }
+        query: { path: result.path, base64: true },
       })
       if (response.content) {
         const mimeType = format.value === 'png' ? 'image/png' : 'image/jpeg'
@@ -168,15 +177,18 @@ async function selectResult(result: ScreenshotResult) {
 }
 
 const selectedPresetIndex = computed({
-  get: () => viewportPresets.findIndex(p => p.width === viewport.value.width && p.height === viewport.value.height),
+  get: () =>
+    viewportPresets.findIndex(
+      (p) =>
+        p.width === viewport.value.width && p.height === viewport.value.height,
+    ),
   set: (index: number) => {
     const preset = viewportPresets[index]
     if (preset) {
       viewport.value = { width: preset.width, height: preset.height }
     }
-  }
+  },
 })
-
 </script>
 
 <template>

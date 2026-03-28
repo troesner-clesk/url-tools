@@ -4,9 +4,7 @@ import { Download, Search } from 'lucide-vue-next'
 const modelValue = defineModel<string>({ required: true })
 const urlFilter = defineModel<string>('filter', { default: '' })
 
-const emit = defineEmits<{
-  (e: 'import', urls: string[]): void
-}>()
+const emit = defineEmits<(e: 'import', urls: string[]) => void>()
 
 const fileInput = ref<HTMLInputElement | null>(null)
 const showFilter = ref(false)
@@ -15,8 +13,8 @@ const showFilter = ref(false)
 const urlCount = computed(() => {
   const urls = modelValue.value
     .split(/[\n,]+/)
-    .map(u => u.trim())
-    .filter(u => u.length > 0 && isValidUrl(u))
+    .map((u) => u.trim())
+    .filter((u) => u.length > 0 && isValidUrl(u))
   return urls.length
 })
 
@@ -39,18 +37,18 @@ async function handleFileImport(event: Event) {
   if (!file) return
 
   const text = await file.text()
-  
+
   // Parse CSV or TXT
   let urls: string[] = []
-  
+
   if (file.name.endsWith('.csv')) {
     // CSV: take first column or find URL column
     const lines = text.split('\n')
     const header = lines[0]?.toLowerCase() || ''
-    const urlColIndex = header.split(',').findIndex(col => 
-      col.includes('url') || col.includes('link')
-    )
-    
+    const urlColIndex = header
+      .split(',')
+      .findIndex((col) => col.includes('url') || col.includes('link'))
+
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i]
       if (!line) continue
@@ -62,14 +60,18 @@ async function handleFileImport(event: Event) {
     }
   } else {
     // TXT: each line is a URL
-    urls = text.split('\n')
-      .map(l => l.trim())
-      .filter(l => l && isValidUrl(l))
+    urls = text
+      .split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l && isValidUrl(l))
   }
 
   if (urls.length > 0) {
     // Add to existing URLs
-    const existing = modelValue.value.split(/[\n,]+/).map(u => u.trim()).filter(Boolean)
+    const existing = modelValue.value
+      .split(/[\n,]+/)
+      .map((u) => u.trim())
+      .filter(Boolean)
     const combined = [...new Set([...existing, ...urls])]
     modelValue.value = combined.join('\n')
   }
