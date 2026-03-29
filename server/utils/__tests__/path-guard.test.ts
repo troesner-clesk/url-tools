@@ -1,8 +1,6 @@
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { assertWithinOutput } from '../path-guard'
-
-const OUTPUT_ROOT = resolve(process.cwd(), 'output')
+import { OUTPUT_ROOT, assertWithinOutput } from '../path-guard'
 
 describe('assertWithinOutput', () => {
   it('allows paths within the output directory', () => {

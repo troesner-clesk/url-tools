@@ -2,7 +2,7 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { defineEventHandler, readBody } from 'h3'
 import Papa from 'papaparse'
-import { assertWithinOutput } from '../utils/path-guard'
+import { OUTPUT_ROOT, assertWithinOutput } from '../utils/path-guard'
 
 interface HtmlResult {
   url: string
@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
 
   // Save scraper results to output/scraper/
   const baseOutputDir = assertWithinOutput(
-    body.baseOutputDir || join(process.cwd(), 'output', 'scraper'),
+    body.baseOutputDir || join(OUTPUT_ROOT, 'scraper'),
   )
   const timestamp = getTimestamp()
   const baseFilename = `${timestamp}_${body.mode}`

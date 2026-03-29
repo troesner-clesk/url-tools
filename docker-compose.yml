@@ -8,4 +8,5 @@ services:
     environment:
       - HOST=0.0.0.0
       - PORT=3000
+      - OUTPUT_DIR=/app/output
     restart: unless-stopped

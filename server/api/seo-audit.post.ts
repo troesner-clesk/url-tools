@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import * as cheerio from 'cheerio'
 import { defineEventHandler, readBody } from 'h3'
 import Papa from 'papaparse'
+import { OUTPUT_ROOT } from '../utils/path-guard'
 import { fetchWithRetry, type RequestSettings } from '../utils/fetch-with-retry'
 import { filterAllowedUrls, isAllowedUrl } from '../utils/url-validator'
 
@@ -370,7 +371,7 @@ export default defineEventHandler(async (event) => {
   const savedFiles: string[] = []
   if (body.saveResults && results.length > 0) {
     const timestamp = getTimestamp()
-    const outputDir = join(process.cwd(), 'output', 'seo-audit')
+    const outputDir = join(OUTPUT_ROOT, 'seo-audit')
     await mkdir(outputDir, { recursive: true })
 
     // Save JSON

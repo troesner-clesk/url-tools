@@ -59,7 +59,13 @@ Then open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Output
 
-All data is saved locally in the `output/` directory:
+All data is saved locally in `~/Documents/url-tools` by default. Set `OUTPUT_DIR` to change the location:
+
+```bash
+OUTPUT_DIR=/my/custom/path npm run dev
+```
+
+Output structure:
 
 - `{timestamp}_html_files/` - Individual HTML files
 - `{timestamp}_html_meta.json` - Metadata for HTML scrapes

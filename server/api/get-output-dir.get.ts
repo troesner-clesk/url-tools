@@ -1,6 +1,7 @@
 import { readdir, stat } from 'node:fs/promises'
 import { extname, join } from 'node:path'
 import { defineEventHandler } from 'h3'
+import { OUTPUT_ROOT } from '../utils/path-guard'
 
 interface OutputFile {
   name: string
@@ -71,7 +72,7 @@ async function getFilesRecursive(
 }
 
 export default defineEventHandler(async () => {
-  const outputDir = join(process.cwd(), 'output')
+  const outputDir = OUTPUT_ROOT
 
   try {
     const files = await getFilesRecursive(outputDir, outputDir)

@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process'
 import { platform } from 'node:os'
 import { resolve } from 'node:path'
 import { defineEventHandler, getQuery } from 'h3'
+import { OUTPUT_ROOT } from '../utils/path-guard'
 
 function getOpenCommand(): string {
   switch (platform()) {
@@ -26,10 +27,9 @@ export default defineEventHandler(async (event) => {
   }
 
   // Resolve path and validate it's within the output directory
-  const outputDir = resolve(process.cwd(), 'output')
   const resolvedPath = resolve(inputPath)
 
-  if (!resolvedPath.startsWith(`${outputDir}/`) && resolvedPath !== outputDir) {
+  if (!resolvedPath.startsWith(`${OUTPUT_ROOT}/`) && resolvedPath !== OUTPUT_ROOT) {
     throw createError({
       statusCode: 403,
       message: 'Access denied: path must be within output directory',

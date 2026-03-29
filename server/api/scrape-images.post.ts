@@ -2,7 +2,7 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { extname, join } from 'node:path'
 import * as cheerio from 'cheerio'
 import { defineEventHandler, readBody } from 'h3'
-import { assertWithinOutput } from '../utils/path-guard'
+import { OUTPUT_ROOT, assertWithinOutput } from '../utils/path-guard'
 
 interface ImageResult {
   src: string
@@ -129,7 +129,7 @@ export default defineEventHandler(async (event) => {
   const results: ScrapeResult[] = []
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
   const outputDir = assertWithinOutput(
-    existingOutputDir || join(process.cwd(), 'output', 'images', timestamp),
+    existingOutputDir || join(OUTPUT_ROOT, 'images', timestamp),
   )
 
   // Create output directory if downloading

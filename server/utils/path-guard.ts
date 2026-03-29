@@ -1,6 +1,9 @@
-import { resolve } from 'node:path'
+import { homedir } from 'node:os'
+import { join, resolve } from 'node:path'
 
-const OUTPUT_ROOT = resolve(process.cwd(), 'output')
+export const OUTPUT_ROOT = resolve(
+  process.env.OUTPUT_DIR || join(homedir(), 'Documents', 'url-tools'),
+)
 
 // Checks if a path is within the output directory
 export function assertWithinOutput(path: string): string {

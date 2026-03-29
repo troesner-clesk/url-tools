@@ -1,9 +1,9 @@
 import { mkdir, rm } from 'node:fs/promises'
-import { join } from 'node:path'
 import { defineEventHandler } from 'h3'
+import { OUTPUT_ROOT } from '../utils/path-guard'
 
 export default defineEventHandler(async () => {
-  const outputDir = join(process.cwd(), 'output')
+  const outputDir = OUTPUT_ROOT
 
   try {
     // Delete the entire output directory

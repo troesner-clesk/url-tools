@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { defineEventHandler, getQuery } from 'h3'
+import { OUTPUT_ROOT } from '../utils/path-guard'
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
@@ -15,10 +16,9 @@ export default defineEventHandler(async (event) => {
   }
 
   // Resolve paths to prevent path traversal attacks
-  const outputDir = resolve(process.cwd(), 'output')
   const resolvedPath = resolve(filePath)
 
-  if (!resolvedPath.startsWith(`${outputDir}/`) && resolvedPath !== outputDir) {
+  if (!resolvedPath.startsWith(`${OUTPUT_ROOT}/`) && resolvedPath !== OUTPUT_ROOT) {
     throw createError({
       statusCode: 403,
       message: 'Access denied',

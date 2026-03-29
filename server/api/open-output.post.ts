@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process'
 import { platform } from 'node:os'
-import { resolve } from 'node:path'
 import { defineEventHandler } from 'h3'
+import { OUTPUT_ROOT } from '../utils/path-guard'
 
 function getOpenCommand(): string {
   switch (platform()) {
@@ -15,7 +15,6 @@ function getOpenCommand(): string {
 }
 
 export default defineEventHandler(async () => {
-  const outputDir = resolve(process.cwd(), 'output')
-  spawn(getOpenCommand(), [outputDir], { stdio: 'ignore' })
+  spawn(getOpenCommand(), [OUTPUT_ROOT], { stdio: 'ignore' })
   return { ok: true }
 })

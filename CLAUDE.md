@@ -41,7 +41,7 @@ The full documentation is located in `docs/`:
 
 - Language in code: English
 - Language in documentation (`docs/`): English
-- No database — results are stored as files in `output/`
+- No database — results are stored as files in `OUTPUT_DIR` (default: `~/Documents/url-tools`)
 - Always use security utils: `url-validator.ts`, `path-guard.ts`, `sanitize-headers.ts`
 - SSE for long-running operations (link scraping, link checking)
 - Composables in `app/composables/` for shared frontend logic
