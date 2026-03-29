@@ -82,7 +82,7 @@ Although there is no auth, there are multiple layers of security:
 | Protection | Implementation | File |
 |------------|---------------|------|
 | SSRF protection | Blocks localhost, private IPs, file:// | `server/utils/url-validator.ts` |
-| Path traversal | File access restricted to `output/` | `server/utils/path-guard.ts` |
+| Path traversal | File access restricted to output directory | `server/utils/path-guard.ts` |
 | Header injection | Blocks Host, Authorization, Cookie, etc. | `server/utils/sanitize-headers.ts` |
 | ReDoS protection | URL filter regex max. 200 characters | `server/api/scrape-links-stream.post.ts` |
 | Response limit | Max. 10 MB per fetch response | Individual API endpoints |
@@ -111,7 +111,7 @@ Although there is no auth, there are multiple layers of security:
 2. **Frontend** sends request to Nitro API (REST or SSE stream)
 3. **Server** fetches external URLs with retry logic and timeout
 4. **Results** are streamed to the frontend or returned as a batch
-5. **Auto-save** stores results as JSON/CSV/HTML in the `output/` folder
+5. **Auto-save** stores results as JSON/CSV/HTML in the output folder (default: `~/Documents/url-tools`, configurable via `OUTPUT_DIR`)
 
 ## Shared Services
 
@@ -131,7 +131,7 @@ Although there is no auth, there are multiple layers of security:
 | `fetchWithRetry` | HTTP fetch with configurable timeout and linear backoff (1s → 2s → 3s) |
 | `link-analyzer` | URL normalization, link extraction (HTML + sitemap), redirect chain analysis |
 | `url-validator` | SSRF protection: blocks localhost, private IPs (10.x, 192.168.x, 172.16-31.x) |
-| `path-guard` | Ensures file paths stay within `output/` |
+| `path-guard` | Ensures file paths stay within the output directory, exports `OUTPUT_ROOT` |
 | `sanitize-headers` | Removes dangerous HTTP headers (Host, Authorization, Cookie, X-Forwarded-*, Proxy-Authorization) |
 
 ## Further Documentation

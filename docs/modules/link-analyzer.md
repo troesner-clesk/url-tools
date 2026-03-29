@@ -44,7 +44,7 @@ Extract and analyze all links on a web page — including HTTP status, redirect 
 | Rate Limit | 2/s | 0.1-10 | Requests per second |
 | Include Paths | — | — | Comma-separated paths (e.g., `/de/,/blog/`) |
 | Exclude Paths | — | — | Paths to exclude |
-| URL Filter | — | max. 200 characters | Regex filter for URLs |
+| URL Filter | — | max. 200 characters | Regex filter for URLs (configured in UrlInput component) |
 | Export Format | CSV | JSON/CSV/both | Output format |
 
 ## Statistics Bar

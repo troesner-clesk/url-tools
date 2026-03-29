@@ -19,6 +19,6 @@ These components are used by multiple modules:
 | Component | Used by | Purpose |
 |-----------|---------|---------|
 | `UrlInput.vue` | All modules | URL input, import, filter |
-| `RequestSettings.vue` | HTML-Scraper, Link-Analyzer, SEO-Audit | Timeout, retries, proxy, headers |
+| `RequestSettings.vue` | HTML-Scraper, Link-Analyzer | Timeout, retries, proxy, headers |
 | `RecentJobsMenu.vue` | All modules | Access previous results |
 | `SitemapParser.vue` | Standalone | Extract sitemap URLs |

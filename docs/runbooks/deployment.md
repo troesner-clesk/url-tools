@@ -72,12 +72,33 @@ docker run -p 3000:3000 -v ./output:/app/output url-tools
 
 ### Environment Variables (Docker)
 
+Set via `docker-compose.yml`:
+
 | Variable | Value | Description |
 |----------|-------|-------------|
 | `HOST` | `0.0.0.0` | Listen on all interfaces |
 | `PORT` | `3000` | Server port |
+| `OUTPUT_DIR` | `/app/output` | Output directory path |
+
+Baked into the Docker image via `Dockerfile ENV`:
+
+| Variable | Value | Description |
+|----------|-------|-------------|
 | `PUPPETEER_SKIP_CHROMIUM_DOWNLOAD` | `true` | Use system Chromium |
 | `PUPPETEER_EXECUTABLE_PATH` | `/usr/bin/chromium` | Path to system Chromium |
+
+### Custom Output Directory
+
+By default, results are saved to `~/Documents/url-tools`. Override with `OUTPUT_DIR`:
+
+```bash
+# Custom output directory
+OUTPUT_DIR=/path/to/my/output npm run dev
+
+# Or export it
+export OUTPUT_DIR=/path/to/my/output
+npm run dev
+```
 
 ---
 
