@@ -1,10 +1,5 @@
 <script setup lang="ts">
-import {
-  AlertTriangle,
-  Check,
-  Link as LinkIcon,
-  Loader,
-} from 'lucide-vue-next'
+import { AlertTriangle, Check, Link as LinkIcon, Loader } from 'lucide-vue-next'
 
 interface BrokenLinkResult {
   sourceUrl: string
@@ -24,6 +19,14 @@ const { parsedUrls, hasValidUrls } = useUrlParser(urlInput)
 const recursive = ref(false)
 const maxDepth = ref(2)
 const sameDomainOnly = ref(true)
+const externalOnly = ref(false)
+
+watch(externalOnly, (val) => {
+  if (val) sameDomainOnly.value = false
+})
+watch(sameDomainOnly, (val) => {
+  if (val) externalOnly.value = false
+})
 
 const isRunning = ref(false)
 const results = ref<BrokenLinkResult[]>([])
@@ -84,6 +87,7 @@ async function startCheck() {
         recursive: recursive.value,
         maxDepth: maxDepth.value,
         sameDomainOnly: sameDomainOnly.value,
+        externalOnly: externalOnly.value,
       }),
       signal: controller.signal,
     })
@@ -192,8 +196,10 @@ async function exportBrokenLinks() {
 
 function truncateUrl(url: string, max = 60): string {
   if (url.length <= max) return url
-  return url.substring(0, max - 3) + '...'
+  return `${url.substring(0, max - 3)}...`
 }
+
+defineExpose({ isRunning })
 </script>
 
 <template>
@@ -235,6 +241,13 @@ function truncateUrl(url: string, max = 60): string {
         <label>
           <input type="checkbox" v-model="sameDomainOnly" :disabled="isRunning">
           Same domain only (crawling)
+        </label>
+      </div>
+
+      <div class="option checkbox">
+        <label>
+          <input type="checkbox" v-model="externalOnly" :disabled="isRunning">
+          External links only
         </label>
       </div>
 

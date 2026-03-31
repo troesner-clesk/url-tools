@@ -13,6 +13,7 @@ interface CheckLinksRequest {
   maxDepth?: number
   maxUrls?: number
   sameDomainOnly?: boolean
+  externalOnly?: boolean
   settings?: RequestSettings
 }
 
@@ -152,6 +153,9 @@ export default defineEventHandler(async (event) => {
 
           // SSRF protection for target URLs
           if (!isAllowedUrl(link.targetUrl)) continue
+
+          // Skip internal links if externalOnly is enabled
+          if (body.externalOnly && link.isInternal) continue
 
           await sleep(delayMs)
 
