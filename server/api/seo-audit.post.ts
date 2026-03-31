@@ -3,8 +3,8 @@ import { join } from 'node:path'
 import * as cheerio from 'cheerio'
 import { defineEventHandler, readBody } from 'h3'
 import Papa from 'papaparse'
-import { OUTPUT_ROOT } from '../utils/path-guard'
 import { fetchWithRetry, type RequestSettings } from '../utils/fetch-with-retry'
+import { OUTPUT_ROOT } from '../utils/path-guard'
 import { filterAllowedUrls, isAllowedUrl } from '../utils/url-validator'
 
 interface SeoAuditRequest {

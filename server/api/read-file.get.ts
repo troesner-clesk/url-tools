@@ -18,7 +18,10 @@ export default defineEventHandler(async (event) => {
   // Resolve paths to prevent path traversal attacks
   const resolvedPath = resolve(filePath)
 
-  if (!resolvedPath.startsWith(`${OUTPUT_ROOT}/`) && resolvedPath !== OUTPUT_ROOT) {
+  if (
+    !resolvedPath.startsWith(`${OUTPUT_ROOT}/`) &&
+    resolvedPath !== OUTPUT_ROOT
+  ) {
     throw createError({
       statusCode: 403,
       message: 'Access denied',

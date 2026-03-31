@@ -2,7 +2,7 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { extname, join } from 'node:path'
 import * as cheerio from 'cheerio'
 import { defineEventHandler, readBody } from 'h3'
-import { OUTPUT_ROOT, assertWithinOutput } from '../utils/path-guard'
+import { assertWithinOutput, OUTPUT_ROOT } from '../utils/path-guard'
 
 interface ImageResult {
   src: string

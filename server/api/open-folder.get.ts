@@ -29,7 +29,10 @@ export default defineEventHandler(async (event) => {
   // Resolve path and validate it's within the output directory
   const resolvedPath = resolve(inputPath)
 
-  if (!resolvedPath.startsWith(`${OUTPUT_ROOT}/`) && resolvedPath !== OUTPUT_ROOT) {
+  if (
+    !resolvedPath.startsWith(`${OUTPUT_ROOT}/`) &&
+    resolvedPath !== OUTPUT_ROOT
+  ) {
     throw createError({
       statusCode: 403,
       message: 'Access denied: path must be within output directory',

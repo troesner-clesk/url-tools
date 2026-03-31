@@ -2,7 +2,7 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { defineEventHandler, readBody } from 'h3'
 import Papa from 'papaparse'
-import { OUTPUT_ROOT, assertWithinOutput } from '../utils/path-guard'
+import { assertWithinOutput, OUTPUT_ROOT } from '../utils/path-guard'
 
 interface HtmlResult {
   url: string

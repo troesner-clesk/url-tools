@@ -2,7 +2,7 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { defineEventHandler, readBody } from 'h3'
 import puppeteer, { type Browser, type Page } from 'puppeteer'
-import { OUTPUT_ROOT, assertWithinOutput } from '../utils/path-guard'
+import { assertWithinOutput, OUTPUT_ROOT } from '../utils/path-guard'
 
 interface ScreenshotRequest {
   urls: string[]
@@ -120,8 +120,7 @@ export default defineEventHandler(async (event) => {
   // Output folder - reuse existing or create new
   const timestamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-')
   const outputDir = assertWithinOutput(
-    body.outputDir ||
-      join(OUTPUT_ROOT, 'screenshots', timestamp),
+    body.outputDir || join(OUTPUT_ROOT, 'screenshots', timestamp),
   )
   await mkdir(outputDir, { recursive: true })
 
