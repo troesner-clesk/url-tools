@@ -318,9 +318,11 @@ Broken link checking with Server-Sent Events.
   urls: string[]
   recursive?: boolean               // default: false
   maxDepth?: number                 // 1-5 (default: 1)
-  maxUrls?: number                  // 1-10,000 (default: 500)
+  maxUrls?: number                  // min 1 (default: 500)
   sameDomainOnly?: boolean
-  settings?: RequestSettings
+  externalOnly?: boolean
+  excludeDomains?: string[]         // e.g. ["*.wikipedia.org", "facebook.com"]
+  settings?: RequestSettings        // includes parallelRequests (1-20, default: 5)
 }
 ```
 

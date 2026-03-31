@@ -5,6 +5,7 @@ export interface RequestSettings {
   retries: number
   proxy?: string
   headers?: Record<string, string>
+  parallelRequests?: number
 }
 
 export interface FetchWithRetryResult {

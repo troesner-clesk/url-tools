@@ -29,10 +29,6 @@ interface BrokenLinkResult {
   error?: string
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
 function isExcludedDomain(
   url: string,
   patterns: string[],
@@ -94,7 +90,10 @@ export default defineEventHandler(async (event) => {
 
   const maxUrls = Math.max(body.maxUrls || 500, 1)
   const maxDepth = Math.min(Math.max(body.maxDepth || 1, 1), 5)
-  const delayMs = 200
+  const parallelRequests = Math.min(
+    Math.max(body.settings?.parallelRequests ?? 5, 1),
+    20,
+  )
 
   try {
     const results: BrokenLinkResult[] = []
@@ -165,49 +164,53 @@ export default defineEventHandler(async (event) => {
           type: 'success',
         })
 
-        for (const link of links) {
-          if (results.length >= maxUrls || isClosed) break
-
-          // Skip already checked target URLs
+        // Filter links to check
+        const linksToCheck = links.filter((link) => {
+          if (results.length >= maxUrls || isClosed) return false
           const linkKey = `${item.url}|${link.targetUrl}`
-          if (checkedLinks.has(linkKey)) continue
+          if (checkedLinks.has(linkKey)) return false
           checkedLinks.add(linkKey)
+          if (!isAllowedUrl(link.targetUrl)) return false
+          if (body.externalOnly && link.isInternal) return false
+          if (body.excludeDomains?.length && isExcludedDomain(link.targetUrl, body.excludeDomains)) return false
+          return true
+        })
 
-          // SSRF protection for target URLs
-          if (!isAllowedUrl(link.targetUrl)) continue
+        // Check links in parallel batches
+        for (let i = 0; i < linksToCheck.length && results.length < maxUrls && !isClosed; i += parallelRequests) {
+          const batch = linksToCheck.slice(i, i + parallelRequests)
 
-          // Skip internal links if externalOnly is enabled
-          if (body.externalOnly && link.isInternal) continue
+          const batchResults = await Promise.all(
+            batch.map(async (link): Promise<BrokenLinkResult> => {
+              const redirectInfo = await getRedirectChain(
+                link.targetUrl,
+                5,
+                settings.timeout * 1000,
+              )
 
-          // Skip excluded domains
-          if (body.excludeDomains?.length && isExcludedDomain(link.targetUrl, body.excludeDomains)) continue
+              const isBroken =
+                redirectInfo.finalStatus >= 400 || redirectInfo.finalStatus === 0
+              const statusText =
+                redirectInfo.error || httpStatusText(redirectInfo.finalStatus)
 
-          await sleep(delayMs)
-
-          const redirectInfo = await getRedirectChain(
-            link.targetUrl,
-            5,
-            settings.timeout * 1000,
+              return {
+                sourceUrl: item.url,
+                targetUrl: link.targetUrl,
+                status: redirectInfo.finalStatus,
+                statusText,
+                isBroken,
+                isInternal: link.isInternal,
+                anchorText: link.anchorText,
+                error: redirectInfo.error,
+              }
+            }),
           )
 
-          const isBroken =
-            redirectInfo.finalStatus >= 400 || redirectInfo.finalStatus === 0
-          const statusText =
-            redirectInfo.error || httpStatusText(redirectInfo.finalStatus)
-
-          const result: BrokenLinkResult = {
-            sourceUrl: item.url,
-            targetUrl: link.targetUrl,
-            status: redirectInfo.finalStatus,
-            statusText,
-            isBroken,
-            isInternal: link.isInternal,
-            anchorText: link.anchorText,
-            error: redirectInfo.error,
+          for (const result of batchResults) {
+            if (results.length >= maxUrls) break
+            results.push(result)
+            emit('result', result)
           }
-
-          results.push(result)
-          emit('result', result)
         }
 
         // Recursive crawling: add internal links to queue
