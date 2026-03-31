@@ -18,6 +18,12 @@ export function useTheme() {
 
   function initTheme() {
     if (import.meta.client) {
+      const stored = localStorage.getItem('theme')
+      if (stored === 'light' || stored === 'dark') {
+        theme.value = stored
+      } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+        theme.value = 'light'
+      }
       document.documentElement.setAttribute('data-theme', theme.value)
     }
   }
