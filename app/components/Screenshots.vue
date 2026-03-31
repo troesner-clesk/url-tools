@@ -211,7 +211,7 @@ defineExpose({ isRunning: isLoading })
       </div>
 
       <div class="option">
-        <label title="PNG (lossless), JPG (smaller file size), or PDF (A4 document)">Format <span class="help-icon">?</span></label>
+        <label>Format <span class="help-icon" data-tooltip="PNG (lossless), JPG (smaller file size), or PDF (A4 document)">?</span></label>
         <select v-model="format" :disabled="isLoading">
           <option value="png">PNG (lossless)</option>
           <option value="jpg">JPG (compressed)</option>
@@ -220,7 +220,7 @@ defineExpose({ isRunning: isLoading })
       </div>
 
       <div class="option">
-        <label title="Screen resolution to simulate — affects layout and responsive design">Viewport <span class="help-icon">?</span></label>
+        <label>Viewport <span class="help-icon" data-tooltip="Screen resolution to simulate — affects layout and responsive design">?</span></label>
         <select v-model="selectedPresetIndex" :disabled="isLoading">
           <option v-for="(preset, index) in viewportPresets" :key="preset.label" :value="index">
             {{ preset.label }}

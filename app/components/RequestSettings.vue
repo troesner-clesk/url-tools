@@ -40,7 +40,7 @@ function removeHeader(key: string) {
   <div class="request-settings">
     <div class="settings-row">
       <div class="setting-group">
-        <label title="Maximum seconds to wait for a response before aborting">Timeout (s) <span class="help-icon">?</span></label>
+        <label>Timeout (s) <span class="help-icon" data-tooltip="Maximum seconds to wait for a response before aborting">?</span></label>
         <input 
           type="number" 
           v-model.number="settings.timeout" 
@@ -50,7 +50,7 @@ function removeHeader(key: string) {
       </div>
 
       <div class="setting-group">
-        <label title="Number of retry attempts for failed or timed-out requests">Retries <span class="help-icon">?</span></label>
+        <label>Retries <span class="help-icon" data-tooltip="Number of retry attempts for failed or timed-out requests">?</span></label>
         <select v-model.number="settings.retries">
           <option :value="0">No retry</option>
           <option :value="1">Retry 1x</option>
@@ -60,7 +60,7 @@ function removeHeader(key: string) {
       </div>
 
       <div class="setting-group">
-        <label title="Number of concurrent requests (higher = faster, but may trigger rate limits)">Parallel Requests <span class="help-icon">?</span></label>
+        <label>Parallel Requests <span class="help-icon" data-tooltip="Number of concurrent requests (higher = faster, but may trigger rate limits)">?</span></label>
         <input 
           type="number" 
           v-model.number="settings.parallelRequests" 
@@ -80,7 +80,7 @@ function removeHeader(key: string) {
 
     <div v-if="showAdvanced" class="advanced-settings">
       <div class="setting-group">
-        <label title="HTTP proxy for all requests (format: http://host:port)">Proxy (optional) <span class="help-icon">?</span></label>
+        <label>Proxy (optional) <span class="help-icon" data-tooltip="HTTP proxy for all requests (format: http://host:port)">?</span></label>
         <input 
           type="text" 
           v-model="settings.proxy" 
@@ -92,7 +92,7 @@ function removeHeader(key: string) {
       </div>
 
       <div class="setting-group">
-        <label title="Additional HTTP headers sent with every request">Custom Headers <span class="help-icon">?</span></label>
+        <label>Custom Headers <span class="help-icon" data-tooltip="Additional HTTP headers sent with every request">?</span></label>
         <div class="headers-list">
           <div 
             v-for="(value, key) in settings.headers" 
