@@ -34,6 +34,10 @@ const expandedHtml = ref<string | null>(null)
 const copiedColumn = ref<string | null>(null)
 const selectedRows = ref<Set<number>>(new Set())
 const showCopiedFeedback = ref(false)
+const { sortState, toggleSort, sortIndicator, sortedData, resetSort } = useTableSort()
+
+const sortedHtmlResults = computed(() => sortedData(props.htmlResults ?? []))
+const sortedLinkResults = computed(() => sortedData(props.linkResults ?? []))
 
 // Select all toggle
 const allSelected = computed(() => {
@@ -126,6 +130,7 @@ watch(
   () => [props.htmlResults, props.linkResults],
   () => {
     selectedRows.value.clear()
+    resetSort()
   },
 )
 
@@ -263,23 +268,27 @@ const linkStats = computed(() => {
             <th class="th-checkbox">
               <input type="checkbox" :checked="allSelected" @change="toggleSelectAll" title="Select all">
             </th>
-            <th @click="copyColumn('url')" :class="['th-copy', { copied: copiedColumn === 'url' }]" title="Click to copy column">
-              <template v-if="copiedColumn === 'url'"><Check :size="12" /> Copied!</template><template v-else>URL <Copy :size="10" /></template>
+            <th @click="toggleSort('url')" class="th-sortable" title="Click to sort">
+              URL{{ sortIndicator('url') }}
+              <span class="copy-icon" @click.stop="copyColumn('url')"><Check v-if="copiedColumn === 'url'" :size="10" /><Copy v-else :size="10" /></span>
             </th>
-            <th @click="copyColumn('status')" :class="['th-copy', { copied: copiedColumn === 'status' }]" title="Click to copy column">
-              <template v-if="copiedColumn === 'status'"><Check :size="12" /> Copied!</template><template v-else>Status <Copy :size="10" /></template>
+            <th @click="toggleSort('status')" class="th-sortable" title="Click to sort">
+              Status{{ sortIndicator('status') }}
+              <span class="copy-icon" @click.stop="copyColumn('status')"><Check v-if="copiedColumn === 'status'" :size="10" /><Copy v-else :size="10" /></span>
             </th>
-            <th @click="copyColumn('contentType')" :class="['th-copy', { copied: copiedColumn === 'contentType' }]" title="Click to copy column">
-              <template v-if="copiedColumn === 'contentType'"><Check :size="12" /> Copied!</template><template v-else>Content-Type <Copy :size="10" /></template>
+            <th @click="toggleSort('contentType')" class="th-sortable" title="Click to sort">
+              Content-Type{{ sortIndicator('contentType') }}
+              <span class="copy-icon" @click.stop="copyColumn('contentType')"><Check v-if="copiedColumn === 'contentType'" :size="10" /><Copy v-else :size="10" /></span>
             </th>
-            <th @click="copyColumn('size')" :class="['th-copy', { copied: copiedColumn === 'size' }]" title="Click to copy column">
-              <template v-if="copiedColumn === 'size'"><Check :size="12" /> Copied!</template><template v-else>Size <Copy :size="10" /></template>
+            <th @click="toggleSort('size')" class="th-sortable" title="Click to sort">
+              Size{{ sortIndicator('size') }}
+              <span class="copy-icon" @click.stop="copyColumn('size')"><Check v-if="copiedColumn === 'size'" :size="10" /><Copy v-else :size="10" /></span>
             </th>
             <th>HTML</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(result, index) in htmlResults" :key="result.url" :class="{ 'row-selected': selectedRows.has(index) }" @click="toggleRow(index)">
+          <tr v-for="(result, index) in sortedHtmlResults" :key="result.url" :class="{ 'row-selected': selectedRows.has(index) }" @click="toggleRow(index)">
             <td class="td-checkbox" @click.stop>
               <input type="checkbox" :checked="selectedRows.has(index)" @change="toggleRow(index)">
             </td>
@@ -327,31 +336,38 @@ const linkStats = computed(() => {
             <th class="th-checkbox">
               <input type="checkbox" :checked="allSelected" @change="toggleSelectAll" title="Select all">
             </th>
-            <th @click="copyColumn('sourceUrl')" :class="['th-copy', { copied: copiedColumn === 'sourceUrl' }]" title="Click to copy column">
-              <template v-if="copiedColumn === 'sourceUrl'"><Check :size="12" /> Copied!</template><template v-else>Source <Copy :size="10" /></template>
+            <th @click="toggleSort('sourceUrl')" class="th-sortable" title="Click to sort">
+              Source{{ sortIndicator('sourceUrl') }}
+              <span class="copy-icon" @click.stop="copyColumn('sourceUrl')"><Check v-if="copiedColumn === 'sourceUrl'" :size="10" /><Copy v-else :size="10" /></span>
             </th>
-            <th @click="copyColumn('targetUrl')" :class="['th-copy', { copied: copiedColumn === 'targetUrl' }]" title="Click to copy column">
-              <template v-if="copiedColumn === 'targetUrl'"><Check :size="12" /> Copied!</template><template v-else>Target <Copy :size="10" /></template>
+            <th @click="toggleSort('targetUrl')" class="th-sortable" title="Click to sort">
+              Target{{ sortIndicator('targetUrl') }}
+              <span class="copy-icon" @click.stop="copyColumn('targetUrl')"><Check v-if="copiedColumn === 'targetUrl'" :size="10" /><Copy v-else :size="10" /></span>
             </th>
-            <th @click="copyColumn('status')" :class="['th-copy', { copied: copiedColumn === 'status' }]" title="Click to copy column">
-              <template v-if="copiedColumn === 'status'"><Check :size="12" /> Copied!</template><template v-else>Status <Copy :size="10" /></template>
+            <th @click="toggleSort('status')" class="th-sortable" title="Click to sort">
+              Status{{ sortIndicator('status') }}
+              <span class="copy-icon" @click.stop="copyColumn('status')"><Check v-if="copiedColumn === 'status'" :size="10" /><Copy v-else :size="10" /></span>
             </th>
-            <th @click="copyColumn('redirectChain')" :class="['th-copy', { copied: copiedColumn === 'redirectChain' }]" title="Click to copy column">
-              <template v-if="copiedColumn === 'redirectChain'"><Check :size="12" /> Copied!</template><template v-else>Redirects <Copy :size="10" /></template>
+            <th @click="toggleSort('redirectChain')" class="th-sortable" title="Click to sort">
+              Redirects{{ sortIndicator('redirectChain') }}
+              <span class="copy-icon" @click.stop="copyColumn('redirectChain')"><Check v-if="copiedColumn === 'redirectChain'" :size="10" /><Copy v-else :size="10" /></span>
             </th>
-            <th @click="copyColumn('type')" :class="['th-copy', { copied: copiedColumn === 'type' }]" title="Click to copy column">
-              <template v-if="copiedColumn === 'type'"><Check :size="12" /> Copied!</template><template v-else>Type <Copy :size="10" /></template>
+            <th @click="toggleSort('type')" class="th-sortable" title="Click to sort">
+              Type{{ sortIndicator('type') }}
+              <span class="copy-icon" @click.stop="copyColumn('type')"><Check v-if="copiedColumn === 'type'" :size="10" /><Copy v-else :size="10" /></span>
             </th>
-            <th @click="copyColumn('anchorText')" :class="['th-copy', { copied: copiedColumn === 'anchorText' }]" title="Click to copy column">
-              <template v-if="copiedColumn === 'anchorText'"><Check :size="12" /> Copied!</template><template v-else>Anchor <Copy :size="10" /></template>
+            <th @click="toggleSort('anchorText')" class="th-sortable" title="Click to sort">
+              Anchor{{ sortIndicator('anchorText') }}
+              <span class="copy-icon" @click.stop="copyColumn('anchorText')"><Check v-if="copiedColumn === 'anchorText'" :size="10" /><Copy v-else :size="10" /></span>
             </th>
-            <th @click="copyColumn('rel')" :class="['th-copy', { copied: copiedColumn === 'rel' }]" title="Click to copy column">
-              <template v-if="copiedColumn === 'rel'"><Check :size="12" /> Copied!</template><template v-else>Rel <Copy :size="10" /></template>
+            <th @click="toggleSort('rel')" class="th-sortable" title="Click to sort">
+              Rel{{ sortIndicator('rel') }}
+              <span class="copy-icon" @click.stop="copyColumn('rel')"><Check v-if="copiedColumn === 'rel'" :size="10" /><Copy v-else :size="10" /></span>
             </th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(result, index) in linkResults" :key="index" :class="{ 'row-selected': selectedRows.has(index) }" @click="toggleRow(index)">
+          <tr v-for="(result, index) in sortedLinkResults" :key="index" :class="{ 'row-selected': selectedRows.has(index) }" @click="toggleRow(index)">
             <td class="td-checkbox" @click.stop>
               <input type="checkbox" :checked="selectedRows.has(index)" @change="toggleRow(index)">
             </td>
@@ -441,19 +457,24 @@ th {
   top: 0;
 }
 
-.th-copy {
+.th-sortable {
   cursor: pointer;
   user-select: none;
 }
 
-.th-copy:hover {
+.th-sortable:hover {
   color: var(--accent);
-  background: var(--info-bg);
 }
 
-.th-copy.copied {
-  color: var(--success);
-  background: var(--success-bg);
+.copy-icon {
+  margin-left: 4px;
+  opacity: 0.5;
+  cursor: pointer;
+}
+
+.copy-icon:hover {
+  opacity: 1;
+  color: var(--accent);
 }
 
 .url-cell {
