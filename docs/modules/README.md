@@ -11,6 +11,8 @@ Each feature module has its own documentation. Focus is on **WHAT** and **WHY**,
 | [SEO-Audit](seo-audit.md) | Calculate SEO score, check meta tags, identify issues | `SeoAudit.vue` |
 | [Screenshots](screenshots.md) | Create screenshots and PDFs of web pages | `Screenshots.vue` |
 | [Image-Scraper](image-scraper.md) | Extract and download images from web pages | `ImageScraper.vue` |
+| [Broken-Link-Checker](broken-link-checker.md) | Check pages for broken links with live streaming | `BrokenLinkChecker.vue` |
+| [Sitemap-Parser](../data-model.md) | Extract URLs from XML sitemaps | `SitemapParser.vue` |
 
 ## Shared Components
 
