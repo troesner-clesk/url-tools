@@ -214,7 +214,7 @@ export default defineEventHandler(async (event) => {
             continue
           }
 
-          await sleep(delayMs / 4)
+          await sleep(delayMs)
           const redirectInfo = await getRedirectChain(link.targetUrl, 3, 5000)
 
           const result: LinkResult = {
