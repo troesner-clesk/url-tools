@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AlertTriangle, Check, Link as LinkIcon, Loader } from 'lucide-vue-next'
+import { AlertTriangle, Check, Info, Link as LinkIcon, Loader } from 'lucide-vue-next'
 
 interface BrokenLinkResult {
   sourceUrl: string
@@ -16,11 +16,20 @@ const urlInput = ref('')
 const { logs, addLog, logContainer } = useLogger()
 const { parsedUrls, hasValidUrls } = useUrlParser(urlInput)
 
+const requestSettings = ref({
+  timeout: 30,
+  retries: 1,
+  proxy: '',
+  headers: {} as Record<string, string>,
+  parallelRequests: 5,
+})
+
 const recursive = ref(false)
 const maxDepth = ref(2)
 const maxLinks = ref(500)
 const sameDomainOnly = ref(true)
 const externalOnly = ref(false)
+const excludeDomains = ref('')
 
 watch(externalOnly, (val) => {
   if (val) sameDomainOnly.value = false
@@ -103,6 +112,11 @@ async function startCheck() {
         maxUrls: maxLinks.value,
         sameDomainOnly: sameDomainOnly.value,
         externalOnly: externalOnly.value,
+        excludeDomains: excludeDomains.value
+          .split(/[,\n]/)
+          .map((d) => d.trim())
+          .filter(Boolean),
+        settings: requestSettings.value,
       }),
       signal: controller.signal,
     })
@@ -234,6 +248,8 @@ defineExpose({ isRunning })
         <div class="url-count">{{ parsedUrls.length }} valid URL(s)</div>
       </div>
 
+      <RequestSettings v-model:settings="requestSettings" />
+
       <div class="option checkbox">
         <label>
           <input type="checkbox" v-model="recursive" :disabled="isRunning">
@@ -264,6 +280,21 @@ defineExpose({ isRunning })
           <input type="checkbox" v-model="externalOnly" :disabled="isRunning">
           External links only
         </label>
+      </div>
+
+      <div class="option">
+        <label>
+          Exclude domains
+          <span class="info-tooltip" title="Comma or newline separated. Use *.example.com to match all subdomains (de.example.com, en.example.com etc.). Use example.com to match only the exact domain.">
+            <Info :size="12" />
+          </span>
+        </label>
+        <textarea
+          v-model="excludeDomains"
+          :disabled="isRunning"
+          placeholder="*.wikipedia.org, facebook.com"
+          rows="2"
+        ></textarea>
       </div>
 
       <div class="option">
@@ -482,7 +513,38 @@ defineExpose({ isRunning })
   margin-bottom: 4px;
 }
 
-.option select {
+.option textarea {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-family: 'SF Mono', Monaco, monospace;
+  resize: vertical;
+}
+
+.option textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.info-tooltip {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-muted);
+  cursor: help;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.info-tooltip:hover {
+  color: var(--accent);
+}
+
+.option select,
+.option input[type="number"] {
   width: 100%;
   padding: 8px 12px;
   background: var(--bg-secondary);
@@ -492,7 +554,8 @@ defineExpose({ isRunning })
   font-size: 13px;
 }
 
-.option select:focus {
+.option select:focus,
+.option input[type="number"]:focus {
   outline: none;
   border-color: var(--accent);
 }

@@ -14,6 +14,7 @@ interface CheckLinksRequest {
   maxUrls?: number
   sameDomainOnly?: boolean
   externalOnly?: boolean
+  excludeDomains?: string[]
   settings?: RequestSettings
 }
 
@@ -30,6 +31,27 @@ interface BrokenLinkResult {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+function isExcludedDomain(
+  url: string,
+  patterns: string[],
+): boolean {
+  if (patterns.length === 0) return false
+  try {
+    const hostname = new URL(url).hostname.toLowerCase()
+    return patterns.some((pattern) => {
+      const p = pattern.toLowerCase().trim()
+      if (!p) return false
+      if (p.startsWith('*.')) {
+        const suffix = p.slice(2)
+        return hostname === suffix || hostname.endsWith(`.${suffix}`)
+      }
+      return hostname === p
+    })
+  } catch {
+    return false
+  }
 }
 
 export default defineEventHandler(async (event) => {
@@ -156,6 +178,9 @@ export default defineEventHandler(async (event) => {
 
           // Skip internal links if externalOnly is enabled
           if (body.externalOnly && link.isInternal) continue
+
+          // Skip excluded domains
+          if (body.excludeDomains?.length && isExcludedDomain(link.targetUrl, body.excludeDomains)) continue
 
           await sleep(delayMs)
 
