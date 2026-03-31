@@ -707,9 +707,8 @@ body {
 [data-tooltip]::after {
   content: attr(data-tooltip);
   position: absolute;
-  bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
+  top: calc(100% + 6px);
+  left: 0;
   padding: 6px 10px;
   background: var(--bg-tertiary, #333);
   color: var(--text-primary, #fff);
@@ -719,11 +718,11 @@ body {
   border-radius: 6px;
   white-space: normal;
   width: max-content;
-  max-width: 260px;
+  max-width: 240px;
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.15s ease;
-  z-index: 1000;
+  z-index: 10000;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
