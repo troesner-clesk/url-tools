@@ -251,14 +251,14 @@ defineExpose({ isRunning })
       <RequestSettings v-model:settings="requestSettings" />
 
       <div class="option checkbox">
-        <label title="Follow links and check additional pages beyond the starting URLs">
+        <label>
           <input type="checkbox" v-model="recursive" :disabled="isRunning">
-          Recursive crawling <span class="help-icon">?</span>
+          Recursive crawling <span class="help-icon" data-tooltip="Follow links and check additional pages beyond the starting URLs">?</span>
         </label>
       </div>
 
       <div v-if="recursive" class="option">
-        <label title="How many levels deep to follow links from the starting page">Max depth <span class="help-icon">?</span></label>
+        <label>Max depth <span class="help-icon" data-tooltip="How many levels deep to follow links from the starting page">?</span></label>
         <select v-model.number="maxDepth" :disabled="isRunning">
           <option :value="1">1</option>
           <option :value="2">2</option>
@@ -269,23 +269,23 @@ defineExpose({ isRunning })
       </div>
 
       <div class="option checkbox">
-        <label title="Only follow internal links when crawling recursively">
+        <label>
           <input type="checkbox" v-model="sameDomainOnly" :disabled="isRunning">
-          Same domain only (crawling) <span class="help-icon">?</span>
+          Same domain only (crawling) <span class="help-icon" data-tooltip="Only follow internal links when crawling recursively">?</span>
         </label>
       </div>
 
       <div class="option checkbox">
-        <label title="Skip internal links — only check links pointing to other domains">
+        <label>
           <input type="checkbox" v-model="externalOnly" :disabled="isRunning">
-          External links only <span class="help-icon">?</span>
+          External links only <span class="help-icon" data-tooltip="Skip internal links — only check links pointing to other domains">?</span>
         </label>
       </div>
 
       <div class="option">
-        <label title="Skip links to these domains (comma-separated, supports wildcards like *.example.com)">
-          Exclude domains <span class="help-icon">?</span>
-          <span class="info-tooltip" title="Comma or newline separated. Use *.example.com to match all subdomains (de.example.com, en.example.com etc.). Use example.com to match only the exact domain.">
+        <label>
+          Exclude domains <span class="help-icon" data-tooltip="Skip links to these domains (comma-separated, supports wildcards like *.example.com)">?</span>
+          <span class="info-tooltip" data-tooltip="Comma or newline separated. Use *.example.com to match all subdomains (de.example.com, en.example.com etc.). Use example.com to match only the exact domain.">
             <Info :size="12" />
           </span>
         </label>
@@ -298,7 +298,7 @@ defineExpose({ isRunning })
       </div>
 
       <div class="option">
-        <label title="Maximum number of links to check before stopping">Max links <span class="help-icon">?</span></label>
+        <label>Max links <span class="help-icon" data-tooltip="Maximum number of links to check before stopping">?</span></label>
         <input type="number" v-model.number="maxLinks" min="1" :disabled="isRunning">
       </div>
 

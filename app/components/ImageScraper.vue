@@ -311,8 +311,8 @@ defineExpose({ isRunning: isLoading })
 
       <div class="size-filters">
         <div class="option">
-          <label title="Skip images smaller than this width (in pixels). Only works if the HTML specifies image dimensions.">
-            Min width <span class="help-icon">?</span>
+          <label>
+            Min width <span class="help-icon" data-tooltip="Skip images smaller than this width (in pixels). Only works if the HTML specifies image dimensions.">?</span>
           </label>
           <input
             type="number"
@@ -323,8 +323,8 @@ defineExpose({ isRunning: isLoading })
           >
         </div>
         <div class="option">
-          <label title="Skip images smaller than this height (in pixels). Only works if the HTML specifies image dimensions.">
-            Min height <span class="help-icon">?</span>
+          <label>
+            Min height <span class="help-icon" data-tooltip="Skip images smaller than this height (in pixels). Only works if the HTML specifies image dimensions.">?</span>
           </label>
           <input
             type="number"

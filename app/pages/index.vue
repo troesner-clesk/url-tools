@@ -681,6 +681,11 @@ body {
   line-height: 1.5;
 }
 
+.help-icon,
+.info-tooltip {
+  position: relative;
+}
+
 .help-icon {
   display: inline-flex;
   align-items: center;
@@ -693,6 +698,37 @@ body {
   border-radius: 50%;
   color: var(--text-secondary);
   cursor: help;
+}
+
+[data-tooltip] {
+  position: relative;
+}
+
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  background: var(--bg-tertiary, #333);
+  color: var(--text-primary, #fff);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+  border-radius: 6px;
+  white-space: normal;
+  width: max-content;
+  max-width: 260px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+[data-tooltip]:hover::after {
+  opacity: 1;
 }
 
 .app {
