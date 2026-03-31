@@ -476,7 +476,7 @@ const selectedPage = computed(() => {
 
 .input-section {
   padding: 16px;
-  border-right: 1px solid #333;
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -485,12 +485,12 @@ const selectedPage = computed(() => {
 
 .input-section h2 {
   margin-bottom: 0;
-  color: #fff;
+  color: var(--text-primary);
   font-size: 16px;
 }
 
 .subtitle {
-  color: #888;
+  color: var(--text-secondary);
   font-size: 13px;
   margin-bottom: 8px;
 }
@@ -499,17 +499,17 @@ const selectedPage = computed(() => {
   display: block;
   margin-bottom: 6px;
   font-size: 13px;
-  color: #888;
+  color: var(--text-secondary);
 }
 
 .url-input textarea {
   width: 100%;
   height: 100px;
   padding: 12px;
-  background: #1a1a1a;
-  border: 1px solid #333;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
   border-radius: 4px;
-  color: #fff;
+  color: var(--text-primary);
   font-family: 'SF Mono', Monaco, monospace;
   font-size: 12px;
   resize: vertical;
@@ -517,19 +517,19 @@ const selectedPage = computed(() => {
 
 .url-input textarea:focus {
   outline: none;
-  border-color: #0066cc;
+  border-color: var(--accent);
 }
 
 .url-count {
   margin-top: 4px;
   font-size: 12px;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .option label {
   display: block;
   font-size: 13px;
-  color: #888;
+  color: var(--text-secondary);
   margin-bottom: 4px;
 }
 
@@ -543,10 +543,10 @@ const selectedPage = computed(() => {
 .option input[type="number"] {
   width: 100%;
   padding: 8px;
-  border: 1px solid #333;
+  border: 1px solid var(--border);
   border-radius: 4px;
-  background: #1a1a1a;
-  color: #fff;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .format-checkboxes {
@@ -560,7 +560,7 @@ const selectedPage = computed(() => {
   align-items: center;
   gap: 4px;
   font-size: 12px;
-  color: #888;
+  color: var(--text-secondary);
   cursor: pointer;
 }
 
@@ -582,9 +582,9 @@ const selectedPage = computed(() => {
   height: 14px;
   margin-left: 4px;
   font-size: 10px;
-  background: #333;
+  background: var(--bg-tertiary);
   border-radius: 50%;
-  color: #888;
+  color: var(--text-secondary);
 }
 
 .button-row {
@@ -595,17 +595,17 @@ const selectedPage = computed(() => {
 .btn-primary {
   flex: 1;
   padding: 12px 24px;
-  background: #0066cc;
+  background: var(--accent);
   border: none;
   border-radius: 4px;
-  color: #fff;
+  color: var(--text-primary);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #0077ee;
+  background: var(--accent-hover);
 }
 
 .btn-primary:disabled {
@@ -615,21 +615,21 @@ const selectedPage = computed(() => {
 
 .btn-stop {
   padding: 12px 16px;
-  background: #cc3333;
+  background: var(--error);
   border: none;
   border-radius: 4px;
-  color: #fff;
+  color: var(--text-primary);
   font-weight: 600;
   cursor: pointer;
 }
 
 .btn-stop:hover {
-  background: #dd4444;
+  background: var(--error);
 }
 
 .log-container {
-  background: #0a0a0a;
-  border: 1px solid #333;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
   border-radius: 4px;
   max-height: 150px;
   overflow-y: auto;
@@ -639,7 +639,7 @@ const selectedPage = computed(() => {
 
 .log-entry {
   padding: 4px 8px;
-  border-bottom: 1px solid #1a1a1a;
+  border-bottom: 1px solid var(--bg-secondary);
   display: flex;
   gap: 8px;
 }
@@ -649,7 +649,7 @@ const selectedPage = computed(() => {
 }
 
 .log-time {
-  color: #666;
+  color: var(--text-muted);
   flex-shrink: 0;
 }
 
@@ -657,16 +657,16 @@ const selectedPage = computed(() => {
   word-break: break-all;
 }
 
-.log-info { color: #888; }
-.log-success { color: #4ade80; }
-.log-error { color: #f87171; }
-.log-progress { color: #38bdf8; }
+.log-info { color: var(--text-secondary); }
+.log-success { color: var(--success); }
+.log-error { color: var(--error); }
+.log-progress { color: var(--info); }
 
 .error-message {
   padding: 12px;
-  background: #4d1a1a;
+  background: var(--error-bg);
   border-radius: 4px;
-  color: #f87171;
+  color: var(--error);
   font-size: 13px;
 }
 
@@ -675,7 +675,7 @@ const selectedPage = computed(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #0a0a0a;
+  background: var(--bg-primary);
 }
 
 .empty-state {
@@ -684,7 +684,7 @@ const selectedPage = computed(() => {
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .empty-state .hint {
@@ -700,7 +700,7 @@ const selectedPage = computed(() => {
 }
 
 .results-list {
-  border-right: 1px solid #333;
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -711,49 +711,49 @@ const selectedPage = computed(() => {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: #1a1a1a;
-  border-bottom: 1px solid #333;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
 }
 
 .results-header h3 {
   font-size: 14px;
-  color: #fff;
+  color: var(--text-primary);
   margin: 0;
 }
 
 .stats-summary {
   font-size: 12px;
-  color: #888;
+  color: var(--text-secondary);
 }
 
 .pages-list {
   max-height: 200px;
   overflow-y: auto;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid var(--border);
 }
 
 .page-item {
   padding: 10px 16px;
-  border-bottom: 1px solid #1a1a1a;
+  border-bottom: 1px solid var(--bg-secondary);
   cursor: pointer;
 }
 
 .page-item:hover {
-  background: #1a1a1a;
+  background: var(--bg-secondary);
 }
 
 .page-item.active {
-  background: #0066cc22;
-  border-left: 3px solid #0066cc;
+  background: color-mix(in srgb, var(--accent) 13%, transparent);
+  border-left: 3px solid var(--accent);
 }
 
 .page-item.error {
-  border-left: 3px solid #ef4444;
+  border-left: 3px solid var(--error);
 }
 
 .page-url {
   font-size: 12px;
-  color: #e0e0e0;
+  color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -761,12 +761,12 @@ const selectedPage = computed(() => {
 
 .page-meta {
   font-size: 11px;
-  color: #888;
+  color: var(--text-secondary);
   margin-top: 2px;
 }
 
 .page-meta .error-text {
-  color: #f87171;
+  color: var(--error);
 }
 
 .images-grid-container {
@@ -780,8 +780,8 @@ const selectedPage = computed(() => {
   display: flex;
   justify-content: flex-end;
   padding: 8px 12px;
-  background: #0a0a0a;
-  border-bottom: 1px solid #333;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
 }
 
 .images-grid {
@@ -796,7 +796,7 @@ const selectedPage = computed(() => {
 
 .image-thumb {
   aspect-ratio: 1;
-  background: #1a1a1a;
+  background: var(--bg-secondary);
   border-radius: 4px;
   overflow: hidden;
   cursor: pointer;
@@ -805,15 +805,15 @@ const selectedPage = computed(() => {
 }
 
 .image-thumb:hover {
-  border-color: #333;
+  border-color: var(--bg-tertiary);
 }
 
 .image-thumb.active {
-  border-color: #0066cc;
+  border-color: var(--accent);
 }
 
 .image-thumb.error {
-  background: #4d1a1a;
+  background: var(--error-bg);
 }
 
 .image-thumb img {
@@ -828,7 +828,7 @@ const selectedPage = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #f87171;
+  color: var(--error);
   font-size: 16px;
 }
 
@@ -838,13 +838,13 @@ const selectedPage = computed(() => {
   right: 2px;
   width: 14px;
   height: 14px;
-  background: #22c55e;
+  background: var(--success);
   border-radius: 50%;
   font-size: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 /* Detail Panel */
@@ -852,7 +852,7 @@ const selectedPage = computed(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #0f0f0f;
+  background: var(--bg-primary);
 }
 
 .detail-empty {
@@ -860,7 +860,7 @@ const selectedPage = computed(() => {
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .detail-content {
@@ -875,13 +875,13 @@ const selectedPage = computed(() => {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: #1a1a1a;
-  border-bottom: 1px solid #333;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
 }
 
 .detail-header h3 {
   font-size: 14px;
-  color: #fff;
+  color: var(--text-primary);
   margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -890,7 +890,7 @@ const selectedPage = computed(() => {
 
 .detail-size {
   font-size: 12px;
-  color: #888;
+  color: var(--text-secondary);
   flex-shrink: 0;
 }
 
@@ -899,9 +899,9 @@ const selectedPage = computed(() => {
   gap: 12px;
   padding: 8px 16px;
   font-size: 12px;
-  color: #888;
-  background: #0a0a0a;
-  border-bottom: 1px solid #333;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
 }
 
 .detail-alt {
@@ -913,9 +913,9 @@ const selectedPage = computed(() => {
 .detail-url {
   padding: 8px 16px;
   font-size: 11px;
-  color: #666;
-  background: #0a0a0a;
-  border-bottom: 1px solid #333;
+  color: var(--text-muted);
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
   word-break: break-all;
 }
 
@@ -942,7 +942,7 @@ const selectedPage = computed(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .preview-icon {
@@ -951,7 +951,7 @@ const selectedPage = computed(() => {
 }
 
 .preview-error {
-  color: #f87171;
+  color: var(--error);
 }
 
 .spin { animation: spin 1s linear infinite; }

@@ -178,16 +178,16 @@ onUnmounted(() => {
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  background: #2a5a2a;
+  background: var(--success-bg);
   border: none;
   border-radius: 3px;
-  color: #4ade80;
+  color: var(--success);
   cursor: pointer;
   font-size: 12px;
 }
 
 .btn-folder:hover {
-  background: #3a6a3a;
+  background: var(--success);
 }
 
 .arrow {
@@ -201,8 +201,8 @@ onUnmounted(() => {
   right: 0;
   min-width: 280px;
   max-width: 350px;
-  background: #1a1a1a;
-  border: 1px solid #333;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
   border-radius: 6px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   z-index: 1000;
@@ -213,17 +213,17 @@ onUnmounted(() => {
   padding: 10px 12px;
   font-size: 11px;
   font-weight: 600;
-  color: #888;
+  color: var(--text-secondary);
   text-transform: uppercase;
-  border-bottom: 1px solid #333;
-  background: #0a0a0a;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-primary);
 }
 
 .dropdown-loading,
 .dropdown-empty {
   padding: 20px;
   text-align: center;
-  color: #666;
+  color: var(--text-muted);
   font-size: 13px;
 }
 
@@ -235,11 +235,11 @@ onUnmounted(() => {
 .dropdown-item {
   padding: 10px 12px;
   cursor: pointer;
-  border-bottom: 1px solid #252525;
+  border-bottom: 1px solid var(--bg-tertiary);
 }
 
 .dropdown-item:hover {
-  background: #252525;
+  background: var(--bg-tertiary);
 }
 
 .dropdown-item:last-child {
@@ -248,7 +248,7 @@ onUnmounted(() => {
 
 .item-name {
   font-size: 13px;
-  color: #e0e0e0;
+  color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -259,27 +259,27 @@ onUnmounted(() => {
   gap: 12px;
   margin-top: 4px;
   font-size: 11px;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .dropdown-footer {
   padding: 8px;
-  border-top: 1px solid #333;
-  background: #0a0a0a;
+  border-top: 1px solid var(--border);
+  background: var(--bg-primary);
 }
 
 .btn-all {
   width: 100%;
   padding: 8px;
-  background: #333;
+  background: var(--bg-tertiary);
   border: none;
   border-radius: 4px;
-  color: #e0e0e0;
+  color: var(--text-primary);
   cursor: pointer;
   font-size: 12px;
 }
 
 .btn-all:hover {
-  background: #444;
+  background: var(--bg-tertiary);
 }
 </style>

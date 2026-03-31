@@ -566,7 +566,7 @@ function getScoreColor(score: number): string {
 
 .input-section {
   padding: 16px;
-  border-right: 1px solid #333;
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -575,12 +575,12 @@ function getScoreColor(score: number): string {
 
 .input-section h2 {
   margin-bottom: 0;
-  color: #fff;
+  color: var(--text-primary);
   font-size: 16px;
 }
 
 .subtitle {
-  color: #888;
+  color: var(--text-secondary);
   font-size: 13px;
   margin-bottom: 8px;
 }
@@ -589,17 +589,17 @@ function getScoreColor(score: number): string {
   display: block;
   margin-bottom: 6px;
   font-size: 13px;
-  color: #888;
+  color: var(--text-secondary);
 }
 
 .url-input textarea {
   width: 100%;
   height: 100px;
   padding: 12px;
-  background: #1a1a1a;
-  border: 1px solid #333;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
   border-radius: 4px;
-  color: #fff;
+  color: var(--text-primary);
   font-family: 'SF Mono', Monaco, monospace;
   font-size: 12px;
   resize: vertical;
@@ -607,13 +607,13 @@ function getScoreColor(score: number): string {
 
 .url-input textarea:focus {
   outline: none;
-  border-color: #0066cc;
+  border-color: var(--accent);
 }
 
 .url-count {
   margin-top: 4px;
   font-size: 12px;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .option.checkbox label {
@@ -621,7 +621,7 @@ function getScoreColor(score: number): string {
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  color: #888;
+  color: var(--text-secondary);
   cursor: pointer;
 }
 
@@ -633,17 +633,17 @@ function getScoreColor(score: number): string {
 .btn-primary {
   flex: 1;
   padding: 12px 24px;
-  background: #0066cc;
+  background: var(--accent);
   border: none;
   border-radius: 4px;
-  color: #fff;
+  color: var(--text-primary);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #0077ee;
+  background: var(--accent-hover);
 }
 
 .btn-primary:disabled {
@@ -653,21 +653,21 @@ function getScoreColor(score: number): string {
 
 .btn-stop {
   padding: 12px 16px;
-  background: #cc3333;
+  background: var(--error);
   border: none;
   border-radius: 4px;
-  color: #fff;
+  color: var(--text-primary);
   font-weight: 600;
   cursor: pointer;
 }
 
 .btn-stop:hover {
-  background: #dd4444;
+  background: var(--error);
 }
 
 .log-container {
-  background: #0a0a0a;
-  border: 1px solid #333;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
   border-radius: 4px;
   max-height: 120px;
   overflow-y: auto;
@@ -677,7 +677,7 @@ function getScoreColor(score: number): string {
 
 .log-entry {
   padding: 4px 8px;
-  border-bottom: 1px solid #1a1a1a;
+  border-bottom: 1px solid var(--bg-secondary);
   display: flex;
   gap: 8px;
 }
@@ -687,7 +687,7 @@ function getScoreColor(score: number): string {
 }
 
 .log-time {
-  color: #666;
+  color: var(--text-muted);
   flex-shrink: 0;
 }
 
@@ -695,20 +695,20 @@ function getScoreColor(score: number): string {
   word-break: break-all;
 }
 
-.log-info { color: #888; }
-.log-success { color: #4ade80; }
-.log-error { color: #f87171; }
-.log-progress { color: #38bdf8; }
+.log-info { color: var(--text-secondary); }
+.log-success { color: var(--success); }
+.log-error { color: var(--error); }
+.log-progress { color: var(--info); }
 
 .saved-files {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
-  background: #1a3d1a;
+  background: var(--success-bg);
   border-radius: 4px;
   font-size: 12px;
-  color: #4ade80;
+  color: var(--success);
 }
 
 .btn-folder {
@@ -716,7 +716,7 @@ function getScoreColor(score: number): string {
   background: #2a5a2a;
   border: none;
   border-radius: 3px;
-  color: #4ade80;
+  color: var(--success);
   cursor: pointer;
   font-size: 11px;
 }
@@ -727,9 +727,9 @@ function getScoreColor(score: number): string {
 
 .error-message {
   padding: 12px;
-  background: #4d1a1a;
+  background: var(--error-bg);
   border-radius: 4px;
-  color: #f87171;
+  color: var(--error);
   font-size: 13px;
 }
 
@@ -737,7 +737,7 @@ function getScoreColor(score: number): string {
 .history-section {
   margin-top: 8px;
   padding-top: 12px;
-  border-top: 1px solid #333;
+  border-top: 1px solid var(--border);
 }
 
 .history-header {
@@ -748,7 +748,7 @@ function getScoreColor(score: number): string {
 }
 
 .history-header h4 {
-  color: #888;
+  color: var(--text-secondary);
   font-size: 12px;
   font-weight: 600;
   margin: 0;
@@ -757,16 +757,16 @@ function getScoreColor(score: number): string {
 .btn-clear {
   padding: 2px 6px;
   background: transparent;
-  border: 1px solid #444;
+  border: 1px solid var(--bg-tertiary);
   border-radius: 3px;
-  color: #666;
+  color: var(--text-muted);
   cursor: pointer;
   font-size: 10px;
 }
 
 .btn-clear:hover {
-  border-color: #666;
-  color: #fff;
+  border-color: var(--text-muted);
+  color: var(--text-primary);
 }
 
 .history-items {
@@ -780,7 +780,7 @@ function getScoreColor(score: number): string {
   align-items: center;
   gap: 8px;
   padding: 8px;
-  background: #0a0a0a;
+  background: var(--bg-primary);
   border-radius: 4px;
 }
 
@@ -791,12 +791,12 @@ function getScoreColor(score: number): string {
 }
 
 .history-info:hover .history-urls {
-  color: #0088ff;
+  color: var(--accent-hover);
 }
 
 .history-urls {
   font-size: 11px;
-  color: #e0e0e0;
+  color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -814,7 +814,7 @@ function getScoreColor(score: number): string {
 }
 
 .history-time {
-  color: #666;
+  color: var(--text-muted);
 }
 
 .btn-rerun {
@@ -824,7 +824,7 @@ function getScoreColor(score: number): string {
   background: transparent;
   border: none;
   border-radius: 3px;
-  color: #888;
+  color: var(--text-secondary);
   cursor: pointer;
   font-size: 12px;
   display: flex;
@@ -833,8 +833,8 @@ function getScoreColor(score: number): string {
 }
 
 .btn-rerun:hover {
-  background: #0066cc;
-  color: #fff;
+  background: var(--accent);
+  color: var(--text-primary);
 }
 
 /* Results Section */
@@ -842,7 +842,7 @@ function getScoreColor(score: number): string {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #0a0a0a;
+  background: var(--bg-primary);
 }
 
 .empty-state {
@@ -851,7 +851,7 @@ function getScoreColor(score: number): string {
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .empty-state .hint {
@@ -867,7 +867,7 @@ function getScoreColor(score: number): string {
 }
 
 .results-list {
-  border-right: 1px solid #333;
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -876,7 +876,7 @@ function getScoreColor(score: number): string {
 .results-detail {
   overflow-y: auto;
   padding: 16px;
-  background: #0f0f0f;
+  background: var(--bg-primary);
 }
 
 .detail-empty {
@@ -884,7 +884,7 @@ function getScoreColor(score: number): string {
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .detail-error {
@@ -892,14 +892,14 @@ function getScoreColor(score: number): string {
 }
 
 .detail-error h3 {
-  color: #fff;
+  color: var(--text-primary);
   font-size: 14px;
   margin-bottom: 8px;
   word-break: break-all;
 }
 
 .detail-error .error-text {
-  color: #f87171;
+  color: var(--error);
 }
 
 .bulk-header {
@@ -907,12 +907,12 @@ function getScoreColor(score: number): string {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: #0a0a0a;
-  border-bottom: 1px solid #333;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
 }
 
 .bulk-header h3 {
-  color: #fff;
+  color: var(--text-primary);
   font-size: 14px;
   margin: 0;
 }
@@ -932,9 +932,9 @@ function getScoreColor(score: number): string {
   grid-template-columns: 1fr 50px 50px;
   gap: 8px;
   padding: 8px 12px;
-  background: #0a0a0a;
+  background: var(--bg-primary);
   font-size: 11px;
-  color: #888;
+  color: var(--text-secondary);
   font-weight: 600;
   position: sticky;
   top: 0;
@@ -945,22 +945,22 @@ function getScoreColor(score: number): string {
   grid-template-columns: 1fr 50px 50px;
   gap: 8px;
   padding: 10px 12px;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid var(--border);
   font-size: 12px;
   cursor: pointer;
   transition: background 0.2s;
 }
 
 .table-row:hover {
-  background: #252525;
+  background: var(--bg-tertiary);
 }
 
 .table-row.active {
-  background: #0066cc33;
+  background: var(--info-bg);
 }
 
 .table-row.error {
-  color: #f87171;
+  color: var(--error);
 }
 
 .table-row:last-child {
@@ -971,7 +971,7 @@ function getScoreColor(score: number): string {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #e0e0e0;
+  color: var(--text-primary);
 }
 
 .col-score {
@@ -981,12 +981,12 @@ function getScoreColor(score: number): string {
 
 .col-issues {
   text-align: center;
-  color: #888;
+  color: var(--text-secondary);
 }
 
 .col-time {
   text-align: right;
-  color: #888;
+  color: var(--text-secondary);
 }
 
 /* Detail View */
@@ -995,7 +995,7 @@ function getScoreColor(score: number): string {
   align-items: center;
   gap: 24px;
   padding: 24px;
-  background: #1a1a1a;
+  background: var(--bg-secondary);
   border-radius: 12px;
   margin-bottom: 16px;
 }
@@ -1018,22 +1018,22 @@ function getScoreColor(score: number): string {
 
 .score-label {
   font-size: 14px;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .score-status {
-  color: #888;
+  color: var(--text-secondary);
   font-size: 14px;
 }
 
 .issues-count {
-  color: #f97316;
+  color: var(--warning);
   font-size: 14px;
   margin-top: 4px;
 }
 
 .card {
-  background: #1a1a1a;
+  background: var(--bg-secondary);
   border-radius: 8px;
   padding: 16px;
   margin-bottom: 12px;
@@ -1042,7 +1042,7 @@ function getScoreColor(score: number): string {
 .card h3 {
   margin-bottom: 12px;
   font-size: 14px;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .issues-card ul {
@@ -1052,8 +1052,8 @@ function getScoreColor(score: number): string {
 
 .issues-card li {
   padding: 8px 0;
-  border-bottom: 1px solid #333;
-  color: #f97316;
+  border-bottom: 1px solid var(--border);
+  color: var(--warning);
   font-size: 13px;
 }
 
@@ -1067,7 +1067,7 @@ function getScoreColor(score: number): string {
 
 .meta-label {
   font-size: 12px;
-  color: #888;
+  color: var(--text-secondary);
   margin-bottom: 4px;
   display: flex;
   align-items: center;
@@ -1076,27 +1076,27 @@ function getScoreColor(score: number): string {
 
 .meta-value {
   font-size: 13px;
-  color: #e0e0e0;
+  color: var(--text-primary);
   word-break: break-word;
 }
 
 .badge {
   display: inline-block;
   padding: 2px 8px;
-  background: #333;
+  background: var(--bg-tertiary);
   border-radius: 4px;
   font-size: 11px;
-  color: #888;
+  color: var(--text-secondary);
 }
 
 .badge-good {
   background: #14532d;
-  color: #22c55e;
+  color: var(--success);
 }
 
 .badge-warn {
   background: #451a03;
-  color: #f97316;
+  color: var(--warning);
 }
 
 .headings-summary {
@@ -1119,15 +1119,15 @@ function getScoreColor(score: number): string {
 }
 
 .heading-tag {
-  background: #333;
+  background: var(--bg-tertiary);
   padding: 2px 6px;
   border-radius: 3px;
-  color: #888;
+  color: var(--text-secondary);
   font-size: 10px;
 }
 
 .heading-text {
-  color: #e0e0e0;
+  color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1142,7 +1142,7 @@ function getScoreColor(score: number): string {
 .stat {
   text-align: center;
   padding: 12px;
-  background: #0a0a0a;
+  background: var(--bg-primary);
   border-radius: 6px;
 }
 
@@ -1150,28 +1150,28 @@ function getScoreColor(score: number): string {
   display: block;
   font-size: 24px;
   font-weight: 600;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .stat-label {
   font-size: 11px;
-  color: #888;
+  color: var(--text-secondary);
 }
 
 .stat-warn .stat-value {
-  color: #f97316;
+  color: var(--warning);
 }
 
 .broken-links {
   margin-top: 16px;
   padding-top: 16px;
-  border-top: 1px solid #333;
+  border-top: 1px solid var(--border);
 }
 
 .broken-links h4 {
   font-size: 13px;
   margin-bottom: 8px;
-  color: #f87171;
+  color: var(--error);
 }
 
 .broken-link {
@@ -1183,15 +1183,15 @@ function getScoreColor(score: number): string {
 }
 
 .link-status {
-  background: #4d1a1a;
-  color: #f87171;
+  background: var(--error-bg);
+  color: var(--error);
   padding: 2px 6px;
   border-radius: 3px;
   font-size: 10px;
 }
 
 .broken-link a {
-  color: #888;
+  color: var(--text-secondary);
   text-decoration: none;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1212,12 +1212,12 @@ function getScoreColor(score: number): string {
 
 .check-pass {
   background: #14532d33;
-  color: #22c55e;
+  color: var(--success);
 }
 
 .check-fail {
   background: #4d1a1a33;
-  color: #f87171;
+  color: var(--error);
 }
 
 .spin { animation: spin 1s linear infinite; }

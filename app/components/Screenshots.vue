@@ -351,7 +351,7 @@ const selectedPresetIndex = computed({
 
 .input-section {
   padding: 16px;
-  border-right: 1px solid #333;
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -360,12 +360,12 @@ const selectedPresetIndex = computed({
 
 .input-section h2 {
   margin-bottom: 0;
-  color: #fff;
+  color: var(--text-primary);
   font-size: 16px;
 }
 
 .subtitle {
-  color: #888;
+  color: var(--text-secondary);
   font-size: 13px;
   margin-bottom: 8px;
 }
@@ -374,17 +374,17 @@ const selectedPresetIndex = computed({
   display: block;
   margin-bottom: 6px;
   font-size: 13px;
-  color: #888;
+  color: var(--text-secondary);
 }
 
 .url-input textarea {
   width: 100%;
   height: 100px;
   padding: 12px;
-  background: #1a1a1a;
-  border: 1px solid #333;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
   border-radius: 4px;
-  color: #fff;
+  color: var(--text-primary);
   font-family: 'SF Mono', Monaco, monospace;
   font-size: 12px;
   resize: vertical;
@@ -392,19 +392,19 @@ const selectedPresetIndex = computed({
 
 .url-input textarea:focus {
   outline: none;
-  border-color: #0066cc;
+  border-color: var(--accent);
 }
 
 .url-count {
   margin-top: 4px;
   font-size: 12px;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .option label {
   display: block;
   font-size: 13px;
-  color: #888;
+  color: var(--text-secondary);
   margin-bottom: 4px;
 }
 
@@ -412,10 +412,10 @@ const selectedPresetIndex = computed({
 .option input[type="range"] {
   width: 100%;
   padding: 8px;
-  border: 1px solid #333;
+  border: 1px solid var(--border);
   border-radius: 4px;
-  background: #1a1a1a;
-  color: #fff;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .option.checkbox label {
@@ -433,17 +433,17 @@ const selectedPresetIndex = computed({
 .btn-primary {
   flex: 1;
   padding: 12px 24px;
-  background: #0066cc;
+  background: var(--accent);
   border: none;
   border-radius: 4px;
-  color: #fff;
+  color: var(--text-primary);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #0077ee;
+  background: var(--accent-hover);
 }
 
 .btn-primary:disabled {
@@ -453,21 +453,21 @@ const selectedPresetIndex = computed({
 
 .btn-stop {
   padding: 12px 16px;
-  background: #cc3333;
+  background: var(--error);
   border: none;
   border-radius: 4px;
-  color: #fff;
+  color: var(--text-primary);
   font-weight: 600;
   cursor: pointer;
 }
 
 .btn-stop:hover {
-  background: #dd4444;
+  background: var(--error);
 }
 
 .log-container {
-  background: #0a0a0a;
-  border: 1px solid #333;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
   border-radius: 4px;
   max-height: 150px;
   overflow-y: auto;
@@ -477,7 +477,7 @@ const selectedPresetIndex = computed({
 
 .log-entry {
   padding: 4px 8px;
-  border-bottom: 1px solid #1a1a1a;
+  border-bottom: 1px solid var(--bg-secondary);
   display: flex;
   gap: 8px;
 }
@@ -487,7 +487,7 @@ const selectedPresetIndex = computed({
 }
 
 .log-time {
-  color: #666;
+  color: var(--text-muted);
   flex-shrink: 0;
 }
 
@@ -495,16 +495,16 @@ const selectedPresetIndex = computed({
   word-break: break-all;
 }
 
-.log-info { color: #888; }
-.log-success { color: #4ade80; }
-.log-error { color: #f87171; }
-.log-progress { color: #38bdf8; }
+.log-info { color: var(--text-secondary); }
+.log-success { color: var(--success); }
+.log-error { color: var(--error); }
+.log-progress { color: var(--info); }
 
 .error-message {
   padding: 12px;
-  background: #4d1a1a;
+  background: var(--error-bg);
   border-radius: 4px;
-  color: #f87171;
+  color: var(--error);
   font-size: 13px;
 }
 
@@ -513,7 +513,7 @@ const selectedPresetIndex = computed({
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #0a0a0a;
+  background: var(--bg-primary);
 }
 
 .empty-state {
@@ -522,7 +522,7 @@ const selectedPresetIndex = computed({
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .empty-state .hint {
@@ -538,7 +538,7 @@ const selectedPresetIndex = computed({
 }
 
 .results-list {
-  border-right: 1px solid #333;
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -549,28 +549,28 @@ const selectedPresetIndex = computed({
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: #1a1a1a;
-  border-bottom: 1px solid #333;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
 }
 
 .results-header h3 {
   font-size: 14px;
-  color: #fff;
+  color: var(--text-primary);
   margin: 0;
 }
 
 .btn-folder {
   padding: 6px 12px;
-  background: #333;
+  background: var(--bg-tertiary);
   border: none;
   border-radius: 4px;
-  color: #fff;
+  color: var(--text-primary);
   cursor: pointer;
   font-size: 12px;
 }
 
 .btn-folder:hover {
-  background: #444;
+  background: var(--bg-tertiary);
 }
 
 .results-items {
@@ -583,26 +583,26 @@ const selectedPresetIndex = computed({
   align-items: flex-start;
   gap: 12px;
   padding: 12px 16px;
-  border-bottom: 1px solid #1a1a1a;
+  border-bottom: 1px solid var(--bg-secondary);
   cursor: pointer;
   border-left: 3px solid transparent;
 }
 
 .result-item:hover {
-  background: #1a1a1a;
+  background: var(--bg-secondary);
 }
 
 .result-item.active {
-  background: #0066cc22;
-  border-left-color: #0066cc;
+  background: color-mix(in srgb, var(--accent) 13%, transparent);
+  border-left-color: var(--accent);
 }
 
 .result-item.success .result-status {
-  color: #22c55e;
+  color: var(--success);
 }
 
 .result-item.failed .result-status {
-  color: #ef4444;
+  color: var(--error);
 }
 
 .result-status {
@@ -617,7 +617,7 @@ const selectedPresetIndex = computed({
 
 .result-url {
   font-size: 12px;
-  color: #e0e0e0;
+  color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -625,13 +625,13 @@ const selectedPresetIndex = computed({
 
 .result-meta {
   font-size: 11px;
-  color: #888;
+  color: var(--text-secondary);
   margin-top: 2px;
 }
 
 .result-error {
   font-size: 11px;
-  color: #f87171;
+  color: var(--error);
   margin-top: 2px;
 }
 
@@ -640,7 +640,7 @@ const selectedPresetIndex = computed({
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #0f0f0f;
+  background: var(--bg-primary);
 }
 
 .detail-empty {
@@ -648,7 +648,7 @@ const selectedPresetIndex = computed({
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .detail-error {
@@ -657,13 +657,13 @@ const selectedPresetIndex = computed({
 
 .detail-error h3 {
   font-size: 14px;
-  color: #fff;
+  color: var(--text-primary);
   margin-bottom: 8px;
   word-break: break-all;
 }
 
 .detail-error .error-text {
-  color: #f87171;
+  color: var(--error);
 }
 
 .detail-content {
@@ -678,27 +678,27 @@ const selectedPresetIndex = computed({
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: #1a1a1a;
-  border-bottom: 1px solid #333;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
 }
 
 .detail-header h3 {
   font-size: 14px;
-  color: #fff;
+  color: var(--text-primary);
   margin: 0;
 }
 
 .detail-size {
   font-size: 12px;
-  color: #888;
+  color: var(--text-secondary);
 }
 
 .detail-url {
   padding: 8px 16px;
   font-size: 12px;
-  color: #888;
-  background: #0a0a0a;
-  border-bottom: 1px solid #333;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
   word-break: break-all;
 }
 
@@ -724,7 +724,7 @@ const selectedPresetIndex = computed({
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .preview-icon {

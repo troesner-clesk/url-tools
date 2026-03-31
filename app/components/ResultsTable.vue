@@ -384,8 +384,8 @@ const linkStats = computed(() => {
 
 <style scoped>
 .results-table {
-  background: #1a1a1a;
-  border: 1px solid #333;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
   border-radius: 4px;
   overflow: auto;
 }
@@ -394,28 +394,28 @@ const linkStats = computed(() => {
   display: flex;
   gap: 16px;
   padding: 12px 16px;
-  background: #0a0a0a;
-  border-bottom: 1px solid #333;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
   font-size: 12px;
   flex-wrap: wrap;
 }
 
 .stat {
-  color: #888;
+  color: var(--text-secondary);
 }
 
 .stat strong {
-  color: #fff;
+  color: var(--text-primary);
 }
 
-.stat.status-ok { color: #4ade80; }
-.stat.status-redirect { color: #facc15; }
-.stat.status-error { color: #f87171; }
-.stat.type-internal { color: #38bdf8; }
+.stat.status-ok { color: var(--success); }
+.stat.status-redirect { color: var(--warning); }
+.stat.status-error { color: var(--error); }
+.stat.type-internal { color: var(--info); }
 .stat.type-external { color: #c084fc; }
 
 .stat-divider {
-  color: #333;
+  color: var(--border);
 }
 
 table {
@@ -427,12 +427,12 @@ table {
 th, td {
   padding: 10px 12px;
   text-align: left;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid var(--border);
 }
 
 th {
-  background: #0a0a0a;
-  color: #888;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
   font-weight: 500;
   text-transform: uppercase;
   font-size: 11px;
@@ -447,13 +447,13 @@ th {
 }
 
 .th-copy:hover {
-  color: #0066cc;
-  background: #1a1a2a;
+  color: var(--accent);
+  background: var(--info-bg);
 }
 
 .th-copy.copied {
-  color: #4ade80;
-  background: #1a4d1a;
+  color: var(--success);
+  background: var(--success-bg);
 }
 
 .url-cell {
@@ -486,18 +486,18 @@ th {
 }
 
 .status-ok {
-  background: #1a4d1a;
-  color: #4ade80;
+  background: var(--success-bg);
+  color: var(--success);
 }
 
 .status-redirect {
-  background: #4d4d1a;
-  color: #facc15;
+  background: var(--bg-tertiary);
+  color: var(--warning);
 }
 
 .status-error {
-  background: #4d1a1a;
-  color: #f87171;
+  background: var(--error-bg);
+  color: var(--error);
 }
 
 .type-badge {
@@ -508,8 +508,8 @@ th {
 }
 
 .type-badge.internal {
-  background: #1a3d4d;
-  color: #38bdf8;
+  background: var(--info-bg);
+  color: var(--info);
 }
 
 .type-badge.external {
@@ -519,26 +519,26 @@ th {
 
 .btn-small {
   padding: 4px 8px;
-  background: #333;
+  background: var(--bg-tertiary);
   border: none;
   border-radius: 3px;
-  color: #fff;
+  color: var(--text-primary);
   cursor: pointer;
   font-size: 11px;
   margin-right: 4px;
 }
 
 .btn-small:hover {
-  background: #444;
+  background: var(--bg-tertiary);
 }
 
 .error-text {
-  color: #f87171;
+  color: var(--error);
   font-size: 12px;
 }
 
 .html-preview {
-  background: #0a0a0a;
+  background: var(--bg-primary);
   padding: 12px;
   font-size: 11px;
   max-height: 400px;
@@ -550,7 +550,7 @@ th {
 .no-results {
   padding: 40px;
   text-align: center;
-  color: #666;
+  color: var(--text-muted);
 }
 
 /* Selection */
@@ -559,39 +559,39 @@ th {
   align-items: center;
   gap: 12px;
   padding: 8px 16px;
-  background: #1a2a4d;
-  border-bottom: 1px solid #333;
+  background: var(--info-bg);
+  border-bottom: 1px solid var(--border);
   font-size: 13px;
-  color: #38bdf8;
+  color: var(--info);
 }
 
 .btn-copy-selection {
   padding: 4px 12px;
-  background: #0066cc;
+  background: var(--accent);
   border: none;
   border-radius: 3px;
-  color: #fff;
+  color: var(--text-primary);
   cursor: pointer;
   font-size: 12px;
 }
 
 .btn-copy-selection:hover {
-  background: #0077ee;
+  background: var(--accent-hover);
 }
 
 .btn-clear-selection {
   padding: 4px 8px;
   background: transparent;
-  border: 1px solid #444;
+  border: 1px solid var(--border);
   border-radius: 3px;
-  color: #888;
+  color: var(--text-secondary);
   cursor: pointer;
   font-size: 12px;
 }
 
 .btn-clear-selection:hover {
-  background: #333;
-  color: #fff;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
 }
 
 .th-checkbox,
@@ -609,11 +609,11 @@ th {
 }
 
 tr.row-selected {
-  background: #1a2a3d;
+  background: var(--info-bg);
 }
 
 tr.row-selected:hover {
-  background: #1a3a4d;
+  background: var(--info-bg);
 }
 
 tbody tr {
@@ -621,6 +621,6 @@ tbody tr {
 }
 
 tbody tr:hover {
-  background: #222;
+  background: var(--bg-tertiary);
 }
 </style>
