@@ -259,6 +259,8 @@ const selectedPage = computed(() => {
   if (selectedPageIndex.value === null) return null
   return results.value[selectedPageIndex.value] || null
 })
+
+defineExpose({ isRunning: isLoading })
 </script>
 
 <template>

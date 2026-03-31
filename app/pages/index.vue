@@ -8,7 +8,7 @@ import {
   Image,
   Link2,
   Loader,
-  Map,
+  Map as MapIcon,
   Moon,
   Pause,
   Play,
@@ -97,7 +97,7 @@ const progress = ref({ done: 0, total: 0 })
 const htmlResults = ref<HtmlResult[]>([])
 const linkResults = ref<LinkResult[]>([])
 const savedFiles = ref<string[]>([])
-const error = ref<string | null>(null)
+const errorMessage = ref<string | null>(null)
 const currentUrl = ref<string | null>(null)
 const activeTab = ref<
   'scraper' | 'seo' | 'screenshots' | 'images' | 'sitemap' | 'broken-links'
@@ -106,13 +106,62 @@ const showClearConfirm = ref(false)
 const isClearing = ref(false)
 const abortController = ref<AbortController | null>(null)
 
+// Template refs for child components
+const seoAuditRef = ref<{ isRunning: { value: boolean } } | null>(null)
+const screenshotsRef = ref<{ isRunning: { value: boolean } } | null>(null)
+const imageScraperRef = ref<{ isRunning: { value: boolean } } | null>(null)
+const sitemapRef = ref<{ isRunning: { value: boolean } } | null>(null)
+const brokenLinksRef = ref<{ isRunning: { value: boolean } } | null>(null)
+
+// Tab switch warning
+const showTabSwitchWarning = ref(false)
+const pendingTab = ref<typeof activeTab.value | null>(null)
+
+function isOperationRunning(): boolean {
+  if (activeTab.value === 'scraper') return isRunning.value
+  if (activeTab.value === 'seo')
+    return seoAuditRef.value?.isRunning?.value ?? false
+  if (activeTab.value === 'screenshots')
+    return screenshotsRef.value?.isRunning?.value ?? false
+  if (activeTab.value === 'images')
+    return imageScraperRef.value?.isRunning?.value ?? false
+  if (activeTab.value === 'sitemap')
+    return sitemapRef.value?.isRunning?.value ?? false
+  if (activeTab.value === 'broken-links')
+    return brokenLinksRef.value?.isRunning?.value ?? false
+  return false
+}
+
+function switchTab(tab: typeof activeTab.value) {
+  if (tab === activeTab.value) return
+  if (isOperationRunning()) {
+    pendingTab.value = tab
+    showTabSwitchWarning.value = true
+    return
+  }
+  activeTab.value = tab
+}
+
+function confirmTabSwitch() {
+  if (pendingTab.value) {
+    activeTab.value = pendingTab.value
+  }
+  pendingTab.value = null
+  showTabSwitchWarning.value = false
+}
+
+function cancelTabSwitch() {
+  pendingTab.value = null
+  showTabSwitchWarning.value = false
+}
+
 // Start scraping
 async function startScraping() {
   if (!hasValidUrls.value || isRunning.value) return
 
   isRunning.value = true
   isPaused.value = false
-  error.value = null
+  errorMessage.value = null
   htmlResults.value = []
   linkResults.value = []
   savedFiles.value = []
@@ -133,7 +182,7 @@ async function startScraping() {
     if (isRunning.value) addLog('Done!', 'success')
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'An error occurred'
-    error.value = msg
+    errorMessage.value = msg
     addLog(msg, 'error')
   } finally {
     isRunning.value = false
@@ -360,37 +409,37 @@ async function clearOutputFolder() {
       <nav class="tabs">
         <button
           :class="['tab', { active: activeTab === 'scraper' }]"
-          @click="activeTab = 'scraper'"
+          @click="switchTab('scraper')"
         >
           <Globe :size="14" /> Scraper
         </button>
         <button
           :class="['tab', { active: activeTab === 'seo' }]"
-          @click="activeTab = 'seo'"
+          @click="switchTab('seo')"
         >
           <Search :size="14" /> SEO Audit
         </button>
         <button
           :class="['tab', { active: activeTab === 'screenshots' }]"
-          @click="activeTab = 'screenshots'"
+          @click="switchTab('screenshots')"
         >
           <Camera :size="14" /> Screenshots
         </button>
         <button
           :class="['tab', { active: activeTab === 'images' }]"
-          @click="activeTab = 'images'"
+          @click="switchTab('images')"
         >
           <Image :size="14" /> Images
         </button>
         <button
           :class="['tab', { active: activeTab === 'sitemap' }]"
-          @click="activeTab = 'sitemap'"
+          @click="switchTab('sitemap')"
         >
-          <Map :size="14" /> Sitemap
+          <MapIcon :size="14" /> Sitemap
         </button>
         <button
           :class="['tab', { active: activeTab === 'broken-links' }]"
-          @click="activeTab = 'broken-links'"
+          @click="switchTab('broken-links')"
         >
           <Link2 :size="14" /> Link Checker
         </button>
@@ -526,7 +575,7 @@ async function clearOutputFolder() {
         </div>
 
         <!-- Error -->
-        <div v-if="error" class="error">{{ error }}</div>
+        <div v-if="errorMessage" class="error">{{ errorMessage }}</div>
       </div>
 
       <!-- Results -->
@@ -541,29 +590,41 @@ async function clearOutputFolder() {
 
     <!-- SEO Audit Tab -->
     <main v-else-if="activeTab === 'seo'" class="full-page">
-      <SeoAudit />
+      <SeoAudit ref="seoAuditRef" />
     </main>
 
     <!-- Screenshots Tab -->
     <main v-else-if="activeTab === 'screenshots'" class="full-page">
-      <Screenshots />
+      <Screenshots ref="screenshotsRef" />
     </main>
 
     <!-- Image Scraper Tab -->
     <main v-else-if="activeTab === 'images'" class="full-page">
-      <ImageScraper />
+      <ImageScraper ref="imageScraperRef" />
     </main>
 
     <!-- Broken Link Checker Tab -->
     <!-- Sitemap Parser Tab -->
     <main v-else-if="activeTab === 'sitemap'" class="full-page">
-      <SitemapParser />
+      <SitemapParser ref="sitemapRef" />
     </main>
 
     <!-- Broken Link Checker Tab -->
     <main v-else-if="activeTab === 'broken-links'" class="full-page">
-      <BrokenLinkChecker />
+      <BrokenLinkChecker ref="brokenLinksRef" />
     </main>
+
+    <!-- Tab Switch Warning Modal -->
+    <div v-if="showTabSwitchWarning" class="modal-overlay" @click.self="cancelTabSwitch">
+      <div class="modal">
+        <h3>Operation in Progress</h3>
+        <p>An operation is still running. Switching tabs will stop it and discard its results.</p>
+        <div class="modal-actions">
+          <button class="btn-secondary" @click="cancelTabSwitch">Stay</button>
+          <button class="btn-danger" @click="confirmTabSwitch">Switch Anyway</button>
+        </div>
+      </div>
+    </div>
 
   </div>
 </template>

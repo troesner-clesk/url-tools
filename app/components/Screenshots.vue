@@ -189,6 +189,8 @@ const selectedPresetIndex = computed({
     }
   },
 })
+
+defineExpose({ isRunning: isLoading })
 </script>
 
 <template>

@@ -92,6 +92,8 @@ async function _copyUrls() {
     addLog('Failed to copy to clipboard', 'error')
   }
 }
+
+defineExpose({ isRunning: isLoading })
 </script>
 
 <template>

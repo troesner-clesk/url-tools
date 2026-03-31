@@ -278,6 +278,8 @@ function getScoreColor(score: number): string {
   if (score >= 40) return '#f97316'
   return '#ef4444'
 }
+
+defineExpose({ isRunning: isLoading })
 </script>
 
 <template>
