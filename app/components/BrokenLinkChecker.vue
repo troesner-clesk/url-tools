@@ -35,18 +35,27 @@ const abortController = ref<AbortController | null>(null)
 const progress = ref({ done: 0, total: 0 })
 const currentUrl = ref<string | null>(null)
 const filterBrokenOnly = ref(false)
+const typeFilter = ref<'all' | 'internal' | 'external'>('all')
 const copySuccess = ref(false)
 
 const brokenCount = computed(
   () => results.value.filter((r) => r.isBroken).length,
 )
 const okCount = computed(() => results.value.filter((r) => !r.isBroken).length)
+const internalCount = computed(() => results.value.filter((r) => r.isInternal).length)
+const externalCount = computed(() => results.value.filter((r) => !r.isInternal).length)
 
 const filteredResults = computed(() => {
+  let filtered = results.value
   if (filterBrokenOnly.value) {
-    return results.value.filter((r) => r.isBroken)
+    filtered = filtered.filter((r) => r.isBroken)
   }
-  return results.value
+  if (typeFilter.value === 'internal') {
+    filtered = filtered.filter((r) => r.isInternal)
+  } else if (typeFilter.value === 'external') {
+    filtered = filtered.filter((r) => !r.isInternal)
+  }
+  return filtered
 })
 
 function getStatusClass(status: number): string {
@@ -311,6 +320,11 @@ defineExpose({ isRunning })
           <span class="stat-label">OK</span>
         </div>
         <div class="stat-actions">
+          <div class="type-filter">
+            <button :class="{ active: typeFilter === 'all' }" @click="typeFilter = 'all'">All ({{ results.length }})</button>
+            <button :class="{ active: typeFilter === 'internal' }" @click="typeFilter = 'internal'">Internal ({{ internalCount }})</button>
+            <button :class="{ active: typeFilter === 'external' }" @click="typeFilter = 'external'">External ({{ externalCount }})</button>
+          </div>
           <label class="filter-toggle">
             <input type="checkbox" v-model="filterBrokenOnly">
             Broken only
@@ -831,5 +845,33 @@ defineExpose({ isRunning })
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+.type-filter {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-primary);
+  border-radius: 4px;
+  padding: 2px;
+}
+
+.type-filter button {
+  padding: 3px 8px;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.type-filter button:hover {
+  color: var(--text-primary);
+}
+
+.type-filter button.active {
+  background: var(--accent);
+  color: #fff;
 }
 </style>
