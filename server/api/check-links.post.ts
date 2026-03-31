@@ -70,7 +70,7 @@ export default defineEventHandler(async (event) => {
     headers: body.settings?.headers,
   }
 
-  const maxUrls = Math.min(Math.max(body.maxUrls || 500, 1), 10000)
+  const maxUrls = Math.max(body.maxUrls || 500, 1)
   const maxDepth = Math.min(Math.max(body.maxDepth || 1, 1), 5)
   const delayMs = 200
 

@@ -18,6 +18,7 @@ const { parsedUrls, hasValidUrls } = useUrlParser(urlInput)
 
 const recursive = ref(false)
 const maxDepth = ref(2)
+const maxLinks = ref(500)
 const sameDomainOnly = ref(true)
 const externalOnly = ref(false)
 
@@ -37,6 +38,7 @@ const currentUrl = ref<string | null>(null)
 const filterBrokenOnly = ref(false)
 const typeFilter = ref<'all' | 'internal' | 'external'>('all')
 const copySuccess = ref(false)
+const { toggleSort, sortIndicator, sortedData, resetSort } = useTableSort()
 
 const brokenCount = computed(
   () => results.value.filter((r) => r.isBroken).length,
@@ -58,6 +60,8 @@ const filteredResults = computed(() => {
   return filtered
 })
 
+const sortedResults = computed(() => sortedData(filteredResults.value))
+
 function getStatusClass(status: number): string {
   if (status === 0) return 'status-error'
   if (status >= 200 && status < 300) return 'status-ok'
@@ -75,6 +79,7 @@ async function startCheck() {
   progress.value = { done: 0, total: 0 }
   currentUrl.value = null
   copySuccess.value = false
+  resetSort()
 
   addLog(
     `Starting broken link check for ${parsedUrls.value.length} URL(s)`,
@@ -95,6 +100,7 @@ async function startCheck() {
         urls: parsedUrls.value,
         recursive: recursive.value,
         maxDepth: maxDepth.value,
+        maxUrls: maxLinks.value,
         sameDomainOnly: sameDomainOnly.value,
         externalOnly: externalOnly.value,
       }),
@@ -260,6 +266,11 @@ defineExpose({ isRunning })
         </label>
       </div>
 
+      <div class="option">
+        <label>Max links</label>
+        <input type="number" v-model.number="maxLinks" min="1" :disabled="isRunning">
+      </div>
+
       <div class="button-row">
         <button class="btn-primary" @click="startCheck" :disabled="!hasValidUrls || isRunning">
           <template v-if="isRunning"><Loader :size="14" class="spin" /> Checking...</template>
@@ -345,16 +356,16 @@ defineExpose({ isRunning })
         <table class="results-table">
           <thead>
             <tr>
-              <th class="col-source">Source</th>
-              <th class="col-target">Target</th>
-              <th class="col-status">Status</th>
-              <th class="col-type">Type</th>
-              <th class="col-anchor">Anchor Text</th>
+              <th class="col-source sortable" @click="toggleSort('sourceUrl')">Source{{ sortIndicator('sourceUrl') }}</th>
+              <th class="col-target sortable" @click="toggleSort('targetUrl')">Target{{ sortIndicator('targetUrl') }}</th>
+              <th class="col-status sortable" @click="toggleSort('status')">Status{{ sortIndicator('status') }}</th>
+              <th class="col-type sortable" @click="toggleSort('isInternal')">Type{{ sortIndicator('isInternal') }}</th>
+              <th class="col-anchor sortable" @click="toggleSort('anchorText')">Anchor Text{{ sortIndicator('anchorText') }}</th>
             </tr>
           </thead>
           <tbody>
             <tr
-              v-for="(result, index) in filteredResults"
+              v-for="(result, index) in sortedResults"
               :key="index"
               :class="{ 'row-broken': result.isBroken }"
             >
@@ -724,6 +735,15 @@ defineExpose({ isRunning })
   color: var(--text-secondary);
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
+}
+
+.results-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.results-table th.sortable:hover {
+  color: var(--accent);
 }
 
 .results-table td {
