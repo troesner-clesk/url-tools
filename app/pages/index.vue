@@ -708,7 +708,8 @@ body {
   content: attr(data-tooltip);
   position: absolute;
   top: calc(100% + 6px);
-  right: 0;
+  left: 50%;
+  transform: translateX(-50%);
   padding: 6px 10px;
   background: var(--bg-tertiary, #333);
   color: var(--text-primary, #fff);
