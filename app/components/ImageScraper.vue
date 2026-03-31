@@ -576,19 +576,6 @@ defineExpose({ isRunning: isLoading })
   cursor: help;
 }
 
-.help-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 14px;
-  height: 14px;
-  margin-left: 4px;
-  font-size: 10px;
-  background: var(--bg-tertiary);
-  border-radius: 50%;
-  color: var(--text-secondary);
-}
-
 .button-row {
   display: flex;
   gap: 8px;

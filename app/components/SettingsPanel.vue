@@ -60,7 +60,7 @@ const customSelector = ref('')
     <!-- HTML-specific Settings -->
     <template v-if="mode === 'html'">
       <div class="setting-group">
-        <label>Extract area</label>
+        <label title="CSS selector to extract specific page sections instead of the full HTML">Extract area <span class="help-icon">?</span></label>
         <select v-model="settings.cssSelector">
           <option value="">Full page</option>
           <option value="main">Main content only (main)</option>
@@ -89,7 +89,7 @@ const customSelector = ref('')
     <!-- Link-specific Settings -->
     <template v-if="mode === 'links'">
       <div class="setting-group">
-        <label>Export Format</label>
+        <label title="File format for saving link results">Export Format <span class="help-icon">?</span></label>
         <select v-model="settings.saveFormat">
           <option value="json">JSON</option>
           <option value="csv">CSV</option>
@@ -98,15 +98,15 @@ const customSelector = ref('')
       </div>
 
       <div class="setting-group">
-        <label>
+        <label title="Follow discovered links and crawl additional pages">
           <input type="checkbox" v-model="settings.recursive">
-          Crawl recursively
+          Crawl recursively <span class="help-icon">?</span>
         </label>
       </div>
 
       <template v-if="settings.recursive">
         <div class="setting-group">
-          <label>Max URLs</label>
+          <label title="Maximum number of URLs to crawl (prevents runaway crawls)">Max URLs <span class="help-icon">?</span></label>
           <input
             type="number"
             v-model.number="settings.maxUrls"
@@ -116,7 +116,7 @@ const customSelector = ref('')
         </div>
 
         <div class="setting-group">
-          <label>Max depth</label>
+          <label title="How many levels deep to follow links from the starting page">Max depth <span class="help-icon">?</span></label>
           <input
             type="number"
             v-model.number="settings.maxDepth"
@@ -126,15 +126,15 @@ const customSelector = ref('')
         </div>
 
         <div class="setting-group">
-          <label>
+          <label title="Only follow links on the same domain as the starting URL">
             <input type="checkbox" v-model="settings.sameDomainOnly">
-            Same domain only
+            Same domain only <span class="help-icon">?</span>
           </label>
         </div>
       </template>
 
       <div class="setting-group">
-        <label>Rate Limit (Req/s)</label>
+        <label title="Maximum requests per second to avoid overloading the target server">Rate Limit (Req/s) <span class="help-icon">?</span></label>
         <input
           type="number"
           v-model.number="settings.rateLimit"
