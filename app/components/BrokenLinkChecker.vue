@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AlertTriangle, Check, Info, Link as LinkIcon, Loader } from 'lucide-vue-next'
+import { AlertTriangle, Check, Link as LinkIcon, Loader } from 'lucide-vue-next'
 
 interface BrokenLinkResult {
   sourceUrl: string
@@ -253,12 +253,12 @@ defineExpose({ isRunning })
       <div class="option checkbox">
         <label>
           <input type="checkbox" v-model="recursive" :disabled="isRunning">
-          Recursive crawling <span class="help-icon" data-tooltip="Follow links and check additional pages beyond the starting URLs">?</span>
+          Recursive crawling <HelpTooltip text="Follow links and check additional pages beyond the starting URLs" />
         </label>
       </div>
 
       <div v-if="recursive" class="option">
-        <label>Max depth <span class="help-icon" data-tooltip="How many levels deep to follow links from the starting page">?</span></label>
+        <label>Max depth <HelpTooltip text="How many levels deep to follow links from the starting page" /></label>
         <select v-model.number="maxDepth" :disabled="isRunning">
           <option :value="1">1</option>
           <option :value="2">2</option>
@@ -271,23 +271,21 @@ defineExpose({ isRunning })
       <div class="option checkbox">
         <label>
           <input type="checkbox" v-model="sameDomainOnly" :disabled="isRunning">
-          Same domain only (crawling) <span class="help-icon" data-tooltip="Only follow internal links when crawling recursively">?</span>
+          Same domain only (crawling) <HelpTooltip text="Only follow internal links when crawling recursively" />
         </label>
       </div>
 
       <div class="option checkbox">
         <label>
           <input type="checkbox" v-model="externalOnly" :disabled="isRunning">
-          External links only <span class="help-icon" data-tooltip="Skip internal links — only check links pointing to other domains">?</span>
+          External links only <HelpTooltip text="Skip internal links — only check links pointing to other domains" />
         </label>
       </div>
 
       <div class="option">
         <label>
-          Exclude domains <span class="help-icon" data-tooltip="Skip links to these domains (comma-separated, supports wildcards like *.example.com)">?</span>
-          <span class="info-tooltip" data-tooltip="Comma or newline separated. Use *.example.com to match all subdomains (de.example.com, en.example.com etc.). Use example.com to match only the exact domain.">
-            <Info :size="12" />
-          </span>
+          Exclude domains <HelpTooltip text="Skip links to these domains (comma-separated, supports wildcards like *.example.com)" />
+          <HelpTooltip text="Comma or newline separated. Use *.example.com to match all subdomains (de.example.com, en.example.com etc.). Use example.com to match only the exact domain." />
         </label>
         <textarea
           v-model="excludeDomains"
@@ -298,7 +296,7 @@ defineExpose({ isRunning })
       </div>
 
       <div class="option">
-        <label>Max links <span class="help-icon" data-tooltip="Maximum number of links to check before stopping">?</span></label>
+        <label>Max links <HelpTooltip text="Maximum number of links to check before stopping" /></label>
         <input type="number" v-model.number="maxLinks" min="1" :disabled="isRunning">
       </div>
 
@@ -528,19 +526,6 @@ defineExpose({ isRunning })
 .option textarea:focus {
   outline: none;
   border-color: var(--accent);
-}
-
-.info-tooltip {
-  display: inline-flex;
-  align-items: center;
-  color: var(--text-muted);
-  cursor: help;
-  margin-left: 4px;
-  vertical-align: middle;
-}
-
-.info-tooltip:hover {
-  color: var(--accent);
 }
 
 .option select,

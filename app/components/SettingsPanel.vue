@@ -60,7 +60,7 @@ const customSelector = ref('')
     <!-- HTML-specific Settings -->
     <template v-if="mode === 'html'">
       <div class="setting-group">
-        <label>Extract area <span class="help-icon" data-tooltip="CSS selector to extract specific page sections instead of the full HTML">?</span></label>
+        <label>Extract area <HelpTooltip text="CSS selector to extract specific page sections instead of the full HTML" /></label>
         <select v-model="settings.cssSelector">
           <option value="">Full page</option>
           <option value="main">Main content only (main)</option>
@@ -89,7 +89,7 @@ const customSelector = ref('')
     <!-- Link-specific Settings -->
     <template v-if="mode === 'links'">
       <div class="setting-group">
-        <label>Export Format <span class="help-icon" data-tooltip="File format for saving link results">?</span></label>
+        <label>Export Format <HelpTooltip text="File format for saving link results" /></label>
         <select v-model="settings.saveFormat">
           <option value="json">JSON</option>
           <option value="csv">CSV</option>
@@ -100,13 +100,13 @@ const customSelector = ref('')
       <div class="setting-group">
         <label>
           <input type="checkbox" v-model="settings.recursive">
-          Crawl recursively <span class="help-icon" data-tooltip="Follow discovered links and crawl additional pages">?</span>
+          Crawl recursively <HelpTooltip text="Follow discovered links and crawl additional pages" />
         </label>
       </div>
 
       <template v-if="settings.recursive">
         <div class="setting-group">
-          <label>Max URLs <span class="help-icon" data-tooltip="Maximum number of URLs to crawl (prevents runaway crawls)">?</span></label>
+          <label>Max URLs <HelpTooltip text="Maximum number of URLs to crawl (prevents runaway crawls)" /></label>
           <input
             type="number"
             v-model.number="settings.maxUrls"
@@ -116,7 +116,7 @@ const customSelector = ref('')
         </div>
 
         <div class="setting-group">
-          <label>Max depth <span class="help-icon" data-tooltip="How many levels deep to follow links from the starting page">?</span></label>
+          <label>Max depth <HelpTooltip text="How many levels deep to follow links from the starting page" /></label>
           <input
             type="number"
             v-model.number="settings.maxDepth"
@@ -128,13 +128,13 @@ const customSelector = ref('')
         <div class="setting-group">
           <label>
             <input type="checkbox" v-model="settings.sameDomainOnly">
-            Same domain only <span class="help-icon" data-tooltip="Only follow links on the same domain as the starting URL">?</span>
+            Same domain only <HelpTooltip text="Only follow links on the same domain as the starting URL" />
           </label>
         </div>
       </template>
 
       <div class="setting-group">
-        <label>Rate Limit (Req/s) <span class="help-icon" data-tooltip="Maximum requests per second to avoid overloading the target server">?</span></label>
+        <label>Rate Limit (Req/s) <HelpTooltip text="Maximum requests per second to avoid overloading the target server" /></label>
         <input
           type="number"
           v-model.number="settings.rateLimit"
@@ -145,7 +145,7 @@ const customSelector = ref('')
       </div>
 
       <div class="setting-group">
-        <label>Include paths <span class="help-icon" data-tooltip="Only crawl URLs containing these path segments (comma-separated, e.g. /en/,/blog/)">?</span></label>
+        <label>Include paths <HelpTooltip text="Only crawl URLs containing these path segments (comma-separated, e.g. /en/,/blog/)" /></label>
         <input
           type="text"
           v-model="settings.pathInclude"
@@ -157,7 +157,7 @@ const customSelector = ref('')
       </div>
 
       <div class="setting-group">
-        <label>Exclude paths <span class="help-icon" data-tooltip="Skip URLs containing these path segments (comma-separated, e.g. /fr/,/admin/)">?</span></label>
+        <label>Exclude paths <HelpTooltip text="Skip URLs containing these path segments (comma-separated, e.g. /fr/,/admin/)" /></label>
         <input
           type="text"
           v-model="settings.pathExclude"

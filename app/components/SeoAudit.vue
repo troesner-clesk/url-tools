@@ -302,13 +302,13 @@ defineExpose({ isRunning: isLoading })
       <div class="option checkbox">
         <label>
           <input type="checkbox" v-model="checkLinks" :disabled="isLoading">
-          Check links for 404 errors <span class="help-icon" data-tooltip="Also check all links on the page for broken URLs (slower)">?</span>
+          Check links for 404 errors <HelpTooltip text="Also check all links on the page for broken URLs (slower)" />
         </label>
       </div>
       <div class="option checkbox">
         <label>
           <input type="checkbox" v-model="saveResults" :disabled="isLoading">
-          Auto-save results <span class="help-icon" data-tooltip="Automatically save audit results as JSON and CSV files">?</span>
+          Auto-save results <HelpTooltip text="Automatically save audit results as JSON and CSV files" />
         </label>
       </div>
 
