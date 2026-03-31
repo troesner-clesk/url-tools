@@ -107,11 +107,11 @@ const isClearing = ref(false)
 const abortController = ref<AbortController | null>(null)
 
 // Template refs for child components
-const seoAuditRef = ref<{ isRunning: { value: boolean } } | null>(null)
-const screenshotsRef = ref<{ isRunning: { value: boolean } } | null>(null)
-const imageScraperRef = ref<{ isRunning: { value: boolean } } | null>(null)
-const sitemapRef = ref<{ isRunning: { value: boolean } } | null>(null)
-const brokenLinksRef = ref<{ isRunning: { value: boolean } } | null>(null)
+const seoAuditRef = ref<{ isRunning: boolean } | null>(null)
+const screenshotsRef = ref<{ isRunning: boolean } | null>(null)
+const imageScraperRef = ref<{ isRunning: boolean } | null>(null)
+const sitemapRef = ref<{ isRunning: boolean } | null>(null)
+const brokenLinksRef = ref<{ isRunning: boolean } | null>(null)
 
 // Tab switch warning
 const showTabSwitchWarning = ref(false)
@@ -119,16 +119,15 @@ const pendingTab = ref<typeof activeTab.value | null>(null)
 
 function isOperationRunning(): boolean {
   if (activeTab.value === 'scraper') return isRunning.value
-  if (activeTab.value === 'seo')
-    return seoAuditRef.value?.isRunning?.value ?? false
+  if (activeTab.value === 'seo') return seoAuditRef.value?.isRunning ?? false
   if (activeTab.value === 'screenshots')
-    return screenshotsRef.value?.isRunning?.value ?? false
+    return screenshotsRef.value?.isRunning ?? false
   if (activeTab.value === 'images')
-    return imageScraperRef.value?.isRunning?.value ?? false
+    return imageScraperRef.value?.isRunning ?? false
   if (activeTab.value === 'sitemap')
-    return sitemapRef.value?.isRunning?.value ?? false
+    return sitemapRef.value?.isRunning ?? false
   if (activeTab.value === 'broken-links')
-    return brokenLinksRef.value?.isRunning?.value ?? false
+    return brokenLinksRef.value?.isRunning ?? false
   return false
 }
 
