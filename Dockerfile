@@ -46,7 +46,6 @@ EXPOSE 3000
 
 ENV HOST=0.0.0.0
 ENV PORT=3000
-ENV OUTPUT_DIR=/app/output
 
 RUN useradd -m -u 1001 appuser && chown -R appuser:appuser /app
 USER appuser

@@ -1,8 +1,7 @@
-import { homedir } from 'node:os'
-import { join, resolve } from 'node:path'
+import { resolve } from 'node:path'
 
 export const OUTPUT_ROOT = resolve(
-  process.env.OUTPUT_DIR || join(homedir(), 'Documents', 'url-tools'),
+  process.env.OUTPUT_DIR || resolve(process.cwd(), 'output'),
 )
 
 // Checks if a path is within the output directory
