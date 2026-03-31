@@ -251,14 +251,14 @@ defineExpose({ isRunning })
       <RequestSettings v-model:settings="requestSettings" />
 
       <div class="option checkbox">
-        <label>
+        <label title="Follow links and check additional pages beyond the starting URLs">
           <input type="checkbox" v-model="recursive" :disabled="isRunning">
-          Recursive crawling
+          Recursive crawling <span class="help-icon">?</span>
         </label>
       </div>
 
       <div v-if="recursive" class="option">
-        <label>Max depth</label>
+        <label title="How many levels deep to follow links from the starting page">Max depth <span class="help-icon">?</span></label>
         <select v-model.number="maxDepth" :disabled="isRunning">
           <option :value="1">1</option>
           <option :value="2">2</option>
@@ -269,22 +269,22 @@ defineExpose({ isRunning })
       </div>
 
       <div class="option checkbox">
-        <label>
+        <label title="Only follow internal links when crawling recursively">
           <input type="checkbox" v-model="sameDomainOnly" :disabled="isRunning">
-          Same domain only (crawling)
+          Same domain only (crawling) <span class="help-icon">?</span>
         </label>
       </div>
 
       <div class="option checkbox">
-        <label>
+        <label title="Skip internal links — only check links pointing to other domains">
           <input type="checkbox" v-model="externalOnly" :disabled="isRunning">
-          External links only
+          External links only <span class="help-icon">?</span>
         </label>
       </div>
 
       <div class="option">
-        <label>
-          Exclude domains
+        <label title="Skip links to these domains (comma-separated, supports wildcards like *.example.com)">
+          Exclude domains <span class="help-icon">?</span>
           <span class="info-tooltip" title="Comma or newline separated. Use *.example.com to match all subdomains (de.example.com, en.example.com etc.). Use example.com to match only the exact domain.">
             <Info :size="12" />
           </span>
@@ -298,7 +298,7 @@ defineExpose({ isRunning })
       </div>
 
       <div class="option">
-        <label>Max links</label>
+        <label title="Maximum number of links to check before stopping">Max links <span class="help-icon">?</span></label>
         <input type="number" v-model.number="maxLinks" min="1" :disabled="isRunning">
       </div>
 

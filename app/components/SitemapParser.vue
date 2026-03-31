@@ -115,9 +115,9 @@ defineExpose({ isRunning: isLoading })
       </div>
 
       <div class="option checkbox">
-        <label>
+        <label title="Recursively follow linked sitemaps in sitemap index files">
           <input type="checkbox" v-model="recursive" :disabled="isLoading">
-          Follow sitemap index files
+          Follow sitemap index files <span class="help-icon">?</span>
         </label>
       </div>
 

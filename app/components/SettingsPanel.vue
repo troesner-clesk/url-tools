@@ -145,7 +145,7 @@ const customSelector = ref('')
       </div>
 
       <div class="setting-group">
-        <label>Include paths</label>
+        <label title="Only crawl URLs containing these path segments (comma-separated, e.g. /en/,/blog/)">Include paths <span class="help-icon">?</span></label>
         <input
           type="text"
           v-model="settings.pathInclude"
@@ -157,7 +157,7 @@ const customSelector = ref('')
       </div>
 
       <div class="setting-group">
-        <label>Exclude paths</label>
+        <label title="Skip URLs containing these path segments (comma-separated, e.g. /fr/,/admin/)">Exclude paths <span class="help-icon">?</span></label>
         <input
           type="text"
           v-model="settings.pathExclude"
