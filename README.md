@@ -2,6 +2,15 @@
 
 A collection of web scraping and analysis tools with a browser-based UI. Built with Nuxt 4.
 
+## Disclaimer
+
+**Use at your own risk.** This tool is provided as-is, without any warranty. By using it, you agree that:
+
+- You are solely responsible for ensuring you have permission to scrape, crawl, or analyze any target website.
+- Downloading content from websites may violate their terms of service or applicable laws.
+- Downloaded files (HTML, images, etc.) may contain malicious content — scan them before opening.
+- The author assumes no liability for any damages, legal issues, or data loss arising from the use of this tool.
+
 ## Why?
 
 I tried various existing tools, but none of them worked the way I needed for my specific use cases. So I built my own.
@@ -29,12 +38,12 @@ Is it perfect? No. Is it feature-complete? Definitely not. But it does exactly w
 - Analyze page titles, meta descriptions, headings
 - Check Open Graph and Twitter Card tags
 - Identify missing or duplicate meta tags
-- Bulk analysis of multiple URLs
+- Bulk analysis of multiple URLs with scoring (0-100)
 
 ### Screenshots & PDF
 - Capture full-page or viewport screenshots
 - Export as PNG, JPG, or PDF
-- Custom viewport dimensions
+- Custom viewport dimensions (Desktop, Laptop, Tablet, Mobile presets)
 - Adjustable quality settings
 
 ### Image Scraper
@@ -42,6 +51,22 @@ Is it perfect? No. Is it feature-complete? Definitely not. But it does exactly w
 - Filter by dimensions and format
 - Batch download to local folder
 - Supports img tags, srcset, and background images
+
+### Sitemap Parser
+- Fetch and parse XML sitemaps
+- Follow sitemap index files recursively
+- Extract URL, lastmod, changefreq, priority
+- Copy all URLs to clipboard
+
+### Broken Link Checker
+- Crawl pages and HEAD-check all links via SSE streaming
+- Color-coded status badges (green/yellow/red)
+- Filter broken links only
+- Export broken links as TSV
+
+### UI
+- Dark/Light mode toggle with system preference detection
+- Responsive design for mobile devices
 
 ## Installation
 
@@ -59,7 +84,7 @@ Then open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Output
 
-All data is saved locally in `~/Documents/url-tools` by default. Set `OUTPUT_DIR` to change the location:
+All data is saved locally in the `output/` directory inside the project. Set `OUTPUT_DIR` to change the location:
 
 ```bash
 OUTPUT_DIR=/my/custom/path npm run dev
@@ -67,11 +92,12 @@ OUTPUT_DIR=/my/custom/path npm run dev
 
 Output structure:
 
-- `{timestamp}_html_files/` - Individual HTML files
-- `{timestamp}_html_meta.json` - Metadata for HTML scrapes
-- `{timestamp}_links.json` - Link analysis results
+- `scraper/{timestamp}_html_files/` - Individual HTML files
+- `scraper/{timestamp}_html_meta.json` - Metadata for HTML scrapes
+- `scraper/{timestamp}_links.json` - Link analysis results
 - `screenshots/{timestamp}/` - Screenshot and PDF files
 - `images/{timestamp}/` - Downloaded images
+- `seo-audit/{timestamp}_seo-audit.json` - SEO audit results
 
 ## Docker
 
@@ -89,7 +115,7 @@ The `output/` directory is mounted as a volume so results persist between contai
 ## Testing
 
 ```bash
-npm test          # Run all tests
+npm test            # Run all tests (80 tests)
 npm run test:watch  # Watch mode
 ```
 
@@ -105,6 +131,8 @@ npm run test:watch  # Watch mode
 - [Cheerio](https://cheerio.js.org/) - HTML parsing
 - [Puppeteer](https://pptr.dev/) - Screenshots and PDF generation
 - [PapaParse](https://www.papaparse.com/) - CSV generation
+- [Lucide](https://lucide.dev/) - Icons
+- [Vitest](https://vitest.dev/) - Testing
 
 ## Documentation
 
