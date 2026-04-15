@@ -28,3 +28,4 @@ logs
 # Scraped data (local only)
 output/
 
+.playwright-mcp/

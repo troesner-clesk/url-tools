@@ -7,11 +7,13 @@ import {
   forceSimulation,
   type Simulation,
 } from 'd3-force'
-import {
-  ChevronLeft,
-  ChevronRight as ChevronRightIcon,
-  RefreshCw,
-} from 'lucide-vue-next'
+import type {
+  GraphStats,
+  LabelMode,
+  LinkEdgeMode,
+  SizeMode,
+} from '../utils/graph-types'
+import GraphSidebar from './GraphSidebar.vue'
 
 interface InboundLink {
   sourceUrl: string
@@ -62,11 +64,7 @@ const hoverPos = ref({ x: 0, y: 0 })
 const pinnedId = ref<string | null>(null)
 const sidebarOpen = ref(true)
 
-// --- Controls ---
-type SizeMode = 'inbound' | 'outbound' | 'equal'
-type LinkEdgeMode = 'hover' | 'always' | 'hidden'
-type LabelMode = 'always' | 'hover' | 'never'
-
+// --- Controls (types in app/utils/graph-types.ts) ---
 const sizeMode = ref<SizeMode>('inbound')
 const linkEdgeMode = ref<LinkEdgeMode>('hover')
 const labelMode = ref<LabelMode>('hover')
@@ -343,7 +341,7 @@ function edgeEndpoint(
 }
 
 // --- Stats ---
-const stats = computed(() => {
+const stats = computed<GraphStats>(() => {
   const nonSynthetic = nodes.value.filter((n) => !n.isSynthetic)
   const targets = nonSynthetic.filter((n) => n.isTarget)
   const orphans = nonSynthetic.filter((n) => n.inboundCount === 0 && !n.isTarget)
@@ -363,7 +361,9 @@ const stats = computed(() => {
     targetCount: targets.length,
     orphanCount: orphans.length,
     hubCount: hubs.length,
-    topTarget: maxInbound,
+    topTarget: maxInbound
+      ? { id: maxInbound.id, inboundCount: maxInbound.inboundCount }
+      : null,
   }
 })
 
@@ -496,10 +496,6 @@ function resetView() {
   if (sim) sim.alpha(0.8).restart()
 }
 
-function toggleSidebar() {
-  sidebarOpen.value = !sidebarOpen.value
-}
-
 function catLabel(n: SimNode): string {
   const cat = nodeCategory(n)
   if (cat === 'root') return 'Root'
@@ -518,124 +514,21 @@ function truncate(s: string, max: number): string {
 <template>
   <ClientOnly>
     <div class="graph-root">
-      <!-- Sidebar -->
-      <aside class="graph-sidebar" :class="{ closed: !sidebarOpen }">
-        <div class="sidebar-header">
-          <h3 v-if="sidebarOpen">Graph controls</h3>
-          <button class="btn-icon" @click="toggleSidebar" :title="sidebarOpen ? 'Hide controls' : 'Show controls'">
-            <ChevronLeft v-if="sidebarOpen" :size="14" />
-            <ChevronRightIcon v-else :size="14" />
-          </button>
-        </div>
-
-        <div v-if="sidebarOpen" class="sidebar-content">
-          <section>
-            <div class="section-label">Zoom <span class="zoom-val">{{ zoomPct }}%</span></div>
-            <input type="range" min="20" max="400" step="5" v-model.number="zoomPct" class="slider" />
-            <button class="btn-secondary full" @click="resetView">
-              <RefreshCw :size="12" /> Reset view
-            </button>
-          </section>
-
-          <section>
-            <div class="section-label">Layout</div>
-            <label class="check-line">
-              <input type="checkbox" v-model="showHierarchy" />
-              Path hierarchy <span class="count">({{ hierarchyEdges.length }})</span>
-            </label>
-            <div class="hint-text">
-              Structural tree based on URL paths (e.g. /wiki → /wiki/griff). Always visible unless disabled.
-            </div>
-          </section>
-
-          <section>
-            <div class="section-label">Node size based on</div>
-            <label class="radio-line">
-              <input type="radio" v-model="sizeMode" value="inbound" /> Inbound links
-            </label>
-            <label class="radio-line">
-              <input type="radio" v-model="sizeMode" value="outbound" /> Outbound links
-            </label>
-            <label class="radio-line">
-              <input type="radio" v-model="sizeMode" value="equal" /> Equal
-            </label>
-          </section>
-
-          <section>
-            <div class="section-label">Link connections</div>
-            <label class="radio-line">
-              <input type="radio" v-model="linkEdgeMode" value="hover" /> On hover only
-            </label>
-            <label class="radio-line">
-              <input type="radio" v-model="linkEdgeMode" value="always" /> Always visible
-            </label>
-            <label class="radio-line">
-              <input type="radio" v-model="linkEdgeMode" value="hidden" /> Hidden
-            </label>
-            <div class="hint-text">
-              Actual &lt;a&gt; links between pages. Default is hover-only to keep the graph readable.
-            </div>
-          </section>
-
-          <section>
-            <div class="section-label">Labels</div>
-            <label class="radio-line">
-              <input type="radio" v-model="labelMode" value="always" /> Always
-            </label>
-            <label class="radio-line">
-              <input type="radio" v-model="labelMode" value="hover" /> On hover / pinned
-            </label>
-            <label class="radio-line">
-              <input type="radio" v-model="labelMode" value="never" /> Never
-            </label>
-          </section>
-
-          <section>
-            <div class="section-label">Show categories</div>
-            <label class="check-line">
-              <input type="checkbox" checked disabled />
-              <span class="dot" style="background: #6cbf3f" />
-              Root <span class="count">(always)</span>
-            </label>
-            <label class="check-line">
-              <input type="checkbox" v-model="showTargets" />
-              <span class="dot" style="background: var(--accent)" />
-              Targets <span class="count">({{ stats.targetCount }})</span>
-            </label>
-            <label class="check-line">
-              <input type="checkbox" v-model="showHotNodes" />
-              <span class="dot" style="background: #f5a623" />
-              Top 10% inbound
-            </label>
-            <label class="check-line">
-              <input type="checkbox" v-model="showHubs" />
-              <span class="dot" style="background: #9c27b0" />
-              Hubs <span class="count">({{ stats.hubCount }})</span>
-            </label>
-            <label class="check-line">
-              <input type="checkbox" v-model="showOrphans" />
-              <span class="dot" style="background: var(--text-muted)" />
-              No inbound <span class="count">({{ stats.orphanCount }})</span>
-            </label>
-          </section>
-
-          <section>
-            <div class="section-label">Statistics</div>
-            <div class="stat-row"><span>Nodes</span><span>{{ stats.nodeCount }}</span></div>
-            <div class="stat-row"><span>Link edges</span><span>{{ stats.edgeCount }}</span></div>
-            <div class="stat-row"><span>Targets</span><span>{{ stats.targetCount }}</span></div>
-            <div class="stat-row"><span>Orphans</span><span>{{ stats.orphanCount }}</span></div>
-            <div class="stat-row"><span>Hubs</span><span>{{ stats.hubCount }}</span></div>
-            <div v-if="stats.topTarget" class="top-target">
-              <div class="section-sublabel">Most-linked page</div>
-              <div class="top-target-url" :title="stats.topTarget.id">
-                {{ truncate(stats.topTarget.id, 40) }}
-              </div>
-              <div class="top-target-count">{{ stats.topTarget.inboundCount }} inbound</div>
-            </div>
-          </section>
-        </div>
-      </aside>
+      <GraphSidebar
+        v-model:open="sidebarOpen"
+        v-model:zoomPct="zoomPct"
+        v-model:sizeMode="sizeMode"
+        v-model:linkEdgeMode="linkEdgeMode"
+        v-model:labelMode="labelMode"
+        v-model:showHierarchy="showHierarchy"
+        v-model:showTargets="showTargets"
+        v-model:showHotNodes="showHotNodes"
+        v-model:showHubs="showHubs"
+        v-model:showOrphans="showOrphans"
+        :hierarchyEdgeCount="hierarchyEdges.length"
+        :stats="stats"
+        @reset="resetView"
+      />
 
       <!-- Canvas -->
       <div ref="containerEl" class="graph-canvas">
@@ -740,201 +633,7 @@ function truncate(s: string, max: number): string {
   background: var(--bg-primary);
 }
 
-.graph-sidebar {
-  width: 240px;
-  background: var(--bg-secondary);
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  transition: width 0.2s ease;
-}
-
-.graph-sidebar.closed {
-  width: 32px;
-}
-
-.sidebar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg-tertiary);
-  flex-shrink: 0;
-}
-
-.sidebar-header h3 {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin: 0;
-}
-
-.btn-icon {
-  padding: 4px;
-  background: transparent;
-  border: none;
-  border-radius: 3px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  display: flex;
-}
-
-.btn-icon:hover {
-  background: var(--bg-primary);
-  color: var(--text-primary);
-}
-
-.sidebar-content {
-  overflow-y: auto;
-  padding: 10px 12px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.sidebar-content section {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.section-label {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  margin-bottom: 4px;
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-}
-
-.section-sublabel {
-  font-size: 10px;
-  color: var(--text-muted);
-  margin-top: 6px;
-  margin-bottom: 2px;
-}
-
-.hint-text {
-  font-size: 10px;
-  color: var(--text-muted);
-  line-height: 1.4;
-  margin-top: 4px;
-  font-style: italic;
-}
-
-.zoom-val {
-  font-weight: 500;
-  color: var(--text-primary);
-  font-family: 'SF Mono', Monaco, monospace;
-  text-transform: none;
-}
-
-.slider {
-  width: 100%;
-  margin: 4px 0;
-  accent-color: var(--accent);
-}
-
-.radio-line,
-.check-line {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: var(--text-primary);
-  cursor: pointer;
-  padding: 2px 0;
-}
-
-.check-line input[disabled] {
-  cursor: not-allowed;
-}
-
-.radio-line input,
-.check-line input {
-  margin: 0;
-  accent-color: var(--accent);
-}
-
-.dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  display: inline-block;
-  flex-shrink: 0;
-}
-
-.count {
-  color: var(--text-muted);
-  font-size: 11px;
-  margin-left: auto;
-  font-family: 'SF Mono', Monaco, monospace;
-}
-
-.stat-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 11px;
-  color: var(--text-primary);
-  padding: 2px 0;
-}
-
-.stat-row span:last-child {
-  font-family: 'SF Mono', Monaco, monospace;
-  color: var(--text-secondary);
-}
-
-.top-target {
-  margin-top: 6px;
-  padding: 8px;
-  background: var(--bg-primary);
-  border-radius: 4px;
-  border: 1px solid var(--border);
-}
-
-.top-target-url {
-  font-family: 'SF Mono', Monaco, monospace;
-  font-size: 11px;
-  color: var(--info);
-  word-break: break-all;
-}
-
-.top-target-count {
-  font-size: 10px;
-  color: var(--text-muted);
-  margin-top: 2px;
-}
-
-.btn-secondary {
-  padding: 6px 10px;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  color: var(--text-primary);
-  cursor: pointer;
-  font-size: 11px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  justify-content: center;
-}
-
-.btn-secondary:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.btn-secondary.full {
-  width: 100%;
-  margin-top: 4px;
-}
+/* Sidebar styles live in GraphSidebar.vue */
 
 .graph-canvas {
   position: relative;
