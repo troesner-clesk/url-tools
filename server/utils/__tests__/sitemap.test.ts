@@ -131,6 +131,63 @@ describe('fetchSitemapUrls', () => {
     expect(result.sitemapsFetched).toBe(2)
   })
 
+  it('invokes onSitemapFetched callback per fetched sitemap', async () => {
+    fetchSpy
+      .mockResolvedValueOnce(
+        xmlResponse(
+          mkIndex(
+            'https://example.com/s1.xml',
+            'https://example.com/s2.xml',
+          ),
+        ),
+      )
+      .mockResolvedValueOnce(
+        xmlResponse(
+          mkUrlset('https://example.com/a', 'https://example.com/b'),
+        ),
+      )
+      .mockResolvedValueOnce(xmlResponse(mkUrlset('https://example.com/c')))
+
+    const calls: Array<[string, number]> = []
+    await fetchSitemapUrls(
+      'https://example.com/sitemap.xml',
+      SETTINGS,
+      {
+        recursive: true,
+        onSitemapFetched: (url, n) => {
+          calls.push([url, n])
+        },
+      },
+    )
+
+    expect(calls).toEqual([
+      ['https://example.com/sitemap.xml', 0], // index has no urlset entries
+      ['https://example.com/s1.xml', 2],
+      ['https://example.com/s2.xml', 1],
+    ])
+  })
+
+  it('a throwing callback does not abort the fetch loop', async () => {
+    fetchSpy
+      .mockResolvedValueOnce(
+        xmlResponse(mkIndex('https://example.com/s1.xml')),
+      )
+      .mockResolvedValueOnce(xmlResponse(mkUrlset('https://example.com/a')))
+
+    const result = await fetchSitemapUrls(
+      'https://example.com/sitemap.xml',
+      SETTINGS,
+      {
+        recursive: true,
+        onSitemapFetched: () => {
+          throw new Error('boom')
+        },
+      },
+    )
+    expect(result.entries.map((e) => e.loc)).toEqual(['https://example.com/a'])
+    expect(result.sitemapsFetched).toBe(2)
+  })
+
   it('deduplicates a URL appearing twice in the same sitemap', async () => {
     fetchSpy.mockResolvedValueOnce(
       xmlResponse(

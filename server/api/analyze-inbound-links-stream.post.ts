@@ -174,6 +174,17 @@ export default defineEventHandler(async (event) => {
         try {
           const { entries } = await fetchSitemapUrls(startUrl, settings, {
             recursive: true,
+            onSitemapFetched: (url, n) => {
+              emit('log', {
+                message: `Fetched sitemap ${url} (${n} entries)`,
+                type: 'progress',
+              })
+              emit('progress', {
+                done: 0,
+                total: 0,
+                currentUrl: url,
+              })
+            },
           })
           for (const entry of entries) {
             const normalized = normalizeUrl(entry.loc)

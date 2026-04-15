@@ -20,6 +20,12 @@ export interface FetchSitemapOptions {
   maxSitemaps?: number
   maxEntries?: number
   maxBodySize?: number
+  /**
+   * Called after each sitemap is successfully fetched and parsed. Use this
+   * to stream progress to a SSE consumer. Throws are swallowed so a buggy
+   * callback can't break the fetch loop.
+   */
+  onSitemapFetched?: (url: string, entriesAdded: number) => void
 }
 
 const DEFAULT_MAX_SITEMAPS = 50
@@ -101,9 +107,16 @@ export async function fetchSitemapUrls(
 
       const { entries, childSitemaps } = parseSitemapXml(xml, currentUrl)
 
+      const before = allEntries.length
       for (const entry of entries) {
         if (allEntries.length >= maxEntries) break
         allEntries.push(entry)
+      }
+
+      try {
+        opts.onSitemapFetched?.(currentUrl, allEntries.length - before)
+      } catch {
+        // Defense-in-depth: a throwing callback must not abort the fetch loop
       }
 
       if (recursive) {
