@@ -176,39 +176,40 @@ function nodeRadius(n: SimNode): number {
 function rebuildGraph() {
   const seen = new Set<string>()
 
-  // 1. Seed nodes from real link data
-  const realIds = new Set<string>()
+  // 1. Seed: collect IDs that came from real <a> link data
+  const linkUrlIds = new Set<string>()
   for (const r of props.results) {
-    realIds.add(r.sourceUrl)
-    realIds.add(r.targetUrl)
+    linkUrlIds.add(r.sourceUrl)
+    linkUrlIds.add(r.targetUrl)
   }
 
-  // 2. Inject synthetic origin roots
+  // 2. allIds = link IDs ∪ synthetic origin roots (kept separate so we can
+  //    later tell which roots were injected vs. observed in the link data)
+  const allIds = new Set(linkUrlIds)
   const origins = new Set<string>()
-  for (const id of realIds) {
+  for (const id of linkUrlIds) {
     try {
       origins.add(new URL(id).origin)
     } catch {}
   }
   for (const origin of origins) {
-    realIds.add(`${origin}/`)
+    allIds.add(`${origin}/`)
   }
 
   // 3. Ensure nodes exist
-  for (const id of realIds) {
+  for (const id of allIds) {
     ensureNode(id, seen)
   }
 
-  // 4. Recompute flags + counts
+  // 4. Recompute flags + counts. isSynthetic is now O(1) per node via the
+  //    linkUrlIds lookup, replacing the previous O(N×M) results.some() scan.
   for (const n of nodeById.values()) {
     n.inboundCount = 0
     n.outboundCount = 0
     n.isTarget = targetSet.value.has(n.id)
     n.depth = pathDepth(n.id)
     n.isRoot = n.depth === 0
-    n.isSynthetic = n.isRoot && !props.results.some(
-      (r) => r.sourceUrl === n.id || r.targetUrl === n.id,
-    )
+    n.isSynthetic = n.isRoot && !linkUrlIds.has(n.id)
   }
   for (const r of props.results) {
     const src = nodeById.get(r.sourceUrl)
