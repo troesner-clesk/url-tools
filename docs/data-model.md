@@ -387,11 +387,35 @@ Broken link checking with Server-Sent Events.
 
 **SSE Events:**
 ```typescript
-event: result   → { sourceUrl, targetUrl, status, statusText, isBroken, isInternal, anchorText, error? }
+event: result   → BrokenLinkResult
 event: progress → { done, total, currentUrl }
 event: log      → { message, type }
 event: done     → { totalLinks, brokenCount, okCount, visited }
 ```
+
+**BrokenLinkResult:**
+```typescript
+{
+  sourceUrl: string
+  targetUrl: string
+  status: number
+  statusText: string
+  isBroken: boolean
+  isInternal: boolean
+  anchorText: string
+  error?: string
+  domainStatus?: 'resolved' | 'available' | 'subdomain-gone' | 'timeout' | 'error' | 'skipped'
+    // DNS-level check: does the target domain resolve?
+    // - resolved: domain has DNS records
+    // - available: NXDOMAIN (domain is likely unregistered/free)
+    // - subdomain-gone: subdomain NXDOMAIN but parent domain resolves
+    // - timeout/error: DNS lookup failed for other reasons
+    // - skipped: IP address or internal link (not checked)
+  domainError?: string // DNS error code or message (e.g. 'NXDOMAIN', 'ECONNREFUSED', 'DNS timeout')
+}
+```
+
+See [ADR-009](adr/009-dns-domain-availability.md) for the rationale behind DNS-based availability detection.
 
 ---
 

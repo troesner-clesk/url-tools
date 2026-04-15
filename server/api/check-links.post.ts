@@ -1,4 +1,9 @@
 import { createError, defineEventHandler, readBody } from 'h3'
+import {
+  checkDomain,
+  type DomainCheckResult,
+  type DomainStatus,
+} from '../utils/domain-checker'
 import { fetchWithRetry, type RequestSettings } from '../utils/fetch-with-retry'
 import {
   extractLinks,
@@ -27,6 +32,8 @@ interface BrokenLinkResult {
   isInternal: boolean
   anchorText: string
   error?: string
+  domainStatus?: DomainStatus
+  domainError?: string
 }
 
 function isExcludedDomain(
@@ -100,6 +107,9 @@ export default defineEventHandler(async (event) => {
     const visited = new Set<string>()
     const checkedLinks = new Set<string>()
     const queue: Array<{ url: string; depth: number }> = []
+    // Shared DNS cache across all link checks for this request — dedupes
+    // lookups per hostname and between parallel batches.
+    const domainCache = new Map<string, Promise<DomainCheckResult>>()
 
     // Seed URLs with SSRF check
     for (const url of body.urls) {
@@ -182,11 +192,16 @@ export default defineEventHandler(async (event) => {
 
           const batchResults = await Promise.all(
             batch.map(async (link): Promise<BrokenLinkResult> => {
-              const redirectInfo = await getRedirectChain(
-                link.targetUrl,
-                5,
-                settings.timeout * 1000,
-              )
+              let hostname: string | null = null
+              try {
+                hostname = new URL(link.targetUrl).hostname
+              } catch {}
+              const [redirectInfo, domainInfo] = await Promise.all([
+                getRedirectChain(link.targetUrl, 5, settings.timeout * 1000),
+                link.isInternal || !hostname
+                  ? Promise.resolve<DomainCheckResult>({ status: 'skipped' })
+                  : checkDomain(hostname, domainCache),
+              ])
 
               const isBroken =
                 redirectInfo.finalStatus >= 400 || redirectInfo.finalStatus === 0
@@ -202,6 +217,8 @@ export default defineEventHandler(async (event) => {
                 isInternal: link.isInternal,
                 anchorText: link.anchorText,
                 error: redirectInfo.error,
+                domainStatus: domainInfo.status,
+                domainError: domainInfo.error,
               }
             }),
           )

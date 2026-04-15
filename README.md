@@ -62,6 +62,7 @@ Is it perfect? No. Is it feature-complete? Definitely not. But it does exactly w
 - Crawl pages and HEAD-check all links via SSE streaming
 - Color-coded status badges (green/yellow/red)
 - Filter broken links only
+- Detect available domains (unregistered/expired) in outbound links — useful for link audits
 - Export broken links as TSV
 
 ### UI

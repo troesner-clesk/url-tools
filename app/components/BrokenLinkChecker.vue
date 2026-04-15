@@ -10,6 +10,21 @@ interface BrokenLinkResult {
   isInternal: boolean
   anchorText: string
   error?: string
+  domainStatus?:
+    | 'resolved'
+    | 'available'
+    | 'subdomain-gone'
+    | 'timeout'
+    | 'error'
+    | 'skipped'
+  domainError?: string
+}
+
+type FilterMode = 'all' | 'broken' | 'available' | 'problems'
+
+interface DomainBadgeInfo {
+  label: string
+  className: string
 }
 
 const urlInput = ref('')
@@ -44,7 +59,7 @@ const error = ref<string | null>(null)
 const abortController = ref<AbortController | null>(null)
 const progress = ref({ done: 0, total: 0 })
 const currentUrl = ref<string | null>(null)
-const filterBrokenOnly = ref(false)
+const filterMode = ref<FilterMode>('all')
 const typeFilter = ref<'all' | 'internal' | 'external'>('all')
 const copySuccess = ref(false)
 const { toggleSort, sortIndicator, sortedData, resetSort } = useTableSort()
@@ -56,10 +71,33 @@ const okCount = computed(() => results.value.filter((r) => !r.isBroken).length)
 const internalCount = computed(() => results.value.filter((r) => r.isInternal).length)
 const externalCount = computed(() => results.value.filter((r) => !r.isInternal).length)
 
+const availableDomainCount = computed(() => {
+  const hostnames = new Set<string>()
+  for (const r of results.value) {
+    if (r.domainStatus === 'available') {
+      try {
+        hostnames.add(new URL(r.targetUrl).hostname)
+      } catch {
+        // ignore malformed URLs
+      }
+    }
+  }
+  return hostnames.size
+})
+
 const filteredResults = computed(() => {
   let filtered = results.value
-  if (filterBrokenOnly.value) {
+  if (filterMode.value === 'broken') {
     filtered = filtered.filter((r) => r.isBroken)
+  } else if (filterMode.value === 'available') {
+    filtered = filtered.filter((r) => r.domainStatus === 'available')
+  } else if (filterMode.value === 'problems') {
+    filtered = filtered.filter(
+      (r) =>
+        r.isBroken ||
+        r.domainStatus === 'available' ||
+        r.domainStatus === 'subdomain-gone',
+    )
   }
   if (typeFilter.value === 'internal') {
     filtered = filtered.filter((r) => r.isInternal)
@@ -68,6 +106,23 @@ const filteredResults = computed(() => {
   }
   return filtered
 })
+
+function getDomainBadge(
+  status: BrokenLinkResult['domainStatus'],
+): DomainBadgeInfo | null {
+  switch (status) {
+    case 'available':
+      return { label: 'Available', className: 'domain-available' }
+    case 'subdomain-gone':
+      return { label: 'Subdomain missing', className: 'domain-subdomain-gone' }
+    case 'timeout':
+      return { label: 'DNS timeout', className: 'domain-timeout' }
+    case 'error':
+      return { label: 'DNS error', className: 'domain-error' }
+    default:
+      return null
+  }
+}
 
 const sortedResults = computed(() => sortedData(filteredResults.value))
 
@@ -208,9 +263,25 @@ async function exportBrokenLinks() {
   const broken = results.value.filter((r) => r.isBroken)
   if (broken.length === 0) return
 
-  const text = broken
-    .map((r) => `${r.targetUrl}\t${r.status}\t${r.statusText}\t${r.sourceUrl}`)
-    .join('\n')
+  const header = [
+    'Target URL',
+    'Status',
+    'Status Text',
+    'Source URL',
+    'Domain Status',
+    'Domain Error',
+  ].join('\t')
+  const rows = broken.map((r) =>
+    [
+      r.targetUrl,
+      r.status,
+      r.statusText,
+      r.sourceUrl,
+      r.domainStatus ?? '',
+      r.domainError ?? '',
+    ].join('\t'),
+  )
+  const text = [header, ...rows].join('\n')
   try {
     await navigator.clipboard.writeText(text)
     copySuccess.value = true
@@ -359,16 +430,22 @@ defineExpose({ isRunning })
           <span class="stat-value">{{ okCount }}</span>
           <span class="stat-label">OK</span>
         </div>
+        <div v-if="availableDomainCount > 0" class="stat-item stat-available">
+          <span class="stat-value">{{ availableDomainCount }}</span>
+          <span class="stat-label">Available domains</span>
+        </div>
         <div class="stat-actions">
           <div class="type-filter">
             <button :class="{ active: typeFilter === 'all' }" @click="typeFilter = 'all'">All ({{ results.length }})</button>
             <button :class="{ active: typeFilter === 'internal' }" @click="typeFilter = 'internal'">Internal ({{ internalCount }})</button>
             <button :class="{ active: typeFilter === 'external' }" @click="typeFilter = 'external'">External ({{ externalCount }})</button>
           </div>
-          <label class="filter-toggle">
-            <input type="checkbox" v-model="filterBrokenOnly">
-            Broken only
-          </label>
+          <select v-model="filterMode" class="filter-select" aria-label="Filter results">
+            <option value="all">All links</option>
+            <option value="broken">Broken only</option>
+            <option value="available">Available domains only</option>
+            <option value="problems">All problems (broken + unregistered)</option>
+          </select>
           <button
             class="btn-export"
             @click="exportBrokenLinks"
@@ -388,6 +465,7 @@ defineExpose({ isRunning })
               <th class="col-source sortable" @click="toggleSort('sourceUrl')">Source{{ sortIndicator('sourceUrl') }}</th>
               <th class="col-target sortable" @click="toggleSort('targetUrl')">Target{{ sortIndicator('targetUrl') }}</th>
               <th class="col-status sortable" @click="toggleSort('status')">Status{{ sortIndicator('status') }}</th>
+              <th class="col-domain sortable" @click="toggleSort('domainStatus')">Domain{{ sortIndicator('domainStatus') }}</th>
               <th class="col-type sortable" @click="toggleSort('isInternal')">Type{{ sortIndicator('isInternal') }}</th>
               <th class="col-anchor sortable" @click="toggleSort('anchorText')">Anchor Text{{ sortIndicator('anchorText') }}</th>
             </tr>
@@ -409,6 +487,15 @@ defineExpose({ isRunning })
                   {{ result.status || 'ERR' }}
                 </span>
                 <span class="status-text">{{ result.statusText }}</span>
+              </td>
+              <td class="col-domain">
+                <span
+                  v-if="getDomainBadge(result?.domainStatus)"
+                  :class="['domain-badge', getDomainBadge(result?.domainStatus)?.className]"
+                  :title="result?.domainError || getDomainBadge(result?.domainStatus)?.label"
+                >
+                  {{ getDomainBadge(result?.domainStatus)?.label }}
+                </span>
               </td>
               <td class="col-type">
                 <span :class="['type-badge', result.isInternal ? 'type-internal' : 'type-external']">
@@ -717,6 +804,15 @@ defineExpose({ isRunning })
   color: var(--success);
 }
 
+.stat-available .stat-value {
+  color: var(--error);
+}
+
+.stat-available .stat-label {
+  color: var(--error);
+  font-weight: 600;
+}
+
 .stat-actions {
   margin-left: auto;
   display: flex;
@@ -724,13 +820,19 @@ defineExpose({ isRunning })
   gap: 12px;
 }
 
-.filter-toggle {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.filter-select {
+  padding: 6px 10px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
   font-size: 12px;
-  color: var(--text-secondary);
   cursor: pointer;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 
 .btn-export {
@@ -865,6 +967,43 @@ defineExpose({ isRunning })
   margin-left: 6px;
   color: var(--text-muted);
   font-size: 11px;
+}
+
+.col-domain {
+  white-space: nowrap;
+}
+
+.domain-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.domain-available {
+  background: var(--error-bg);
+  color: var(--error);
+  border: 1px solid var(--error);
+}
+
+.domain-subdomain-gone {
+  background: color-mix(in srgb, var(--warning) 20%, transparent);
+  color: var(--warning);
+  border: 1px solid color-mix(in srgb, var(--warning) 50%, transparent);
+}
+
+.domain-timeout {
+  background: color-mix(in srgb, var(--warning) 10%, transparent);
+  color: var(--warning);
+  font-weight: 500;
+}
+
+.domain-error {
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+  font-weight: 500;
 }
 
 .type-badge {

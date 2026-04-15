@@ -13,6 +13,7 @@ Check all links on a web page for broken URLs (4xx, 5xx, connection errors). Res
 - **External Only Mode** — Only check outbound links
 - **Type Filtering** — Filter results by All / Internal / External
 - **Broken Only Filter** — Show only broken links
+- **Domain Availability Detection** — Flag unregistered/free domains in outbound links
 - **Sortable Columns** — Click column headers to sort results
 - **TSV Export** — Copy results to clipboard
 
@@ -55,3 +56,15 @@ Check all links on a web page for broken URLs (4xx, 5xx, connection errors). Res
 | Green | 200-299 | OK |
 | Orange | 300-399 | Redirect |
 | Red | 400+ or 0 | Broken / Connection Failed |
+
+## Domain Availability Detection
+
+Every external link triggers a parallel DNS lookup via `dns.promises.lookup()` alongside the HTTP check. The result is classified as one of:
+
+- `resolved` — domain has DNS records
+- `available` — NXDOMAIN, the domain is likely unregistered and free to register
+- `subdomain-gone` — subdomain NXDOMAIN but the parent domain still resolves
+- `timeout` / `error` — DNS lookup failed for other reasons
+- `skipped` — internal link or IP literal, not checked
+
+A per-request Promise-valued cache deduplicates concurrent lookups for the same hostname, so many links sharing a host only cost one DNS query. See `server/utils/domain-checker.ts` for the implementation and [ADR-009](../adr/009-dns-domain-availability.md) for the rationale.
