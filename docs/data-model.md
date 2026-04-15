@@ -123,6 +123,65 @@ event: error      → { message }
 
 ---
 
+### POST /api/analyze-inbound-links-stream (SSE)
+
+Inbound ("silo") analysis — crawl a site and find which pages link TO one or more target URLs.
+
+**Request:**
+```typescript
+{
+  startUrls: string[]                    // Seed URLs (or sitemap URLs)
+  crawlScope: 'recursive' | 'sitemap'
+  targetMode: 'single' | 'multi' | 'matrix'
+  targets?: string[]                     // Required for single/multi, max 500
+  maxUrls?: number                       // Default 200, cap 10,000
+  maxDepth?: number                      // Default 3, cap 10
+  rateLimit?: number                     // Default 2 req/s
+  pathInclude?: string
+  pathExclude?: string
+  settings?: RequestSettings
+}
+```
+
+**SSE Events:**
+```typescript
+event: result    → InboundLink
+event: progress  → { done, total, currentUrl }
+event: log       → { message, type }
+event: done      → { pagesProcessed, inboundFound, visited }
+event: error     → { message }
+```
+
+**InboundLink:**
+```typescript
+{
+  sourceUrl: string
+  targetUrl: string
+  anchorText: string
+  rel: string
+  sourceStatus: number
+  depth: number
+}
+```
+
+**InboundGroup** (client-side aggregation):
+```typescript
+{
+  targetUrl: string
+  inboundCount: number
+  uniqueSources: number
+  sources: { sourceUrl: string; anchorTexts: string[]; rels: string[] }[]
+  anchorDistribution: Record<string, number>
+}
+```
+
+Output saved to `OUTPUT_DIR/silo/`:
+- `<timestamp>_inbound-links.json` — full results
+- `<timestamp>_inbound-links.csv` — flat CSV
+- `<timestamp>_inbound-links.txt` — unique source URLs
+
+---
+
 ### POST /api/scrape-images
 
 Extract images from web pages and optionally download them.

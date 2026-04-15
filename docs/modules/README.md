@@ -12,6 +12,7 @@ Each feature module has its own documentation. Focus is on **WHAT** and **WHY**,
 | [Screenshots](screenshots.md) | Create screenshots and PDFs of web pages | `Screenshots.vue` |
 | [Image-Scraper](image-scraper.md) | Extract and download images from web pages | `ImageScraper.vue` |
 | [Broken-Link-Checker](broken-link-checker.md) | Check pages for broken links with live streaming | `BrokenLinkChecker.vue` |
+| [Inbound-Link-Analyzer](inbound-link-analyzer.md) | Find which pages link to a target URL — silo / inbound analysis with force-directed graph | `InboundLinkAnalyzer.vue`, `InboundGroupedView.vue`, `GraphView.vue` |
 | [Sitemap-Parser](../data-model.md) | Extract URLs from XML sitemaps | `SitemapParser.vue` |
 
 ## Shared Components
@@ -24,3 +25,4 @@ These components are used by multiple modules:
 | `RequestSettings.vue` | HTML-Scraper, Link-Analyzer | Timeout, retries, proxy, headers |
 | `RecentJobsMenu.vue` | All modules | Access previous results |
 | `SitemapParser.vue` | Standalone | Extract sitemap URLs |
+| `HelpTooltip.vue` | All modules with settings | Teleport-based tooltip that never gets clipped by overflow containers |

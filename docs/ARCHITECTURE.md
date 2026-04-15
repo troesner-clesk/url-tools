@@ -26,8 +26,9 @@ url-tools/
 ├── app/                          # Frontend (Vue 3)
 │   ├── pages/
 │   │   └── index.vue             # Main page with tab navigation
-│   ├── components/               # 10 Vue components
+│   ├── components/               # 11 Vue components
 │   │   ├── BrokenLinkChecker.vue # Broken link checking
+│   │   ├── HelpTooltip.vue       # Teleport-based tooltip (no clipping)
 │   │   ├── ImageScraper.vue      # Image extraction and download
 │   │   ├── RecentJobsMenu.vue    # Recent jobs / history
 │   │   ├── RequestSettings.vue   # HTTP request settings
@@ -40,6 +41,7 @@ url-tools/
 │   └── composables/              # Reusable logic
 │       ├── useFormatters.ts      # File size formatting
 │       ├── useLogger.ts          # Log system with auto-scroll
+│       ├── useTableSort.ts       # Sortable table columns (asc/desc/none)
 │       ├── useTheme.ts           # Dark/light mode
 │       └── useUrlParser.ts       # URL parsing and validation
 ├── server/                       # Backend (Nitro)
@@ -123,6 +125,7 @@ Although there is no auth, there are multiple layers of security:
 | `useLogger` | Log entries with timestamp and auto-scroll, max. 100 entries |
 | `useTheme` | Dark/light mode toggle, localStorage persistence, system preference detection |
 | `useFormatters` | File size formatting (B, KB, MB) |
+| `useTableSort` | Generic table column sorting (asc → desc → unsorted cycle), handles numbers/strings/booleans |
 
 ### Server Utilities
 

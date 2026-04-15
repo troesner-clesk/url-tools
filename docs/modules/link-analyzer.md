@@ -13,6 +13,8 @@ Extract and analyze all links on a web page — including HTTP status, redirect 
 - **Rate Limiting** — Configurable requests per second
 - **Pause/Resume** — Pause and resume crawling
 - **Row Selection** — Select rows and copy as TSV
+- **Sortable Columns** — Click column headers to sort (asc → desc → unsorted)
+- **Column Copy** — Small copy icon next to each header copies column values to clipboard
 - **Multi-Export** — JSON, CSV, and/or TXT (URL list)
 
 ## Data Model

@@ -10,6 +10,8 @@ Extract HTML content from one or more URLs. Supports CSS selectors for filtering
 - **CSS Selectors** — Extract specific sections (e.g., only `<main>`, `<article>`, `.content`)
 - **Selector Presets** — Predefined selectors for common page structures
 - **Sitemap Support** — Automatic detection of XML sitemaps
+- **Sortable Columns** — Click column headers in results table to sort (asc → desc → unsorted)
+- **Column Copy** — Small copy icon next to each header copies the column values to clipboard
 - **Auto-Export** — Results are automatically saved as JSON/CSV/HTML
 
 ## Roles & Permissions
