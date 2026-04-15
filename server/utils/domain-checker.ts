@@ -1,4 +1,5 @@
 import { promises as dns } from 'node:dns'
+import { isIP } from 'node:net'
 
 export type DomainStatus =
   | 'resolved' // Domain has DNS records
@@ -76,8 +77,10 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
 }
 
 function isIpAddress(hostname: string): boolean {
+  // Strip IPv6 brackets if present (e.g. "[::1]" → "::1")
   const h = hostname.replace(/^\[|\]$/g, '')
-  return /^[\d.]+$/.test(h) || /^[\da-f:]+$/i.test(h)
+  // net.isIP returns 0 for non-IP, 4 for IPv4, 6 for IPv6
+  return isIP(h) !== 0
 }
 
 function getRegistrableParent(hostname: string): string | null {

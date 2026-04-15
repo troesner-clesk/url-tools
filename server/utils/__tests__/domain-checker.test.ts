@@ -67,6 +67,31 @@ describe('checkDomain', () => {
     expect(mockedLookup).not.toHaveBeenCalled()
   })
 
+  it('does NOT treat hex-only single-label hostnames as IPs (regression)', async () => {
+    // "cafe", "abc", "face" are valid hostname labels, not IPv6 addresses.
+    // The old regex-based isIpAddress falsely flagged these as IPv6.
+    mockedLookup.mockRejectedValueOnce(nxdomainError())
+    const cache = makeCache()
+
+    const result = await checkDomain('cafe', cache)
+
+    expect(result.status).toBe('available')
+    expect(mockedLookup).toHaveBeenCalledTimes(1)
+  })
+
+  it('does NOT treat incomplete numeric strings as IPv4 (regression)', async () => {
+    // "1.2" and "1.2.3" are not valid IPv4 — they must go through DNS rather
+    // than being silently skipped. (The old regex-based check incorrectly
+    // treated any dot-and-digit string as IPv4.)
+    mockedLookup.mockRejectedValue(nxdomainError())
+    const cache = makeCache()
+
+    await checkDomain('1.2.3', cache)
+
+    // The key assertion: dns.lookup was actually invoked, i.e. not skipped.
+    expect(mockedLookup).toHaveBeenCalled()
+  })
+
   it('returns resolved when dns.lookup succeeds', async () => {
     mockedLookup.mockResolvedValueOnce({ address: '93.184.216.34', family: 4 })
     const cache = makeCache()
