@@ -5,6 +5,7 @@ import {
   matchesTarget,
   normalizeTargets,
 } from '../utils/inbound-matcher'
+import { decideEmitInbound } from '../utils/inbound-stream-helpers'
 import { extractLinks, normalizeUrl } from '../utils/link-analyzer'
 import { fetchSitemapUrls } from '../utils/sitemap'
 import { isAllowedUrl } from '../utils/url-validator'
@@ -258,9 +259,14 @@ export default defineEventHandler(async (event) => {
             matchesTarget(link.targetUrl, normalizedTargetSet)
 
           if (isMatch) {
-            const edgeKey = `${item.url}|${link.targetUrl}`
-            if (!emittedEdges.has(edgeKey)) {
-              emittedEdges.add(edgeKey)
+            const decision = decideEmitInbound(
+              item.url,
+              link.targetUrl,
+              emittedEdges,
+              inboundFound,
+              MAX_RESULTS,
+            )
+            if (decision.kind === 'emit') {
               const inbound: InboundLink = {
                 sourceUrl: item.url,
                 targetUrl: link.targetUrl,
@@ -272,7 +278,7 @@ export default defineEventHandler(async (event) => {
               emit('result', inbound)
               inboundFound++
               pageHits++
-              if (inboundFound >= MAX_RESULTS) {
+              if (decision.capReached) {
                 capReached = true
                 emit('log', {
                   message: `Result cap reached (${MAX_RESULTS}); stopping early`,

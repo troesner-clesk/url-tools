@@ -89,47 +89,7 @@ const hierarchyEdges = ref<SimEdge[]>([])
 const linkEdges = ref<SimEdge[]>([])
 let sim: Simulation<SimNode, SimEdge> | null = null
 
-// --- URL parent resolution ---
-function resolveParentId(
-  childId: string,
-  allIds: Set<string>,
-): string | null {
-  let u: URL
-  try {
-    u = new URL(childId)
-  } catch {
-    return null
-  }
-  const origin = u.origin
-  const path = u.pathname.replace(/\/+$/, '')
-  if (!path) return null // already root
-
-  const segments = path.split('/').filter(Boolean)
-  for (let i = segments.length - 1; i > 0; i--) {
-    const parentPath = `/${segments.slice(0, i).join('/')}`
-    const candidates = [
-      `${origin}${parentPath}/`,
-      `${origin}${parentPath}`,
-    ]
-    for (const c of candidates) {
-      if (c !== childId && allIds.has(c)) return c
-    }
-  }
-  const root = `${origin}/`
-  if (root !== childId && allIds.has(root)) return root
-  return null
-}
-
-function pathDepth(id: string): number {
-  try {
-    const u = new URL(id)
-    const path = u.pathname.replace(/\/+$/, '')
-    if (!path) return 0
-    return path.split('/').filter(Boolean).length
-  } catch {
-    return 0
-  }
-}
+// resolveParentId / pathDepth are auto-imported from app/utils/graph-hierarchy.ts
 
 // --- Adjacency (uses BOTH hierarchy and link edges) ---
 const adjacency = computed(() => {

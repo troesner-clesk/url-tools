@@ -159,6 +159,20 @@ export function useLogStore() {
   }
 }
 
+/**
+ * Test-only: resets module-level state so each test starts clean.
+ * Does NOT touch `initialized` (in node it stays false anyway because
+ * `typeof window === 'undefined'` short-circuits init) or the persisted
+ * UI state (`drawerOpen`, `drawerWidth`) which is irrelevant to log tests.
+ */
+export function __resetForTests() {
+  Object.assign(allLogs, emptyLogs())
+  Object.assign(allProgress, emptyProgress())
+  Object.assign(allCurrentUrl, emptyCurrentUrl())
+  Object.assign(allRunning, emptyRunning())
+  activeTabId.value = 'scraper'
+}
+
 export function useTabLogger(tabId: TabId) {
   initFromStorage()
 
