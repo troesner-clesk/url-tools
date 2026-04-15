@@ -105,17 +105,17 @@ function truncateUrl(url: string, max = 80): string {
 </script>
 
 <template>
-  <!-- Collapsed tab handle -->
+  <!-- Persistent toggle tab — same visual position whether drawer is open or closed -->
   <button
-    v-if="!drawerOpen"
     class="drawer-handle"
-    :class="{ 'is-running': anyRunning }"
+    :class="{ 'is-open': drawerOpen, 'is-running': anyRunning }"
+    :style="drawerOpen ? { right: `${drawerWidth}px` } : undefined"
     @click="toggleDrawer"
-    aria-label="Open log panel"
+    :aria-label="drawerOpen ? 'Close log panel' : 'Open log panel'"
   >
-    <Terminal :size="14" />
-    <span class="handle-label">Log</span>
     <span v-if="anyRunning" class="pulse" />
+    <span class="handle-label">Log</span>
+    <Terminal :size="12" class="handle-icon" />
   </button>
 
   <!-- Drawer -->
@@ -356,7 +356,7 @@ function truncateUrl(url: string, max = 80): string {
 .log-error { color: var(--error); }
 .log-progress { color: var(--info); }
 
-/* Collapsed handle */
+/* Persistent right-edge toggle tab — vertical (90° rotated), flat against the edge */
 .drawer-handle {
   position: fixed;
   top: 50%;
@@ -365,20 +365,22 @@ function truncateUrl(url: string, max = 80): string {
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
   border-right: none;
-  border-top-left-radius: 6px;
-  border-bottom-left-radius: 6px;
-  padding: 10px 8px;
+  border-top-left-radius: 5px;
+  border-bottom-left-radius: 5px;
+  padding: 8px 4px;
   color: var(--text-primary);
   cursor: pointer;
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: 6px;
-  z-index: 90;
-  writing-mode: vertical-rl;
-  font-size: 12px;
+  z-index: 95;
+  font-size: 10px;
   font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
   box-shadow: -2px 0 6px rgba(0, 0, 0, 0.08);
+  transition: right 0.2s ease, background 0.15s;
 }
 
 .drawer-handle:hover {
@@ -386,16 +388,27 @@ function truncateUrl(url: string, max = 80): string {
   color: #fff;
 }
 
-.drawer-handle svg {
-  writing-mode: horizontal-tb;
+.drawer-handle.is-open .handle-icon {
+  transform: rotate(-90deg);
 }
 
-.handle-label {
-  letter-spacing: 1px;
+.drawer-handle:not(.is-open) .handle-icon {
+  transform: rotate(90deg);
+}
+
+/* Force icon + pulse to stay in normal (horizontal) orientation
+   so they don't get visually rotated by writing-mode. */
+.handle-icon,
+.pulse {
+  writing-mode: horizontal-tb;
+  flex-shrink: 0;
+}
+
+.handle-icon {
+  transition: transform 0.2s ease;
 }
 
 .pulse {
-  writing-mode: horizontal-tb;
   width: 6px;
   height: 6px;
   border-radius: 50%;
