@@ -639,6 +639,9 @@ function truncate(s: string, max: number): string {
 
       <!-- Canvas -->
       <div ref="containerEl" class="graph-canvas">
+        <div v-if="nodes.length === 0" class="graph-empty">
+          No graph yet — start an analysis to populate.
+        </div>
         <svg
           ref="svgEl"
           class="graph-svg"
@@ -936,6 +939,19 @@ function truncate(s: string, max: number): string {
 .graph-canvas {
   position: relative;
   overflow: hidden;
+}
+
+.graph-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-style: italic;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .graph-svg {

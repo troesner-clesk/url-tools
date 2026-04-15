@@ -112,8 +112,18 @@ const uniqueSources = computed(() => {
   return set.size
 })
 
+const showMatrixConfirm = ref(false)
+let matrixConfirmed = false
+
 async function start() {
   if (!canStart.value) return
+
+  // Matrix mode can flood with tens of thousands of edges. Warn first.
+  if (targetMode.value === 'matrix' && !matrixConfirmed) {
+    showMatrixConfirm.value = true
+    return
+  }
+  matrixConfirmed = false
 
   isRunning.value = true
   setRunning(true)
@@ -234,6 +244,16 @@ function stop() {
   // Don't touch isRunning here — the finally block in start() owns that flag,
   // so the button stays disabled until the stream has actually closed.
   addLog('Stopping...', 'info')
+}
+
+function confirmMatrix() {
+  matrixConfirmed = true
+  showMatrixConfirm.value = false
+  start()
+}
+
+function cancelMatrix() {
+  showMatrixConfirm.value = false
 }
 
 async function saveResults() {
@@ -391,6 +411,10 @@ defineExpose({ isRunning })
             <template v-else><Network :size="14" /> Analyze</template>
           </button>
         </span>
+        <HelpTooltip
+          v-if="!canStart && !isRunning && disabledReasons.length > 0"
+          :text="`Cannot start yet: ${disabledReasons.join(' · ')}`"
+        />
         <button v-if="isRunning" class="btn-stop" @click="stop">Stop</button>
       </div>
       <div v-if="!canStart && !isRunning && disabledReasons.length > 0" class="disabled-hint">
@@ -479,6 +503,23 @@ defineExpose({ isRunning })
 
       <div v-if="savedFiles.length > 0" class="saved-files">
         <FileText :size="12" /> Saved {{ savedFiles.length }} file(s)
+      </div>
+    </div>
+
+    <!-- Matrix-mode confirmation -->
+    <div v-if="showMatrixConfirm" class="modal-overlay" @click.self="cancelMatrix">
+      <div class="modal">
+        <h3>Matrix mode can produce a lot of data</h3>
+        <p>
+          Matrix mode emits one entry per internal link found across the crawl.
+          On a typical 1 000-page site this can mean 5 000–50 000 results.
+          The cap is 50 000 — beyond that the stream stops early.
+        </p>
+        <p>Continue?</p>
+        <div class="modal-actions">
+          <button class="btn-secondary" @click="cancelMatrix">Cancel</button>
+          <button class="btn-primary" @click="confirmMatrix">Continue</button>
+        </div>
       </div>
     </div>
   </div>
@@ -594,6 +635,59 @@ defineExpose({ isRunning })
   color: var(--text-muted);
   padding: 4px 2px 0;
   line-height: 1.4;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.modal {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 20px 24px;
+  max-width: 480px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.modal h3 {
+  margin: 0 0 12px;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.modal p {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.btn-secondary {
+  padding: 8px 16px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.btn-secondary:hover {
+  border-color: var(--accent);
 }
 
 .btn-primary {
