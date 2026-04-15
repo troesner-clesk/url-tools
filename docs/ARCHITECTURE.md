@@ -26,10 +26,14 @@ url-tools/
 ├── app/                          # Frontend (Vue 3)
 │   ├── pages/
 │   │   └── index.vue             # Main page with tab navigation
-│   ├── components/               # 11 Vue components
+│   ├── components/               # Vue components
 │   │   ├── BrokenLinkChecker.vue # Broken link checking
+│   │   ├── GraphView.vue         # d3-force graph for Silo (path hierarchy + <a> edges)
 │   │   ├── HelpTooltip.vue       # Teleport-based tooltip (no clipping)
 │   │   ├── ImageScraper.vue      # Image extraction and download
+│   │   ├── InboundGroupedView.vue# Silo: grouped-per-target stats view
+│   │   ├── InboundLinkAnalyzer.vue# Silo: root tab component (flat/grouped/graph)
+│   │   ├── LogDrawer.vue         # Global right-side log panel (resizable, persisted)
 │   │   ├── RecentJobsMenu.vue    # Recent jobs / history
 │   │   ├── RequestSettings.vue   # HTTP request settings
 │   │   ├── ResultsTable.vue      # Results table (HTML/links)
@@ -40,20 +44,22 @@ url-tools/
 │   │   └── UrlInput.vue          # URL input with import/filter
 │   └── composables/              # Reusable logic
 │       ├── useFormatters.ts      # File size formatting
-│       ├── useLogger.ts          # Log system with auto-scroll
+│       ├── useInboundAggregation.ts # Silo: aggregate raw InboundLinks into groups
+│       ├── useLogStore.ts        # Module-level store for per-tab logs/progress/currentUrl
 │       ├── useTableSort.ts       # Sortable table columns (asc/desc/none)
 │       ├── useTheme.ts           # Dark/light mode
 │       └── useUrlParser.ts       # URL parsing and validation
 ├── server/                       # Backend (Nitro)
-│   ├── api/                      # 14 REST/SSE endpoints
+│   ├── api/                      # REST/SSE endpoints
+│   │   ├── analyze-inbound-links-stream.post.ts # Silo analysis (SSE)
 │   │   ├── check-links.post.ts   # Link checking (SSE)
 │   │   ├── clear-output.post.ts  # Clear output folder
 │   │   ├── get-output-dir.get.ts # List output directory
 │   │   ├── open-folder.get.ts    # Open folder in Finder
 │   │   ├── open-output.post.ts   # Open output folder
-│   │   ├── parse-sitemap.post.ts # Parse XML sitemap
+│   │   ├── parse-sitemap.post.ts # Parse XML sitemap (wraps server/utils/sitemap.ts)
 │   │   ├── read-file.get.ts      # Read file (with path guard)
-│   │   ├── save-results.post.ts  # Save results (CSV/JSON)
+│   │   ├── save-results.post.ts  # Save results (CSV/JSON/TXT) — html / links / inbound-links modes
 │   │   ├── scrape-html.post.ts   # HTML scraping with CSS selectors
 │   │   ├── scrape-images.post.ts # Image scraping and download
 │   │   ├── scrape-json.post.ts   # JSON-LD/OpenGraph extraction
@@ -61,12 +67,22 @@ url-tools/
 │   │   ├── screenshot.post.ts    # Screenshots/PDF (Puppeteer)
 │   │   └── seo-audit.post.ts     # SEO audit with scoring
 │   └── utils/                    # Server utilities
+│       ├── domain-checker.ts     # DNS resolution for Link Checker domain badges
 │       ├── fetch-with-retry.ts   # Fetch with linear backoff retry
+│       ├── inbound-matcher.ts    # Silo: target matching + group aggregation
 │       ├── link-analyzer.ts      # URL normalization, link extraction
 │       ├── path-guard.ts         # Path traversal protection
 │       ├── sanitize-headers.ts   # Header sanitization
+│       ├── sitemap.ts            # Shared sitemap fetch/parse (used by parse-sitemap + silo)
 │       └── url-validator.ts      # SSRF protection
+├── public/
+│   └── demo/dead-links.html      # Link Checker domain-badge test fixture
 ├── output/                       # Generated results (gitignored)
+│   ├── scraper/                  # html + links
+│   ├── silo/                     # inbound-links
+│   ├── seo-audit/
+│   ├── screenshots/
+│   └── images/
 ├── .github/workflows/ci.yml     # CI/CD pipeline
 ├── Dockerfile                    # Multi-stage Docker build
 ├── docker-compose.yml            # Docker Compose configuration
@@ -122,7 +138,8 @@ Although there is no auth, there are multiple layers of security:
 | Composable | Purpose |
 |------------|---------|
 | `useUrlParser` | Parses URLs from textarea (newline/comma-separated), validates with `new URL()` |
-| `useLogger` | Log entries with timestamp and auto-scroll, max. 100 entries |
+| `useLogStore` / `useTabLogger` | Global log/progress/current-URL store keyed by tab; feeds the `LogDrawer`. Module-level reactive state. See [ADR-010](adr/010-global-log-drawer.md) |
+| `useInboundAggregation` | Silo: aggregate flat `InboundLink[]` into per-target groups with anchor-text distribution |
 | `useTheme` | Dark/light mode toggle, localStorage persistence, system preference detection |
 | `useFormatters` | File size formatting (B, KB, MB) |
 | `useTableSort` | Generic table column sorting (asc → desc → unsorted cycle), handles numbers/strings/booleans |
@@ -133,9 +150,19 @@ Although there is no auth, there are multiple layers of security:
 |---------|---------|
 | `fetchWithRetry` | HTTP fetch with configurable timeout and linear backoff (1s → 2s → 3s) |
 | `link-analyzer` | URL normalization, link extraction (HTML + sitemap), redirect chain analysis |
-| `url-validator` | SSRF protection: blocks localhost, private IPs (10.x, 192.168.x, 172.16-31.x) |
+| `sitemap` | Shared sitemap fetch loop used by both `parse-sitemap` endpoint and Silo sitemap-scope mode |
+| `inbound-matcher` | Silo: normalize targets, match discovered links, aggregate into groups |
+| `domain-checker` | DNS lookup for Link Checker domain badges (Available / Subdomain missing / timeout / error) |
+| `url-validator` | SSRF protection: blocks localhost, private IPs (10.x, 192.168.x, 172.16-31.x). Localhost can be opted back in via `URL_TOOLS_ALLOW_LOCALHOST=1` for crawling bundled `/demo/` fixtures |
 | `path-guard` | Ensures file paths stay within the output directory, exports `OUTPUT_ROOT` |
 | `sanitize-headers` | Removes dangerous HTTP headers (Host, Authorization, Cookie, X-Forwarded-*, Proxy-Authorization) |
+
+## Environment Variables
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `OUTPUT_DIR` | `~/Documents/url-tools` | Where results are written |
+| `URL_TOOLS_ALLOW_LOCALHOST` | `0` | When `1`, disables the SSRF guard's localhost block. Needed to crawl the bundled `public/demo/` fixtures (e.g. the Link Checker domain-badge demo). Dev only — never set in production. |
 
 ## Further Documentation
 

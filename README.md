@@ -65,7 +65,18 @@ Is it perfect? No. Is it feature-complete? Definitely not. But it does exactly w
 - Detect available domains (unregistered/expired) in outbound links — useful for link audits
 - Export broken links as TSV
 
+### Silo / Inbound Link Analyzer
+- Find which internal pages link TO a given target URL (inverse of the Link Analyzer)
+- Three target modes: single URL, multiple URLs, full site matrix
+- Two crawl scopes: recursive from seed URL, or sitemap-driven
+- Three result views:
+  - **Flat table** — raw source → target rows
+  - **Grouped** — per-target inbound count, unique sources, anchor-text distribution
+  - **Graph** — force-directed visualization with URL-path hierarchy as layout backbone, actual `<a>` edges overlaid on hover; Obsidian/Seorch-style bursts per URL path
+- Graph sidebar: zoom slider, node-size modes, connection visibility, category filters (targets / top-inbound / hubs / orphans), live stats
+
 ### UI
+- Global right-side log drawer (resizable, collapsible, per-tab logs/progress/current-URL, state persisted in localStorage)
 - Dark/Light mode toggle with system preference detection
 - Responsive design for mobile devices
 
