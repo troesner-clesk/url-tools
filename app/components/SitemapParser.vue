@@ -16,7 +16,7 @@ interface ParseSitemapResponse {
 }
 
 const urlInput = ref('')
-const { logs, addLog, logContainer } = useLogger()
+const { addLog, clearLogs, setRunning } = useTabLogger('sitemap')
 const recursive = ref(false)
 const isLoading = ref(false)
 const entries = ref<SitemapEntry[]>([])
@@ -41,10 +41,11 @@ async function _parseSitemap() {
   if (!url || !isValidUrl.value) return
 
   isLoading.value = true
+  setRunning(true)
   error.value = null
   entries.value = []
   stats.value = null
-  logs.value = []
+  clearLogs()
   copied.value = false
 
   addLog(`Fetching sitemap: ${url}`, 'info')
@@ -74,6 +75,7 @@ async function _parseSitemap() {
     addLog(msg, 'error')
   } finally {
     isLoading.value = false
+    setRunning(false)
   }
 }
 
@@ -126,17 +128,6 @@ defineExpose({ isRunning: isLoading })
           <template v-if="isLoading"><Loader :size="14" class="spin" /> Parsing...</template>
           <template v-else><Map :size="14" /> Parse</template>
         </button>
-      </div>
-
-      <div v-if="logs.length" class="log-container" ref="logContainer">
-        <div
-          v-for="(log, index) in logs"
-          :key="index"
-          :class="['log-entry', `log-${log.type}`]"
-        >
-          <span class="log-time">{{ log.timestamp }}</span>
-          <span class="log-message">{{ log.message }}</span>
-        </div>
       </div>
 
       <div v-if="error" class="error-message">

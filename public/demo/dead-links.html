@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>URL Tools — Link Checker Demo</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 720px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        line-height: 1.5;
+        color: #222;
+      }
+      h1 { font-size: 1.4rem; }
+      code {
+        background: #f2f2f2;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 0.9em;
+      }
+      table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
+      th, td {
+        border: 1px solid #ddd;
+        padding: 6px 10px;
+        text-align: left;
+        font-size: 0.9rem;
+      }
+      th { background: #f9f9f9; }
+      ul { padding-left: 1.2rem; }
+      li { margin: 0.35rem 0; }
+    </style>
+  </head>
+  <body>
+    <h1>Link Checker — Domain Badge Demo</h1>
+    <p>
+      This page exists to exercise every branch of the domain checker
+      (<code>server/utils/domain-checker.ts</code>). Crawl this URL in the
+      Link Checker tab with <em>External links only</em> disabled. The
+      <strong>Domain</strong> column should then show a badge for each of
+      the first two links below.
+    </p>
+
+    <h2>Links</h2>
+    <ul>
+      <li>
+        <a href="http://definitely-nonexistent-abc123xyz.invalid/">
+          Unregistered domain (.invalid TLD)
+        </a>
+        — triggers <strong>Available</strong>. The
+        <code>.invalid</code> TLD is reserved by RFC 2606 and will always
+        return NXDOMAIN.
+      </li>
+      <li>
+        <a href="http://no-such-sub-xyz987.google.com/">
+          Missing subdomain on a live parent domain
+        </a>
+        — triggers <strong>Subdomain missing</strong>. The leaf fails to
+        resolve but <code>google.com</code> (the registrable parent) does.
+      </li>
+      <li>
+        <a href="https://example.com/">
+          Valid reference link
+        </a>
+        — resolves cleanly, no Domain badge, Status 200.
+      </li>
+      <li>
+        <a href="https://example.com/this-path-does-not-exist">
+          Valid domain, 404 path
+        </a>
+        — Status 404, but Domain column stays empty. Demonstrates that
+        HTTP status and DNS status are independent dimensions.
+      </li>
+    </ul>
+
+    <h2>Expected result</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Link</th>
+          <th>Status</th>
+          <th>Domain badge</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>*.invalid</code></td>
+          <td>ERR</td>
+          <td>Available</td>
+        </tr>
+        <tr>
+          <td><code>no-such-sub-xyz987.google.com</code></td>
+          <td>ERR</td>
+          <td>Subdomain missing</td>
+        </tr>
+        <tr>
+          <td><code>example.com</code></td>
+          <td>200</td>
+          <td>(empty)</td>
+        </tr>
+        <tr>
+          <td><code>example.com/this-path-does-not-exist</code></td>
+          <td>404</td>
+          <td>(empty)</td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>

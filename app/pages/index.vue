@@ -10,6 +10,7 @@ import {
   Loader,
   Map as MapIcon,
   Moon,
+  Network,
   Pause,
   Play,
   Search,
@@ -67,7 +68,9 @@ onMounted(() => initTheme())
 
 // State
 const urlInput = ref('')
-const { logs, addLog, logContainer } = useLogger()
+const { addLog, clearLogs, setProgress, setCurrentUrl, setRunning } =
+  useTabLogger('scraper')
+const { setActiveTab } = useLogStore()
 const { parsedUrls, hasValidUrls } = useUrlParser(urlInput)
 const { formatSize } = useFormatters()
 const mode = ref<'html' | 'links'>('html')
@@ -93,14 +96,12 @@ const settings = ref<Settings>({
 
 const isRunning = ref(false)
 const isPaused = ref(false)
-const progress = ref({ done: 0, total: 0 })
 const htmlResults = ref<HtmlResult[]>([])
 const linkResults = ref<LinkResult[]>([])
 const savedFiles = ref<string[]>([])
 const errorMessage = ref<string | null>(null)
-const currentUrl = ref<string | null>(null)
 const activeTab = ref<
-  'scraper' | 'seo' | 'screenshots' | 'images' | 'sitemap' | 'broken-links'
+  'scraper' | 'seo' | 'screenshots' | 'images' | 'sitemap' | 'broken-links' | 'silo'
 >('scraper')
 const showClearConfirm = ref(false)
 const isClearing = ref(false)
@@ -112,6 +113,7 @@ const screenshotsRef = ref<{ isRunning: boolean } | null>(null)
 const imageScraperRef = ref<{ isRunning: boolean } | null>(null)
 const sitemapRef = ref<{ isRunning: boolean } | null>(null)
 const brokenLinksRef = ref<{ isRunning: boolean } | null>(null)
+const siloRef = ref<{ isRunning: boolean } | null>(null)
 
 // Tab switch warning
 const showTabSwitchWarning = ref(false)
@@ -128,6 +130,8 @@ function isOperationRunning(): boolean {
     return sitemapRef.value?.isRunning ?? false
   if (activeTab.value === 'broken-links')
     return brokenLinksRef.value?.isRunning ?? false
+  if (activeTab.value === 'silo')
+    return siloRef.value?.isRunning ?? false
   return false
 }
 
@@ -139,11 +143,13 @@ function switchTab(tab: typeof activeTab.value) {
     return
   }
   activeTab.value = tab
+  setActiveTab(tab)
 }
 
 function confirmTabSwitch() {
   if (pendingTab.value) {
     activeTab.value = pendingTab.value
+    setActiveTab(pendingTab.value)
   }
   pendingTab.value = null
   showTabSwitchWarning.value = false
@@ -170,13 +176,15 @@ async function startScraping() {
   if (!hasValidUrls.value || isRunning.value) return
 
   isRunning.value = true
+  setRunning(true)
   isPaused.value = false
   errorMessage.value = null
   htmlResults.value = []
   linkResults.value = []
   savedFiles.value = []
-  logs.value = []
-  progress.value = { done: 0, total: parsedUrls.value.length }
+  clearLogs()
+  setProgress({ done: 0, total: parsedUrls.value.length })
+  setCurrentUrl(null)
 
   addLog(
     `Starting ${mode.value === 'html' ? 'HTML' : 'Links'} scraping for ${parsedUrls.value.length} URL(s)`,
@@ -196,7 +204,8 @@ async function startScraping() {
     addLog(msg, 'error')
   } finally {
     isRunning.value = false
-    currentUrl.value = null
+    setRunning(false)
+    setCurrentUrl(null)
   }
 }
 
@@ -209,7 +218,9 @@ async function scrapeHtml() {
 
   for (let i = 0; i < urls.length; i += batchSize) {
     const batch = urls.slice(i, i + batchSize)
-    currentUrl.value = `Batch ${Math.floor(i / batchSize) + 1}: ${batch.length} URLs...`
+    setCurrentUrl(
+      `Batch ${Math.floor(i / batchSize) + 1}: ${batch.length} URLs...`,
+    )
 
     addLog(
       `[${i + 1}-${Math.min(i + batchSize, urls.length)}/${urls.length}] Loading ${batch.length} URLs...`,
@@ -248,7 +259,10 @@ async function scrapeHtml() {
       }
     }
 
-    progress.value.done = Math.min(i + batchSize, urls.length)
+    setProgress({
+      done: Math.min(i + batchSize, urls.length),
+      total: urls.length,
+    })
     htmlResults.value = [...results]
   }
 
@@ -321,16 +335,14 @@ async function scrapeLinks() {
               linkResults.value.push(parsed)
               break
             case 'progress':
-              progress.value.done = parsed.done
-              progress.value.total = parsed.total
-              currentUrl.value = parsed.currentUrl
+              setProgress({ done: parsed.done, total: parsed.total })
+              setCurrentUrl(parsed.currentUrl)
               break
             case 'log':
               addLog(parsed.message, parsed.type)
               break
             case 'done':
-              progress.value.done = parsed.totalLinks
-              progress.value.total = parsed.totalLinks
+              setProgress({ done: parsed.totalLinks, total: parsed.totalLinks })
               addLog(
                 `${parsed.totalLinks} links found (${parsed.visited} pages visited)`,
                 'success',
@@ -453,6 +465,12 @@ async function clearOutputFolder() {
         >
           <Link2 :size="14" /> Link Checker
         </button>
+        <button
+          :class="['tab', { active: activeTab === 'silo' }]"
+          @click="switchTab('silo')"
+        >
+          <Network :size="14" /> Silo
+        </button>
         <button class="tab tab-output" @click="openOutputFolder">
           <FolderOpen :size="14" /> Output
         </button>
@@ -526,34 +544,6 @@ async function clearOutputFolder() {
           </button>
         </div>
 
-        <!-- Progress -->
-        <div v-if="isRunning || progress.done > 0" class="progress">
-          <div class="progress-bar">
-            <div
-              class="progress-fill"
-              :style="{ width: `${(progress.done / Math.max(progress.total, 1)) * 100}%` }"
-            ></div>
-          </div>
-          <div class="progress-text">{{ progress.done }} / {{ progress.total }}</div>
-        </div>
-
-        <!-- Current URL -->
-        <div v-if="currentUrl" class="current-url">
-          <Loader :size="14" class="spin" /> {{ currentUrl }}
-        </div>
-
-        <!-- Live Log -->
-        <div v-if="logs.length" class="log-container" ref="logContainer">
-          <div
-            v-for="(log, index) in logs"
-            :key="index"
-            :class="['log-entry', `log-${log.type}`]"
-          >
-            <span class="log-time">{{ log.timestamp }}</span>
-            <span class="log-message">{{ log.message }}</span>
-          </div>
-        </div>
-
         <!-- Saved Files -->
         <div v-if="savedFiles.length" class="saved-files">
           <div class="saved-header">
@@ -623,6 +613,14 @@ async function clearOutputFolder() {
     <main v-else-if="activeTab === 'broken-links'" class="full-page">
       <BrokenLinkChecker ref="brokenLinksRef" />
     </main>
+
+    <!-- Silo / Inbound Link Analyzer Tab -->
+    <main v-else-if="activeTab === 'silo'" class="full-page">
+      <InboundLinkAnalyzer ref="siloRef" />
+    </main>
+
+    <!-- Global Log Drawer -->
+    <LogDrawer />
 
     <!-- Tab Switch Warning Modal -->
     <div v-if="showTabSwitchWarning" class="modal-overlay" @click.self="cancelTabSwitch">

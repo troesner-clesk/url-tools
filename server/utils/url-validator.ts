@@ -8,14 +8,17 @@ export function isAllowedUrl(url: string): boolean {
 
     const hostname = parsed.hostname.toLowerCase()
 
+    // Opt-in escape hatch for crawling localhost — useful in dev for the
+    // bundled demo fixtures (e.g. /demo/dead-links.html). Off by default.
+    const allowLocalhost = process.env.URL_TOOLS_ALLOW_LOCALHOST === '1'
+
     // Block localhost
-    if (
+    const isLocalhost =
       hostname === 'localhost' ||
       hostname === '127.0.0.1' ||
-      hostname === '::1'
-    )
-      return false
-    if (hostname.endsWith('.localhost')) return false
+      hostname === '::1' ||
+      hostname.endsWith('.localhost')
+    if (isLocalhost && !allowLocalhost) return false
 
     // Block private IP ranges
     if (hostname.startsWith('10.')) return false

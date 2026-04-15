@@ -1,12 +1,6 @@
 <script setup lang="ts">
 import { AlertTriangle, Check, Image, Loader } from 'lucide-vue-next'
 
-interface LogEntry {
-  timestamp: string
-  message: string
-  type: 'info' | 'success' | 'error' | 'progress'
-}
-
 interface ImageResult {
   src: string
   alt: string
@@ -51,31 +45,10 @@ const selectedPageIndex = ref<number | null>(null)
 const selectedImage = ref<ImageResult | null>(null)
 const outputDir = ref<string | null>(null)
 const error = ref<string | null>(null)
-const logs = ref<LogEntry[]>([])
-const logContainer = ref<HTMLElement | null>(null)
 const previewUrl = ref<string | null>(null)
 const stats = ref<ApiResponse['stats'] | null>(null)
 
-function addLog(message: string, type: LogEntry['type'] = 'info') {
-  const now = new Date()
-  const timestamp = now.toLocaleTimeString('en-US')
-  logs.value.push({ timestamp, message, type })
-  if (logs.value.length > 100) {
-    logs.value.shift()
-  }
-}
-
-watch(
-  logs,
-  () => {
-    nextTick(() => {
-      if (logContainer.value) {
-        logContainer.value.scrollTop = logContainer.value.scrollHeight
-      }
-    })
-  },
-  { deep: true },
-)
+const { addLog, clearLogs, setRunning } = useTabLogger('images')
 
 const parsedUrls = computed(() => {
   return urlInput.value
@@ -100,13 +73,14 @@ async function scrapeImages() {
   if (parsedUrls.value.length === 0) return
 
   isLoading.value = true
+  setRunning(true)
   isCancelled.value = false
   error.value = null
   results.value = []
   selectedPageIndex.value = null
   selectedImage.value = null
   outputDir.value = null
-  logs.value = []
+  clearLogs()
   previewUrl.value = null
   stats.value = null
 
@@ -204,6 +178,7 @@ async function scrapeImages() {
     addLog(`✗ ${msg}`, 'error')
   } finally {
     isLoading.value = false
+    setRunning(false)
   }
 }
 
@@ -348,18 +323,6 @@ defineExpose({ isRunning: isLoading })
         <button v-if="isLoading" class="btn-stop" @click="stopScraping">
           Stop
         </button>
-      </div>
-
-      <!-- Live Log -->
-      <div v-if="logs.length" class="log-container" ref="logContainer">
-        <div
-          v-for="(log, index) in logs"
-          :key="index"
-          :class="['log-entry', `log-${log.type}`]"
-        >
-          <span class="log-time">{{ log.timestamp }}</span>
-          <span class="log-message">{{ log.message }}</span>
-        </div>
       </div>
 
       <div v-if="error" class="error-message">

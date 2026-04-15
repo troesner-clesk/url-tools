@@ -21,7 +21,7 @@ interface ScreenshotResponse {
 }
 
 const urlInput = ref('')
-const { logs, addLog, logContainer } = useLogger()
+const { addLog, clearLogs, setRunning } = useTabLogger('screenshots')
 const { parsedUrls } = useUrlParser(urlInput)
 const { formatSize } = useFormatters()
 const format = ref<'png' | 'jpg' | 'pdf'>('png')
@@ -54,12 +54,13 @@ async function takeScreenshots() {
   if (parsedUrls.value.length === 0) return
 
   isLoading.value = true
+  setRunning(true)
   isCancelled.value = false
   error.value = null
   results.value = []
   selectedResult.value = null
   outputDir.value = ''
-  logs.value = []
+  clearLogs()
   previewUrl.value = null
 
   const urlCount = parsedUrls.value.length
@@ -154,6 +155,7 @@ async function takeScreenshots() {
     addLog(`✗ ${msg}`, 'error')
   } finally {
     isLoading.value = false
+    setRunning(false)
   }
 }
 
@@ -252,18 +254,6 @@ defineExpose({ isRunning: isLoading })
         <button v-if="isLoading" class="btn-stop" @click="stopScreenshots">
           Stop
         </button>
-      </div>
-
-      <!-- Live Log -->
-      <div v-if="logs.length" class="log-container" ref="logContainer">
-        <div
-          v-for="(log, index) in logs"
-          :key="index"
-          :class="['log-entry', `log-${log.type}`]"
-        >
-          <span class="log-time">{{ log.timestamp }}</span>
-          <span class="log-message">{{ log.message }}</span>
-        </div>
       </div>
 
       <div v-if="error" class="error-message">

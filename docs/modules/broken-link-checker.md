@@ -68,3 +68,23 @@ Every external link triggers a parallel DNS lookup via `dns.promises.lookup()` a
 - `skipped` — internal link or IP literal, not checked
 
 A per-request Promise-valued cache deduplicates concurrent lookups for the same hostname, so many links sharing a host only cost one DNS query. See `server/utils/domain-checker.ts` for the implementation and [ADR-009](../adr/009-dns-domain-availability.md) for the rationale.
+
+## Test the feature
+
+A bundled demo page exercises every domain-check branch. Start the dev server with the localhost-SSRF opt-in:
+
+```
+URL_TOOLS_ALLOW_LOCALHOST=1 npm run dev
+```
+
+Then open the Link Checker tab, disable *External links only*, and crawl:
+
+```
+http://localhost:3000/demo/dead-links.html
+```
+
+(Use the port shown in your terminal — may differ from 3000.)
+
+Expected: one **Available** badge (`.invalid` TLD), one **Subdomain missing** badge (`no-such-sub-xyz987.google.com`), and two valid `example.com` links with an empty Domain column.
+
+Without `URL_TOOLS_ALLOW_LOCALHOST=1`, the SSRF guard rejects localhost seed URLs and the crawler reports `0 seed URL(s)`.

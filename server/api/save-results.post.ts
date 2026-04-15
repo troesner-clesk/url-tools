@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { defineEventHandler, readBody } from 'h3'
+import { createError, defineEventHandler, readBody } from 'h3'
 import Papa from 'papaparse'
 import { assertWithinOutput, OUTPUT_ROOT } from '../utils/path-guard'
 
@@ -16,7 +16,7 @@ interface HtmlResult {
 interface SaveResultsRequest {
   results: Record<string, unknown>[]
   format: 'csv' | 'json' | 'both'
-  mode: 'html' | 'links'
+  mode: 'html' | 'links' | 'inbound-links'
   baseOutputDir?: string
 }
 
@@ -51,10 +51,21 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Save scraper results to output/scraper/
-  const baseOutputDir = assertWithinOutput(
-    body.baseOutputDir || join(OUTPUT_ROOT, 'scraper'),
-  )
+  // Guard against OOM when serializing very large matrix results
+  const MAX_RESULTS = 50000
+  if (body.results.length > MAX_RESULTS) {
+    throw createError({
+      statusCode: 413,
+      message: `too many results (max ${MAX_RESULTS}); refine filters or use sitemap scope`,
+    })
+  }
+
+  // Output subdirectory depends on mode
+  const defaultDir =
+    body.mode === 'inbound-links'
+      ? join(OUTPUT_ROOT, 'silo')
+      : join(OUTPUT_ROOT, 'scraper')
+  const baseOutputDir = assertWithinOutput(body.baseOutputDir || defaultDir)
   const timestamp = getTimestamp()
   const baseFilename = `${timestamp}_${body.mode}`
 
@@ -101,7 +112,7 @@ export default defineEventHandler(async (event) => {
         savedFiles.push(jsonPath)
       }
     } else {
-      // Links mode: JSON/CSV + TXT (URLs only)
+      // Links / inbound-links mode: JSON/CSV + TXT
       if (body.format === 'json' || body.format === 'both') {
         const jsonPath = join(baseOutputDir, `${baseFilename}.json`)
         await writeFile(
@@ -119,10 +130,17 @@ export default defineEventHandler(async (event) => {
         savedFiles.push(csvPath)
       }
 
-      // TXT with URLs only (one per line)
-      const linkResults = body.results as Array<{ targetUrl?: string }>
+      // TXT: inbound-links → unique sourceUrls (actionable list);
+      // links → unique targetUrls.
+      const urlField =
+        body.mode === 'inbound-links' ? 'sourceUrl' : 'targetUrl'
+      const linkResults = body.results as Array<Record<string, unknown>>
       const uniqueLinks = [
-        ...new Set(linkResults.map((r) => r.targetUrl).filter(Boolean)),
+        ...new Set(
+          linkResults
+            .map((r) => r[urlField])
+            .filter((v): v is string => typeof v === 'string' && v.length > 0),
+        ),
       ]
       const txtPath = join(baseOutputDir, `${baseFilename}.txt`)
       await writeFile(txtPath, uniqueLinks.join('\n'), 'utf-8')

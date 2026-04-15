@@ -56,7 +56,7 @@ interface HistoryEntry {
 }
 
 const urlInput = ref('')
-const { logs, addLog, logContainer } = useLogger()
+const { addLog, clearLogs, setRunning } = useTabLogger('seo')
 const { parsedUrls } = useUrlParser(urlInput)
 const { formatSize } = useFormatters()
 const checkLinks = ref(false)
@@ -159,11 +159,12 @@ async function runAudit() {
   if (parsedUrls.value.length === 0) return
 
   isLoading.value = true
+  setRunning(true)
   isCancelled.value = false
   error.value = null
   results.value = []
   selectedResult.value = null
-  logs.value = []
+  clearLogs()
   savedFiles.value = []
   stats.value = null
 
@@ -265,6 +266,7 @@ async function runAudit() {
     addLog(`✗ ${msg}`, 'error')
   } finally {
     isLoading.value = false
+    setRunning(false)
   }
 }
 
@@ -320,17 +322,6 @@ defineExpose({ isRunning: isLoading })
         <button v-if="isLoading" class="btn-stop" @click="stopAudit">
           Stop
         </button>
-      </div>
-
-      <div v-if="logs.length" class="log-container" ref="logContainer">
-        <div
-          v-for="(log, index) in logs"
-          :key="index"
-          :class="['log-entry', `log-${log.type}`]"
-        >
-          <span class="log-time">{{ log.timestamp }}</span>
-          <span class="log-message">{{ log.message }}</span>
-        </div>
       </div>
 
       <div v-if="savedFiles.length" class="saved-files">

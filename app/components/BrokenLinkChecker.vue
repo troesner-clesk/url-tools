@@ -28,7 +28,8 @@ interface DomainBadgeInfo {
 }
 
 const urlInput = ref('')
-const { logs, addLog, logContainer } = useLogger()
+const { addLog, clearLogs, setProgress, setCurrentUrl, setRunning } =
+  useTabLogger('broken-links')
 const { parsedUrls, hasValidUrls } = useUrlParser(urlInput)
 
 const requestSettings = ref({
@@ -57,8 +58,6 @@ const isRunning = ref(false)
 const results = ref<BrokenLinkResult[]>([])
 const error = ref<string | null>(null)
 const abortController = ref<AbortController | null>(null)
-const progress = ref({ done: 0, total: 0 })
-const currentUrl = ref<string | null>(null)
 const filterMode = ref<FilterMode>('all')
 const typeFilter = ref<'all' | 'internal' | 'external'>('all')
 const copySuccess = ref(false)
@@ -137,11 +136,12 @@ async function startCheck() {
   if (!hasValidUrls.value || isRunning.value) return
 
   isRunning.value = true
+  setRunning(true)
   error.value = null
   results.value = []
-  logs.value = []
-  progress.value = { done: 0, total: 0 }
-  currentUrl.value = null
+  clearLogs()
+  setProgress({ done: 0, total: 0 })
+  setCurrentUrl(null)
   copySuccess.value = false
   resetSort()
 
@@ -210,16 +210,14 @@ async function startCheck() {
               results.value.push(parsed)
               break
             case 'progress':
-              progress.value.done = parsed.done
-              progress.value.total = parsed.total
-              currentUrl.value = parsed.currentUrl
+              setProgress({ done: parsed.done, total: parsed.total })
+              setCurrentUrl(parsed.currentUrl)
               break
             case 'log':
               addLog(parsed.message, parsed.type)
               break
             case 'done':
-              progress.value.done = parsed.totalLinks
-              progress.value.total = parsed.totalLinks
+              setProgress({ done: parsed.totalLinks, total: parsed.totalLinks })
               addLog(
                 `${parsed.totalLinks} links checked, ${parsed.brokenCount} broken, ${parsed.okCount} OK`,
                 'success',
@@ -246,8 +244,9 @@ async function startCheck() {
     addLog(msg, 'error')
   } finally {
     isRunning.value = false
+    setRunning(false)
     abortController.value = null
-    currentUrl.value = null
+    setCurrentUrl(null)
   }
 }
 
@@ -255,7 +254,6 @@ function stopCheck() {
   if (abortController.value) {
     abortController.value.abort()
   }
-  isRunning.value = false
   addLog('Stopping...', 'info')
 }
 
@@ -381,33 +379,6 @@ defineExpose({ isRunning })
         </button>
       </div>
 
-      <!-- Progress -->
-      <div v-if="isRunning || progress.done > 0" class="progress">
-        <div class="progress-bar">
-          <div
-            class="progress-fill"
-            :style="{ width: `${(progress.done / Math.max(progress.total, 1)) * 100}%` }"
-          ></div>
-        </div>
-        <div class="progress-text">{{ progress.done }} / {{ progress.total }}</div>
-      </div>
-
-      <!-- Current URL -->
-      <div v-if="currentUrl" class="current-url">
-        <Loader :size="14" class="spin" /> {{ currentUrl }}
-      </div>
-
-      <!-- Log -->
-      <div v-if="logs.length" class="log-container" ref="logContainer">
-        <div
-          v-for="(log, index) in logs"
-          :key="index"
-          :class="['log-entry', `log-${log.type}`]"
-        >
-          <span class="log-time">{{ log.timestamp }}</span>
-          <span class="log-message">{{ log.message }}</span>
-        </div>
-      </div>
 
       <div v-if="error" class="error-message">
         {{ error }}

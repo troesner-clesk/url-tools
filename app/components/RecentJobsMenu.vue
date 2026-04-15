@@ -10,7 +10,7 @@ interface OutputFile {
 }
 
 interface Props {
-  toolType?: 'screenshots' | 'seo' | 'html' | 'links' | 'json' | 'all'
+  toolType?: 'screenshots' | 'seo' | 'html' | 'links' | 'json' | 'silo' | 'all'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -43,6 +43,7 @@ async function loadFolders() {
         html: ['html_', 'scrape_html'],
         links: ['links_', 'scrape_links'],
         json: ['json_', 'scrape_json'],
+        silo: ['inbound-links', 'silo'],
       }
       const patterns = prefixes[props.toolType] || []
       if (patterns.length > 0) {
