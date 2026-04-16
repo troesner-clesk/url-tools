@@ -207,9 +207,12 @@ async function runAudit() {
       if (!result.error) {
         for (const existing of results.value) {
           if (existing.error) continue
-          
+
           let matched = false
-          if (existing.title.text && existing.title.text === result.title.text) {
+          if (
+            existing.title.text &&
+            existing.title.text === result.title.text
+          ) {
             matched = true
           } else {
             // Hamming distance of contentHash
@@ -229,7 +232,7 @@ async function runAudit() {
             result.duplicateOf = existing.url
             result.score = Math.max(0, result.score - 10)
             result.issues.push(`Duplicate content with ${existing.url}`)
-            
+
             if (!existing.isDuplicate) {
               existing.isDuplicate = true
               existing.duplicateOf = url

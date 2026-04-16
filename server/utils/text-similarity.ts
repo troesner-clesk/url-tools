@@ -8,8 +8,7 @@ function fnv32a(str: string): number {
   let hval = 0x811c9dc5
   for (let i = 0; i < str.length; i++) {
     hval ^= str.charCodeAt(i)
-    hval +=
-      (hval << 1) + (hval << 4) + (hval << 7) + (hval << 8) + (hval << 24)
+    hval += (hval << 1) + (hval << 4) + (hval << 7) + (hval << 8) + (hval << 24)
   }
   return hval >>> 0
 }
@@ -19,12 +18,15 @@ function fnv32a(str: string): number {
  */
 function getShingles(text: string): string[] {
   // Normalize text: lowercase, keep only alphanumeric
-  const normalized = text.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+  const normalized = text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
   const words = normalized.split(' ')
   const shingles: string[] = []
-  
+
   if (words.length < 2) return words
-  
+
   // Create bi-grams
   for (let i = 0; i < words.length - 1; i++) {
     shingles.push(`${words[i]} ${words[i + 1]}`)
@@ -50,7 +52,7 @@ export function computeSimhash(text: string): number {
   let fingerprint = 0
   for (let i = 0; i < 32; i++) {
     if (v[i] >= 0) {
-      fingerprint |= (1 << i)
+      fingerprint |= 1 << i
     }
   }
   return fingerprint >>> 0
