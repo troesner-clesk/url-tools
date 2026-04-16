@@ -214,15 +214,12 @@ async function runAudit() {
             existing.title.text === result.title.text
           ) {
             matched = true
-          } else {
-            // Hamming distance of contentHash
-            let xor = (existing.contentHash ^ result.contentHash) >>> 0
-            let distance = 0
-            while (xor > 0) {
-              distance += xor & 1
-              xor >>>= 1
-            }
-            if (distance <= 3) {
+          } else if (existing.contentHash !== 0 && result.contentHash !== 0) {
+            // Skip content comparison when either hash is 0 (empty/broken
+            // body) — otherwise two empty pages would always look identical.
+            if (
+              hammingDistance(existing.contentHash, result.contentHash) <= 3
+            ) {
               matched = true
             }
           }
