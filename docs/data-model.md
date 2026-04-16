@@ -285,6 +285,9 @@ SEO analysis with score calculation (0-100).
     status: number
     loadTime: number                // Milliseconds
     size: number                    // Bytes
+    contentHash: number             // Simhash for Duplicate Detection
+    isDuplicate?: boolean
+    duplicateOf?: string
     title: { text, length, isGood } // Good: 30-60 characters
     description: { text, length, isGood } // Good: 120-160 characters
     canonical: string | null

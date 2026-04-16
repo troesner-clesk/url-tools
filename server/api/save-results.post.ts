@@ -16,7 +16,7 @@ interface HtmlResult {
 interface SaveResultsRequest {
   results: Record<string, unknown>[]
   format: 'csv' | 'json' | 'both'
-  mode: 'html' | 'links' | 'inbound-links'
+  mode: 'html' | 'links' | 'inbound-links' | 'seo'
   baseOutputDir?: string
 }
 
@@ -64,7 +64,9 @@ export default defineEventHandler(async (event) => {
   const defaultDir =
     body.mode === 'inbound-links'
       ? join(OUTPUT_ROOT, 'silo')
-      : join(OUTPUT_ROOT, 'scraper')
+      : body.mode === 'seo'
+        ? join(OUTPUT_ROOT, 'seo-audit')
+        : join(OUTPUT_ROOT, 'scraper')
   const baseOutputDir = assertWithinOutput(body.baseOutputDir || defaultDir)
   const timestamp = getTimestamp()
   const baseFilename = `${timestamp}_${body.mode}`
@@ -130,10 +132,11 @@ export default defineEventHandler(async (event) => {
         savedFiles.push(csvPath)
       }
 
-      // TXT: inbound-links → unique sourceUrls (actionable list);
-      // links → unique targetUrls.
-      const urlField =
-        body.mode === 'inbound-links' ? 'sourceUrl' : 'targetUrl'
+      // TXT: inbound-links → unique sourceUrls;
+      // links → unique targetUrls; seo → unique url.
+      let urlField = 'targetUrl'
+      if (body.mode === 'inbound-links') urlField = 'sourceUrl'
+      else if (body.mode === 'seo') urlField = 'url'
       const linkResults = body.results as Array<Record<string, unknown>>
       const uniqueLinks = [
         ...new Set(

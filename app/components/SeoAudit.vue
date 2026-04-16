@@ -6,6 +6,9 @@ interface SeoAuditResult {
   status: number
   loadTime: number
   size: number
+  contentHash: number
+  isDuplicate?: boolean
+  duplicateOf?: string
   title: { text: string; length: number; isGood: boolean }
   description: { text: string; length: number; isGood: boolean }
   canonical: string | null
@@ -200,6 +203,44 @@ async function runAudit() {
       const result = 'results' in response ? response.results[0] : response
       if (!result) continue
 
+      // Duplicate Check (compare against already fetched results)
+      if (!result.error) {
+        for (const existing of results.value) {
+          if (existing.error) continue
+          
+          let matched = false
+          if (existing.title.text && existing.title.text === result.title.text) {
+            matched = true
+          } else {
+            // Hamming distance of contentHash
+            let xor = (existing.contentHash ^ result.contentHash) >>> 0
+            let distance = 0
+            while (xor > 0) {
+              distance += xor & 1
+              xor >>>= 1
+            }
+            if (distance <= 3) {
+              matched = true
+            }
+          }
+
+          if (matched) {
+            result.isDuplicate = true
+            result.duplicateOf = existing.url
+            result.score = Math.max(0, result.score - 10)
+            result.issues.push(`Duplicate content with ${existing.url}`)
+            
+            if (!existing.isDuplicate) {
+              existing.isDuplicate = true
+              existing.duplicateOf = url
+              existing.score = Math.max(0, existing.score - 10)
+              existing.issues.push(`Duplicate content with ${url}`)
+            }
+            break
+          }
+        }
+      }
+
       results.value.push(result)
 
       if (result.error) {
@@ -289,7 +330,7 @@ defineExpose({ isRunning: isLoading })
     <!-- Left: Input Section -->
     <div class="input-section">
       <h2><Search :size="18" /> SEO Audit</h2>
-      <p class="subtitle">Analyze URLs for SEO factors</p>
+      <p class="subtitle">Analyze URLs for SEO factors + Duplicates <HelpTooltip text="Automatically detects duplicate titles or very high text similarity (Simhash) between the inputted URLs." /></p>
 
       <div class="url-input">
         <label>URLs (one per line)</label>
@@ -384,7 +425,10 @@ defineExpose({ isRunning: isLoading })
               :class="['table-row', { active: selectedResult?.url === result.url, error: result.error }]"
               @click="selectResult(result)"
             >
-              <span class="col-url">{{ result.url }}</span>
+              <span class="col-url">
+                <span v-if="result.isDuplicate" class="alert-icon" title="Duplicate Content">⚠️</span>
+                {{ result.url }}
+              </span>
               <span class="col-score" :style="{ color: getScoreColor(result.score) }">
                 {{ result.error ? '—' : result.score }}
               </span>
@@ -424,10 +468,12 @@ defineExpose({ isRunning: isLoading })
           </div>
         </div>
 
-        <div v-if="selectedResult.issues.length" class="card issues-card">
+        <div class="card">
           <h3>Issues</h3>
           <ul>
-            <li v-for="issue in selectedResult.issues" :key="issue">{{ issue }}</li>
+            <li v-for="issue in selectedResult.issues" :key="issue" :class="{'text-error': issue.includes('Duplicate')}">
+              {{ issue }}
+            </li>
           </ul>
         </div>
 
@@ -800,6 +846,17 @@ defineExpose({ isRunning: isLoading })
   gap: 6px;
   font-size: 10px;
   margin-top: 2px;
+}
+
+.alert-icon {
+  margin-right: 6px;
+  font-size: 13px;
+  cursor: help;
+}
+
+.text-error {
+  color: var(--error);
+  font-weight: 500;
 }
 
 .history-score {

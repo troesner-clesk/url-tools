@@ -38,6 +38,7 @@ Is it perfect? No. Is it feature-complete? Definitely not. But it does exactly w
 - Analyze page titles, meta descriptions, headings
 - Check Open Graph and Twitter Card tags
 - Identify missing or duplicate meta tags
+- Live Duplicate Content detection (Text Similarity & Title matching)
 - Bulk analysis of multiple URLs with scoring (0-100)
 
 ### Screenshots & PDF

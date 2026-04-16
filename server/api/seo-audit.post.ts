@@ -6,6 +6,7 @@ import Papa from 'papaparse'
 import { fetchWithRetry, type RequestSettings } from '../utils/fetch-with-retry'
 import { OUTPUT_ROOT } from '../utils/path-guard'
 import { filterAllowedUrls, isAllowedUrl } from '../utils/url-validator'
+import { computeSimhash } from '../utils/text-similarity'
 
 interface SeoAuditRequest {
   urls: string[] // Bulk mode: array of URLs
@@ -34,6 +35,9 @@ interface SeoAuditResult {
   status: number
   loadTime: number
   size: number
+  contentHash: number
+  isDuplicate?: boolean
+  duplicateOf?: string
 
   // Meta
   title: {
@@ -272,6 +276,12 @@ async function auditUrl(
       score -= 3
     }
 
+    // Simhash of pure content
+    const clonedBody = $('body').clone()
+    clonedBody.find('script, style, nav, footer, header, noscript, svg, iframe, form').remove()
+    const pureText = clonedBody.text()
+    const contentHash = computeSimhash(pureText)
+
     // Ensure score is between 0-100
     score = Math.max(0, Math.min(100, score))
 
@@ -280,6 +290,7 @@ async function auditUrl(
       status: response.status,
       loadTime,
       size: html.length,
+      contentHash,
       title: { text: titleText, length: titleLength, isGood: titleIsGood },
       description: { text: descText, length: descLength, isGood: descIsGood },
       canonical,
@@ -307,6 +318,7 @@ async function auditUrl(
       status: 0,
       loadTime: 0,
       size: 0,
+      contentHash: 0,
       title: { text: '', length: 0, isGood: false },
       description: { text: '', length: 0, isGood: false },
       canonical: null,
