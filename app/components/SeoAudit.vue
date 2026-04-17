@@ -342,18 +342,20 @@ defineExpose({ isRunning: isLoading })
         <div class="url-count">{{ parsedUrls.length }} valid URL(s)</div>
       </div>
 
-      <div class="option checkbox">
-        <label>
-          <input type="checkbox" v-model="checkLinks" :disabled="isLoading">
-          Check links for 404 errors <HelpTooltip text="Also check all links on the page for broken URLs (slower)" />
-        </label>
-      </div>
-      <div class="option checkbox">
-        <label>
-          <input type="checkbox" v-model="saveResults" :disabled="isLoading">
-          Auto-save results <HelpTooltip text="Automatically save audit results as JSON and CSV files" />
-        </label>
-      </div>
+      <AdvancedOptions tab-id="seo">
+        <div class="option checkbox">
+          <label>
+            <input type="checkbox" v-model="checkLinks" :disabled="isLoading">
+            Check links for 404 errors <HelpTooltip text="Also check all links on the page for broken URLs (slower)" />
+          </label>
+        </div>
+        <div class="option checkbox">
+          <label>
+            <input type="checkbox" v-model="saveResults" :disabled="isLoading">
+            Auto-save results <HelpTooltip text="Automatically save audit results as JSON and CSV files" />
+          </label>
+        </div>
+      </AdvancedOptions>
 
       <div class="button-row">
         <button class="btn-primary" @click="runAudit" :disabled="parsedUrls.length === 0 || isLoading">

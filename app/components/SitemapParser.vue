@@ -116,12 +116,14 @@ defineExpose({ isRunning: isLoading })
         />
       </div>
 
-      <div class="option checkbox">
-        <label>
-          <input type="checkbox" v-model="recursive" :disabled="isLoading">
-          Follow sitemap index files <HelpTooltip text="Recursively follow linked sitemaps in sitemap index files" />
-        </label>
-      </div>
+      <AdvancedOptions tab-id="sitemap">
+        <div class="option checkbox">
+          <label>
+            <input type="checkbox" v-model="recursive" :disabled="isLoading">
+            Follow sitemap index files <HelpTooltip text="Recursively follow linked sitemaps in sitemap index files" />
+          </label>
+        </div>
+      </AdvancedOptions>
 
       <div class="button-row">
         <button class="btn-primary" @click="parseSitemap" :disabled="!isValidUrl || isLoading">

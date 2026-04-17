@@ -230,17 +230,19 @@ defineExpose({ isRunning: isLoading })
         </select>
       </div>
 
-      <div v-if="format !== 'pdf'" class="option checkbox">
-        <label>
-          <input type="checkbox" v-model="fullPage" :disabled="isLoading">
-          Full page (scroll height) <HelpTooltip text="Capture the entire scrollable page, not just the visible viewport" />
-        </label>
-      </div>
+      <AdvancedOptions tab-id="screenshots">
+        <div v-if="format !== 'pdf'" class="option checkbox">
+          <label>
+            <input type="checkbox" v-model="fullPage" :disabled="isLoading">
+            Full page (scroll height) <HelpTooltip text="Capture the entire scrollable page, not just the visible viewport" />
+          </label>
+        </div>
 
-      <div v-if="format === 'jpg'" class="option">
-        <label>Quality: {{ quality }}% <HelpTooltip text="JPG compression level — lower means smaller file but less detail" /></label>
-        <input type="range" v-model.number="quality" min="10" max="100" step="5" :disabled="isLoading">
-      </div>
+        <div v-if="format === 'jpg'" class="option">
+          <label>Quality: {{ quality }}% <HelpTooltip text="JPG compression level — lower means smaller file but less detail" /></label>
+          <input type="range" v-model.number="quality" min="10" max="100" step="5" :disabled="isLoading">
+        </div>
+      </AdvancedOptions>
 
       <div class="button-row">
         <button

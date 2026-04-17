@@ -319,55 +319,57 @@ defineExpose({ isRunning })
 
       <RequestSettings v-model:settings="requestSettings" />
 
-      <div class="option checkbox">
-        <label>
-          <input type="checkbox" v-model="recursive" :disabled="isRunning">
-          Recursive crawling <HelpTooltip text="Follow links and check additional pages beyond the starting URLs" />
-        </label>
-      </div>
+      <AdvancedOptions tab-id="broken-links">
+        <div class="option checkbox">
+          <label>
+            <input type="checkbox" v-model="recursive" :disabled="isRunning">
+            Recursive crawling <HelpTooltip text="Follow links and check additional pages beyond the starting URLs" />
+          </label>
+        </div>
 
-      <div v-if="recursive" class="option">
-        <label>Max depth <HelpTooltip text="How many levels deep to follow links from the starting page" /></label>
-        <select v-model.number="maxDepth" :disabled="isRunning">
-          <option :value="1">1</option>
-          <option :value="2">2</option>
-          <option :value="3">3</option>
-          <option :value="4">4</option>
-          <option :value="5">5</option>
-        </select>
-      </div>
+        <div v-if="recursive" class="option">
+          <label>Max depth <HelpTooltip text="How many levels deep to follow links from the starting page" /></label>
+          <select v-model.number="maxDepth" :disabled="isRunning">
+            <option :value="1">1</option>
+            <option :value="2">2</option>
+            <option :value="3">3</option>
+            <option :value="4">4</option>
+            <option :value="5">5</option>
+          </select>
+        </div>
 
-      <div class="option checkbox">
-        <label>
-          <input type="checkbox" v-model="sameDomainOnly" :disabled="isRunning">
-          Same domain only (crawling) <HelpTooltip text="Only follow internal links when crawling recursively" />
-        </label>
-      </div>
+        <div class="option checkbox">
+          <label>
+            <input type="checkbox" v-model="sameDomainOnly" :disabled="isRunning">
+            Same domain only (crawling) <HelpTooltip text="Only follow internal links when crawling recursively" />
+          </label>
+        </div>
 
-      <div class="option checkbox">
-        <label>
-          <input type="checkbox" v-model="externalOnly" :disabled="isRunning">
-          External links only <HelpTooltip text="Skip internal links — only check links pointing to other domains" />
-        </label>
-      </div>
+        <div class="option checkbox">
+          <label>
+            <input type="checkbox" v-model="externalOnly" :disabled="isRunning">
+            External links only <HelpTooltip text="Skip internal links — only check links pointing to other domains" />
+          </label>
+        </div>
 
-      <div class="option">
-        <label>
-          Exclude domains <HelpTooltip text="Skip links to these domains (comma-separated, supports wildcards like *.example.com)" />
-          <HelpTooltip text="Comma or newline separated. Use *.example.com to match all subdomains (de.example.com, en.example.com etc.). Use example.com to match only the exact domain." />
-        </label>
-        <textarea
-          v-model="excludeDomains"
-          :disabled="isRunning"
-          placeholder="*.wikipedia.org, facebook.com"
-          rows="2"
-        ></textarea>
-      </div>
+        <div class="option">
+          <label>
+            Exclude domains <HelpTooltip text="Skip links to these domains (comma-separated, supports wildcards like *.example.com)" />
+            <HelpTooltip text="Comma or newline separated. Use *.example.com to match all subdomains (de.example.com, en.example.com etc.). Use example.com to match only the exact domain." />
+          </label>
+          <textarea
+            v-model="excludeDomains"
+            :disabled="isRunning"
+            placeholder="*.wikipedia.org, facebook.com"
+            rows="2"
+          ></textarea>
+        </div>
 
-      <div class="option">
-        <label>Max links <HelpTooltip text="Maximum number of links to check before stopping" /></label>
-        <input type="number" v-model.number="maxLinks" min="1" :disabled="isRunning">
-      </div>
+        <div class="option">
+          <label>Max links <HelpTooltip text="Maximum number of links to check before stopping" /></label>
+          <input type="number" v-model.number="maxLinks" min="1" :disabled="isRunning">
+        </div>
+      </AdvancedOptions>
 
       <div class="button-row">
         <button class="btn-primary" @click="startCheck" :disabled="!hasValidUrls || isRunning">

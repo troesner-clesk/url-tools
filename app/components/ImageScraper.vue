@@ -262,54 +262,56 @@ defineExpose({ isRunning: isLoading })
         </label>
       </div>
 
-      <div v-if="download" class="option checkbox">
-        <label>
-          <input type="checkbox" v-model="subfolderPerUrl" :disabled="isLoading">
-          Create subfolder per URL
-        </label>
-      </div>
+      <AdvancedOptions tab-id="images">
+        <div v-if="download" class="option checkbox">
+          <label>
+            <input type="checkbox" v-model="subfolderPerUrl" :disabled="isLoading">
+            Create subfolder per URL
+          </label>
+        </div>
 
-      <div class="option">
-        <label>Filter by format</label>
-        <div class="format-checkboxes">
-          <label v-for="fmt in formatOptions" :key="fmt" class="format-checkbox">
+        <div class="option">
+          <label>Filter by format</label>
+          <div class="format-checkboxes">
+            <label v-for="fmt in formatOptions" :key="fmt" class="format-checkbox">
+              <input
+                type="checkbox"
+                :value="fmt"
+                v-model="selectedFormats"
+                :disabled="isLoading"
+              >
+              {{ fmt.toUpperCase() }}
+            </label>
+          </div>
+        </div>
+
+        <div class="size-filters">
+          <div class="option">
+            <label>
+              Min width <HelpTooltip text="Skip images smaller than this width (in pixels). Only works if the HTML specifies image dimensions." />
+            </label>
             <input
-              type="checkbox"
-              :value="fmt"
-              v-model="selectedFormats"
+              type="number"
+              v-model.number="minWidth"
+              placeholder="0"
+              min="0"
               :disabled="isLoading"
             >
-            {{ fmt.toUpperCase() }}
-          </label>
+          </div>
+          <div class="option">
+            <label>
+              Min height <HelpTooltip text="Skip images smaller than this height (in pixels). Only works if the HTML specifies image dimensions." />
+            </label>
+            <input
+              type="number"
+              v-model.number="minHeight"
+              placeholder="0"
+              min="0"
+              :disabled="isLoading"
+            >
+          </div>
         </div>
-      </div>
-
-      <div class="size-filters">
-        <div class="option">
-          <label>
-            Min width <HelpTooltip text="Skip images smaller than this width (in pixels). Only works if the HTML specifies image dimensions." />
-          </label>
-          <input
-            type="number"
-            v-model.number="minWidth"
-            placeholder="0"
-            min="0"
-            :disabled="isLoading"
-          >
-        </div>
-        <div class="option">
-          <label>
-            Min height <HelpTooltip text="Skip images smaller than this height (in pixels). Only works if the HTML specifies image dimensions." />
-          </label>
-          <input
-            type="number"
-            v-model.number="minHeight"
-            placeholder="0"
-            min="0"
-            :disabled="isLoading"
-          >
-        </div>
-      </div>
+      </AdvancedOptions>
 
       <div class="button-row">
         <button

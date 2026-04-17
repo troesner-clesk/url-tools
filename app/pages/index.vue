@@ -508,7 +508,9 @@ async function clearOutputFolder() {
         </div>
 
         <!-- Settings -->
-        <SettingsPanel :mode="mode" v-model:settings="settings" />
+        <AdvancedOptions tab-id="scraper">
+          <SettingsPanel :mode="mode" v-model:settings="settings" />
+        </AdvancedOptions>
 
         <!-- Actions -->
         <div class="actions">

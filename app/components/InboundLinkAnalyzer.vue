@@ -362,44 +362,46 @@ defineExpose({ isRunning })
 
       <RequestSettings v-model:settings="requestSettings" />
 
-      <div class="option-row">
-        <div class="option">
-          <label>Max pages</label>
-          <input type="number" v-model.number="maxUrls" min="1" :disabled="isRunning">
+      <AdvancedOptions tab-id="silo">
+        <div class="option-row">
+          <div class="option">
+            <label>Max pages</label>
+            <input type="number" v-model.number="maxUrls" min="1" :disabled="isRunning">
+          </div>
+          <div v-if="crawlScope === 'recursive'" class="option">
+            <label>Max depth</label>
+            <select v-model.number="maxDepth" :disabled="isRunning">
+              <option :value="1">1</option>
+              <option :value="2">2</option>
+              <option :value="3">3</option>
+              <option :value="4">4</option>
+              <option :value="5">5</option>
+            </select>
+          </div>
+          <div class="option">
+            <label>Rate limit (req/s)</label>
+            <input type="number" v-model.number="rateLimit" min="0.1" step="0.1" :disabled="isRunning">
+          </div>
         </div>
-        <div v-if="crawlScope === 'recursive'" class="option">
-          <label>Max depth</label>
-          <select v-model.number="maxDepth" :disabled="isRunning">
-            <option :value="1">1</option>
-            <option :value="2">2</option>
-            <option :value="3">3</option>
-            <option :value="4">4</option>
-            <option :value="5">5</option>
+
+        <div class="option">
+          <label>Path include (comma-separated)</label>
+          <input type="text" v-model="pathInclude" placeholder="/de/, /blog/" :disabled="isRunning">
+        </div>
+        <div class="option">
+          <label>Path exclude</label>
+          <input type="text" v-model="pathExclude" placeholder="/admin/, /cart/" :disabled="isRunning">
+        </div>
+
+        <div class="option">
+          <label>Save format</label>
+          <select v-model="saveFormat" :disabled="isRunning">
+            <option value="csv">CSV + TXT</option>
+            <option value="json">JSON + TXT</option>
+            <option value="both">All (JSON + CSV + TXT)</option>
           </select>
         </div>
-        <div class="option">
-          <label>Rate limit (req/s)</label>
-          <input type="number" v-model.number="rateLimit" min="0.1" step="0.1" :disabled="isRunning">
-        </div>
-      </div>
-
-      <div class="option">
-        <label>Path include (comma-separated)</label>
-        <input type="text" v-model="pathInclude" placeholder="/de/, /blog/" :disabled="isRunning">
-      </div>
-      <div class="option">
-        <label>Path exclude</label>
-        <input type="text" v-model="pathExclude" placeholder="/admin/, /cart/" :disabled="isRunning">
-      </div>
-
-      <div class="option">
-        <label>Save format</label>
-        <select v-model="saveFormat" :disabled="isRunning">
-          <option value="csv">CSV + TXT</option>
-          <option value="json">JSON + TXT</option>
-          <option value="both">All (JSON + CSV + TXT)</option>
-        </select>
-      </div>
+      </AdvancedOptions>
 
       <div class="button-row">
         <span
