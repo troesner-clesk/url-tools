@@ -8,6 +8,7 @@ export type TabId =
   | 'sitemap'
   | 'broken-links'
   | 'silo'
+  | 'site-audit'
 
 export interface LogEntry {
   timestamp: string
@@ -36,6 +37,7 @@ function emptyLogs(): Record<TabId, LogEntry[]> {
     sitemap: [],
     'broken-links': [],
     silo: [],
+    'site-audit': [],
   }
 }
 
@@ -48,6 +50,7 @@ function emptyProgress(): Record<TabId, Progress> {
     sitemap: { done: 0, total: 0 },
     'broken-links': { done: 0, total: 0 },
     silo: { done: 0, total: 0 },
+    'site-audit': { done: 0, total: 0 },
   }
 }
 
@@ -60,6 +63,7 @@ function emptyCurrentUrl(): Record<TabId, string | null> {
     sitemap: null,
     'broken-links': null,
     silo: null,
+    'site-audit': null,
   }
 }
 
@@ -72,6 +76,7 @@ function emptyRunning(): Record<TabId, boolean> {
     sitemap: false,
     'broken-links': false,
     silo: false,
+    'site-audit': false,
   }
 }
 

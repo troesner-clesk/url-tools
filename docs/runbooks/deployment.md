@@ -4,7 +4,7 @@
 
 ### Prerequisites
 
-- Node.js 22+
+- Node.js 22.13+ (24 recommended; the Site Audit uses the built-in `node:sqlite`)
 - npm
 
 ### Setup
@@ -62,7 +62,7 @@ docker run -p 3000:3000 -v ./output:/app/output url-tools
 
 ### Docker Details
 
-- **Base image:** `node:22-slim`
+- **Base image:** `node:24-slim`
 - **Multi-stage build:** Build stage + Production stage
 - **Chromium:** Pre-installed in the image (no download at runtime)
 - **Port:** 3000
@@ -79,6 +79,8 @@ Set via `docker-compose.yml`:
 | `HOST` | `0.0.0.0` | Listen on all interfaces |
 | `PORT` | `3000` | Server port |
 | `OUTPUT_DIR` | `/app/output` | Output directory path |
+| `URL_TOOLS_ALLOWED_HOSTS` | (unset) | Extra host names/IPs under which the container is reached, e.g. `nas.local,192.168.1.20` (otherwise only `localhost`/`127.0.0.1` pass the request guard) |
+| `URL_TOOLS_MCP_ALLOW_CRAWL` | (unset) | `1` lets MCP clients start/stop crawls; default read-only |
 
 Baked into the Docker image via `Dockerfile ENV`:
 
@@ -115,7 +117,7 @@ File: `.github/workflows/ci.yml`
 2. `npm test` — Run tests
 3. `npm run build` — Create production build
 
-**Environment:** Ubuntu Latest, Node.js 22, npm cache enabled
+**Environment:** Ubuntu Latest, Node.js 24, npm cache enabled
 
 ### Production Build
 
@@ -128,4 +130,4 @@ npm run build
 node .output/server/index.mjs
 ```
 
-The `.output/` directory is self-contained and can be deployed to any server with Node.js 22.
+The `.output/` directory is self-contained and can be deployed to any server with Node.js 22.13+ (24 recommended).

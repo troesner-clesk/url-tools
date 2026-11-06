@@ -6,6 +6,8 @@ Each feature module has its own documentation. Focus is on **WHAT** and **WHY**,
 
 | Module | Description | Components |
 |--------|-------------|------------|
+| [Site-Audit](site-audit.md) | Crawl a whole site, store it as one SQLite file, find technical SEO issues site-wide (45 checks) | `SiteAudit.vue` |
+| [Agent-Interface](agent-interface.md) | MCP endpoint so AI agents can query crawls and, if allowed, start them | `server/mcp/` (no UI) |
 | [HTML-Scraper](html-scraper.md) | Extract HTML from web pages using CSS selectors | `ResultsTable.vue`, `SettingsPanel.vue` |
 | [Link-Analyzer](link-analyzer.md) | Analyze links, follow redirect chains, crawl recursively | `ResultsTable.vue`, `SettingsPanel.vue` |
 | [SEO-Audit](seo-audit.md) | Calculate SEO score, check meta tags, identify issues | `SeoAudit.vue` |

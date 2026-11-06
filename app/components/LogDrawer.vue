@@ -11,6 +11,7 @@ const TAB_LABELS: Record<TabId, string> = {
   sitemap: 'Sitemap',
   'broken-links': 'Link Checker',
   silo: 'Silo',
+  'site-audit': 'Site Audit',
 }
 
 const store = useLogStore()

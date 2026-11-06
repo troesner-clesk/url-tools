@@ -21,6 +21,8 @@ output/
 ├── seo-audit/
 │   ├── {timestamp}_seo-audit.json       # SEO audit results
 │   └── {timestamp}_seo-audit.csv
+├── crawls/
+│   └── {crawl-id}.sqlite                # Site Audit: one SQLite file per crawl
 ├── screenshots/
 │   └── {timestamp}/                     # Screenshot folder
 │       ├── 001_example_com.png
@@ -532,6 +534,157 @@ Open a folder in Finder/Explorer.
 **Query:** `?path=/absolute/path`
 
 **Response:** `{ success: boolean }`
+
+---
+
+## Site Audit API
+
+All endpoints live under `/api/site-audit`. Crawl ids look like `2026-11-05_14-03-43_example.com` (timestamp + host, optional `_2` suffix). Types: `server/crawler/queries.ts` and `server/crawler/engine.ts`. Module docs: [site-audit.md](modules/site-audit.md).
+
+### GET /api/site-audit/crawls
+
+```typescript
+{ crawls: CrawlSummary[] }          // newest first
+
+interface CrawlSummary {
+  crawlId: string
+  startUrl: string
+  status: 'running' | 'completed' | 'stopped' | 'failed' | 'interrupted'
+  source: 'ui' | 'mcp' | 'api'
+  startedAt: string | null          // ISO
+  finishedAt: string | null
+  urlsFetched: number
+  issues: { error: number; warning: number; notice: number }  // affected URLs per severity
+  sizeBytes: number
+  progress?: CrawlProgress          // only while running
+}
+```
+
+`interrupted` = the file says `running`, but no crawl job exists (server restarted during the crawl).
+
+### POST /api/site-audit/crawls
+
+Starts a crawl in the background.
+
+**Request:**
+```typescript
+{
+  startUrl: string                  // Required, http(s)
+  maxUrls?: number                  // 1-10,000 (default: 500)
+  maxDepth?: number                 // 0-50 (default: 10)
+  concurrency?: number              // 1-10 (default: 4)
+  requestsPerSecond?: number        // 0.2-20 (default: 5)
+  respectRobots?: boolean           // default: true
+  checkExternal?: boolean           // default: true
+  useSitemaps?: boolean             // default: true
+  includeSubdomains?: boolean       // default: false
+  includePaths?: string | string[]  // path prefixes, comma-separated or array
+  excludePaths?: string | string[]
+  userAgent?: string
+  headers?: Record<string, string>  // sanitized like RequestSettings.headers
+}
+```
+
+**Response:** `{ crawlId: string, progress: CrawlProgress }`. **Errors:** 400 (invalid or blocked URL), 429 (3 crawls already running).
+
+### GET /api/site-audit/crawls/:id/events (SSE)
+
+| Event | Data |
+|-------|------|
+| `progress` | `CrawlProgress` (throttled to 4/s) |
+| `log` | `{ time, message, type: 'info' \| 'success' \| 'warning' \| 'error' \| 'progress' }` |
+| `done` | final `CrawlProgress` (or `CrawlSummary` for crawls finished earlier) |
+
+```typescript
+interface CrawlProgress {
+  crawlId: string
+  status: CrawlSummary['status']
+  startUrl: string
+  fetched: number; queued: number; discovered: number
+  failed: number; blocked: number
+  externalChecked: number; externalQueued: number
+  currentUrl: string | null
+  phase: 'starting' | 'crawling' | 'sitemaps' | 'externals' | 'analyzing' | 'done'
+  elapsedMs: number
+  issueCount?: number
+  error?: string
+}
+```
+
+### POST /api/site-audit/crawls/:id/stop
+
+Stops a running crawl; the data collected so far is analysed (status `stopped`). 409 if the crawl is not running.
+
+### GET /api/site-audit/crawls/:id/overview
+
+Totals (`urls`, `internal`, `external`, `fetched`, `htmlPages`, `indexable`, `nonIndexable`, `blockedByRobots`, `failed`, `notCrawled`), `statusCodes` (internal URLs per `2xx`/`3xx`/`4xx`/`5xx`/`failed`/`blocked`/`not crawled`), `indexability` (count per reason), `depth` (HTML pages per click depth), `responseTimeMs` (`average`, `max`), `topIssues` (top 10 with 3 examples each), `config` (resolved crawl options).
+
+### GET /api/site-audit/crawls/:id/issues
+
+Query: `severity` (`error` / `warning` / `notice`), `category`. Returns `{ issues: IssueSummary[] }`: catalog entry (`id`, `category`, `severity`, `title`, `description`, `why`, `fix`) plus `count` and up to 5 `examples` (`url`, `detail`). Only issues with at least one URL, sorted by severity, then count.
+
+### GET /api/site-audit/crawls/:id/urls
+
+Query: `filter` (`all`, `internal`, `external`, `html`, `indexable`, `non-indexable`, `2xx`, `3xx`, `4xx`, `5xx`, `failed`, `blocked`, `not-crawled`), `issue` (issue id; adds `issue_detail`), `search` (substring of URL or title), `columns` (comma-separated, whitelist `URL_COLUMNS`), `sort`, `dir` (`asc`/`desc`), `limit` (1-500, default 50), `offset`.
+
+**Response:** `{ total, offset, limit, columns, rows }`.
+
+### GET /api/site-audit/crawls/:id/url?url=
+
+Details of one URL: `url` (all columns of the `urls` row), `issues`, `inlinks` (`total`, `items`), `outlinks` (`total`, `items` with target status), `hreflang`, `redirectChain` (`[{ url, status }]`), `sitemaps`. 404 with a hint if the URL is not in the crawl.
+
+### GET /api/site-audit/crawls/:id/export?kind=
+
+CSV download (UTF-8 with BOM): `issues` (severity, issue id, title, URL, detail), `urls` (all URL columns), `links` (source, target, anchor, nofollow, target status).
+
+### GET /api/site-audit/catalog
+
+`{ issues: IssueDefinition[] }` — all 45 checks with explanations.
+
+### POST /mcp
+
+MCP endpoint for AI agents (JSON-RPC 2.0, stateless Streamable HTTP). See [agent-interface.md](modules/agent-interface.md).
+
+---
+
+## Crawl File (SQLite)
+
+`<OUTPUT_DIR>/crawls/<crawl-id>.sqlite`, `PRAGMA user_version = 1`, `PRAGMA application_id = 0x55544C53`. Open it read-only with any SQLite client:
+
+```bash
+sqlite3 -readonly crawls/2026-11-05_14-03-43_example.com.sqlite \
+  "SELECT severity, issue_id, COUNT(*) FROM v_issues GROUP BY 1, 2 ORDER BY 1, 3 DESC"
+```
+
+| Table / View | Content |
+|--------------|---------|
+| `meta` | `key`/`value`: `tool`, `tool_version`, `crawl_id`, `start_url`, `started_at`, `finished_at`, `status`, `source`, `config` (JSON), `stats` (JSON), `issue_counts` (JSON), `error` |
+| `urls` | One row per discovered URL (see below) |
+| `links` | `source_id`, `target_id`, `anchor`, `rel`, `nofollow` (unique per source/target pair) |
+| `hreflang` | `source_id`, `lang`, `target_id` |
+| `sitemap_urls` | `url_id`, `sitemap` (sitemap file that lists the URL) |
+| `issue_catalog` | `issue_id`, `category`, `severity`, `title`, `description`, `why`, `fix` |
+| `issues` | `issue_id`, `url_id`, `detail` (evidence, e.g. the redirect chain) |
+| `v_issues` | Issues joined with catalog and URL: `issue_id`, `severity`, `category`, `title`, `url`, `detail` |
+| `v_links` | Links with URLs: `source`, `target`, `anchor`, `rel`, `nofollow`, `target_is_internal`, `target_status` |
+
+**`urls` columns:**
+
+| Column | Meaning |
+|--------|---------|
+| `url`, `is_internal` | Absolute URL (fragment removed, trailing slash kept); internal = start host and its www/non-www twin (plus subdomains if enabled) |
+| `found_via`, `depth` | `seed` / `link` / `redirect` / `canonical` / `hreflang` / `sitemap`; click depth from the start URL (`NULL` = not reachable via links) |
+| `crawl_state` | `fetched`, `failed`, `blocked_robots`, `blocked_target` (SSRF guard), `excluded` (path filter), `skipped_limit`, `not_checked` (external, check disabled), `pending` |
+| `status_code`, `error`, `content_type`, `is_html`, `response_ms`, `size_bytes` | Response of this URL (no automatic redirect following) |
+| `redirect_url`, `final_url`, `final_status`, `redirect_hops` | Location of a 3xx and the resolved end of the chain |
+| `title`, `title_length`, `title_count`, `meta_description`, `meta_description_length`, `meta_description_count`, `h1`, `h1_count`, `h2_count` | On-page signals |
+| `meta_robots`, `x_robots_tag`, `noindex`, `nofollow` | Robots directives (all bots or Googlebot) |
+| `canonical_url`, `canonical_count`, `canonical_relative` | First canonical (HTML or `Link` header), number of different canonicals, relative href used |
+| `lang`, `meta_refresh_url` | `<html lang>`, meta refresh target |
+| `word_count`, `content_hash`, `simhash` | Main text without navigation/header/footer/forms; SHA-1 of the word sequence; 64-bit SimHash (hex) |
+| `images_total`, `images_missing_alt`, `insecure_resources` | Images, images without `alt` attribute, `http:` subresources on HTTPS pages |
+| `in_sitemap`, `inlinks`, `outlinks`, `external_outlinks` | Derived after the crawl |
+| `indexable`, `indexability_reason` | `1`/`0` for internal URLs (NULL for non-HTML); reason: `noindex`, `canonicalised`, `redirect`, `client_error`, `server_error`, `blocked_robots`, `fetch_failed`, `other_status` |
 
 ---
 

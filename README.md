@@ -19,6 +19,22 @@ Is it perfect? No. Is it feature-complete? Definitely not. But it does exactly w
 
 ## Features
 
+### Site Audit (crawler)
+- Crawls a whole website like a search engine: breadth-first (real click depth), robots.txt respected, rate-limited, sitemaps included
+- 45 site-wide checks with stable ids and explanations (what it means, why it matters, how to fix): broken links, redirect chains and loops, canonical and hreflang errors, indexability conflicts, sitemap problems, orphan pages, duplicate titles, descriptions and content, thin content, mixed content and more
+- Every crawl is one open SQLite file (`crawls/<crawl-id>.sqlite`), queryable with any SQLite client, Python, DuckDB or BI tools
+- Live progress, overview, issue explorer, URL table with filters, URL details (inlinks, outlinks, hreflang, redirect chain)
+- CSV exports for issues, URLs and links
+
+### AI Agents (MCP)
+- Built-in MCP endpoint at `/mcp`: Claude Code, Codex, Cursor and other agents can list crawls, read overviews and issues, query URLs and run read-only SQL
+- Read-only by default; starting crawls via MCP needs `URL_TOOLS_MCP_ALLOW_CRAWL=1`
+- Crawled content is marked as untrusted data in every tool result (prompt-injection safety)
+
+```bash
+claude mcp add --scope user --transport http url-tools http://localhost:3000/mcp
+```
+
 ### HTML Scraping
 - Fetch HTML from multiple URLs in parallel
 - CSS Selectors to extract specific parts of a page
@@ -111,6 +127,7 @@ Output structure:
 - `screenshots/{timestamp}/` - Screenshot and PDF files
 - `images/{timestamp}/` - Downloaded images
 - `seo-audit/{timestamp}_seo-audit.json` - SEO audit results
+- `crawls/{crawl-id}.sqlite` - Site Audit crawls (one SQLite file per crawl, schema in [docs/data-model.md](docs/data-model.md#crawl-file-sqlite))
 
 ## Docker
 
@@ -128,13 +145,13 @@ The `output/` directory is mounted as a volume so results persist between contai
 ## Testing
 
 ```bash
-npm test            # Run all tests (80 tests)
+npm test            # Run all tests
 npm run test:watch  # Watch mode
 ```
 
 ## Limitations
 
-- **Localhost only**: Designed to run locally. No authentication for the web interface.
+- **Localhost only**: Designed to run locally. No authentication for the web interface. Requests from other websites (cross-site, DNS rebinding) are blocked; to use another hostname or IP set `URL_TOOLS_ALLOWED_HOSTS`.
 - **No JavaScript rendering** (for scraping): Uses simple fetch for HTML/Link/Image scraping. Screenshots use Puppeteer and do render JavaScript.
 - **Basic error handling**: Works for my use cases, edge cases might not be covered.
 
@@ -142,6 +159,7 @@ npm run test:watch  # Watch mode
 
 - [Nuxt 4](https://nuxt.com/) - Vue framework
 - [Cheerio](https://cheerio.js.org/) - HTML parsing
+- [node:sqlite](https://nodejs.org/api/sqlite.html) - Crawl files (built into Node 22.13+)
 - [Puppeteer](https://pptr.dev/) - Screenshots and PDF generation
 - [PapaParse](https://www.papaparse.com/) - CSV generation
 - [Lucide](https://lucide.dev/) - Icons

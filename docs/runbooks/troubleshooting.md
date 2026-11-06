@@ -100,6 +100,42 @@ docker compose up -d
 
 **Solution:** This is intentional — SSRF protection prevents access to internal networks. Only public HTTP/HTTPS URLs are allowed.
 
+The Site Audit checks the resolved IP address of every connection, including each redirect hop (ADR-013). A public hostname that resolves to a private address shows up as `crawl_state = blocked_target` with the message `Blocked target <host> → <ip> (private or reserved address)`. For local tests only: `URL_TOOLS_ALLOW_LOCALHOST=1` allows loopback addresses (never private networks).
+
+### 403 "Host not allowed" or "Origin not allowed"
+
+**Symptom:** The UI or an API call answers 403 with `Host not allowed (DNS rebinding protection)` or `Origin not allowed`.
+
+**Cause:** The local request guard only accepts `localhost`, `127.0.0.1`, `[::1]` and `*.localhost` as host, and only browser requests from the url-tools page itself. Requests from other websites and from other local web apps (another port) are rejected (ADR-013).
+
+**Solution:** When url-tools is reached under another name or IP (LAN access, reverse proxy), list it: `URL_TOOLS_ALLOWED_HOSTS=tools.internal,192.168.1.20`. `*` disables the host check (only behind your own authentication).
+
+---
+
+## Site Audit / MCP
+
+### Crawl Shows Status "interrupted"
+
+**Cause:** The server was stopped or restarted while the crawl was running. Crawls are not resumed.
+
+**Solution:** Start the crawl again. The old file stays in `crawls/` and can be deleted.
+
+### Many URLs With "Blocked by robots.txt" or Nothing Crawled
+
+**Cause:** robots.txt disallows the paths, or robots.txt answered 5xx / was unreachable (RFC 9309: then nothing may be crawled). The log drawer shows the reason.
+
+**Solution:** Check `https://<site>/robots.txt`. For your own sites you can switch off "Respect robots.txt" in the options.
+
+### Agent Says start_crawl Is Disabled
+
+**Cause:** MCP is read-only by default (ADR-012).
+
+**Solution:** Start the server with `URL_TOOLS_MCP_ALLOW_CRAWL=1`, or start the crawl in the UI and let the agent read it.
+
+### Agent Does Not See url-tools
+
+**Solution:** The server must be running (`npm run dev` or Docker). Register it once: `claude mcp add --scope user --transport http url-tools http://localhost:3000/mcp`, then start a new Claude Code session. Check with `curl -s -X POST http://localhost:3000/mcp -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"ping"}'`.
+
 ### Rate Limiting by Target Server
 
 **Symptom:** Many 429 errors (Too Many Requests)

@@ -13,6 +13,7 @@ import {
   Network,
   Pause,
   Play,
+  Radar,
   Search,
   Square,
   Sun,
@@ -108,6 +109,7 @@ const activeTab = ref<
   | 'sitemap'
   | 'broken-links'
   | 'silo'
+  | 'site-audit'
 >('scraper')
 const showClearConfirm = ref(false)
 const isClearing = ref(false)
@@ -447,6 +449,12 @@ async function clearOutputFolder() {
           <Globe :size="14" /> Scraper
         </button>
         <button
+          :class="['tab', { active: activeTab === 'site-audit' }]"
+          @click="switchTab('site-audit')"
+        >
+          <Radar :size="14" /> Site Audit
+        </button>
+        <button
           :class="['tab', { active: activeTab === 'seo' }]"
           @click="switchTab('seo')"
         >
@@ -601,6 +609,12 @@ async function clearOutputFolder() {
       </div>
     </main>
 
+    <!-- Site Audit Tab: crawls keep running on the server across tab
+         switches, so it exposes no isRunning for the switch warning. -->
+    <main v-else-if="activeTab === 'site-audit'" class="full-page">
+      <SiteAudit />
+    </main>
+
     <!-- SEO Audit Tab -->
     <main v-else-if="activeTab === 'seo'" class="full-page">
       <SeoAudit ref="seoAuditRef" />
@@ -742,8 +756,17 @@ header h1 .subtitle {
   margin-left: 8px;
 }
 
+/* Keep all tabs on one line on laptop screens (the subtitle is the first to go). */
+@media (max-width: 1440px) {
+  header h1 .subtitle {
+    display: none;
+  }
+}
+
 .tabs {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 4px;
 }
 
@@ -759,6 +782,7 @@ header h1 .subtitle {
   color: var(--text-secondary);
   cursor: pointer;
   font-size: 13px;
+  white-space: nowrap;
 }
 
 .tab:hover {
