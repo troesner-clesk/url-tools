@@ -91,7 +91,7 @@ Baked into the Docker image via `Dockerfile ENV`:
 
 ### Custom Output Directory
 
-By default, results are saved to `~/Documents/url-tools`. Override with `OUTPUT_DIR`:
+By default, results are saved to `output/` in the working directory (the project folder). Override with `OUTPUT_DIR`:
 
 ```bash
 # Custom output directory

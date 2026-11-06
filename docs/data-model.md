@@ -2,7 +2,7 @@
 
 > No traditional database schema — URL Tools uses the filesystem as its persistence layer. This document describes the output structure and all API endpoints.
 
-**Output directory:** Configurable via `OUTPUT_DIR` environment variable. Default: `~/Documents/url-tools`. In Docker: `/app/output`.
+**Output directory:** Configurable via `OUTPUT_DIR` environment variable. Default: `output/` in the working directory (the project folder with `npm run dev`). In Docker Compose: `/app/output`.
 
 ## Output Directory Structure
 

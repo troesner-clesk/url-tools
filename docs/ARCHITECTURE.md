@@ -127,7 +127,8 @@ Although there is no auth, there are multiple layers of security:
 
 | Protection | Implementation | File |
 |------------|---------------|------|
-| SSRF protection | Blocks localhost, private IPs, file:// | `server/utils/url-validator.ts` |
+| SSRF protection | Blocks localhost, private IPs, file:// in the URL string | `server/utils/url-validator.ts` |
+| SSRF protection (scraping tools) | Follows redirects itself and checks the resolved IP of every hop; screenshots abort blocked browser requests (request interception) | `server/utils/safe-fetch.ts`, `server/api/screenshot.post.ts` |
 | SSRF protection (Site Audit) | Checks the resolved IP of every connection incl. redirect hops; blocks loopback, private, link-local, CGNAT, reserved, IPv6 equivalents | `server/crawler/net-guard.ts` |
 | Cross-site / DNS rebinding | `/api/**` and `/mcp` only accept local `Host` headers (or `URL_TOOLS_ALLOWED_HOSTS`) and browser requests from the url-tools page itself (`Origin` = own origin, `Sec-Fetch-Site` = `same-origin`/`none`); other websites and other local web apps are rejected | `server/middleware/local-guard.ts` |
 | Agent safety | MCP read-only by default, crawl tools only with `URL_TOOLS_MCP_ALLOW_CRAWL=1`, crawled content marked as untrusted, results paged and capped | `server/mcp/tools.ts` |
@@ -162,7 +163,7 @@ Although there is no auth, there are multiple layers of security:
 2. **Frontend** sends request to Nitro API (REST or SSE stream)
 3. **Server** fetches external URLs with retry logic and timeout
 4. **Results** are streamed to the frontend or returned as a batch
-5. **Auto-save** stores results as JSON/CSV/HTML in the output folder (default: `~/Documents/url-tools`, configurable via `OUTPUT_DIR`)
+5. **Auto-save** stores results as JSON/CSV/HTML in the output folder (default: `output/` in the working directory, configurable via `OUTPUT_DIR`)
 
 **Site Audit:** crawl once, analyse everywhere. `POST /api/site-audit/crawls` (UI) or `start_crawl` (MCP) starts a background job (`server/crawler/engine.ts`) that writes straight into `crawls/<crawl-id>.sqlite`; progress is streamed via `GET .../events` (SSE). After the crawl, `analyze.ts` derives redirect chains, link counts and indexability and fills the `issues` table. The UI endpoints, CSV exports and MCP tools all read through `server/crawler/queries.ts`, so they always show the same numbers. See [modules/site-audit.md](modules/site-audit.md).
 
@@ -183,7 +184,8 @@ Although there is no auth, there are multiple layers of security:
 
 | Utility | Purpose |
 |---------|---------|
-| `fetchWithRetry` | HTTP fetch with configurable timeout and linear backoff (1s → 2s → 3s) |
+| `fetchWithRetry` | HTTP fetch with configurable timeout and linear backoff (1s → 2s → 3s), uses `safeFetch` |
+| `safe-fetch` | `safeFetch` (redirects followed manually, every hop checked incl. DNS), `blockedTargetReason`, cached check for Puppeteer requests (ADR-013) |
 | `link-analyzer` | URL normalization, link extraction (HTML + sitemap), redirect chain analysis |
 | `sitemap` | Shared sitemap fetch loop used by both `parse-sitemap` endpoint and Silo sitemap-scope mode |
 | `inbound-matcher` | Silo: normalize targets, match discovered links, aggregate into groups |
@@ -197,7 +199,7 @@ Although there is no auth, there are multiple layers of security:
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `OUTPUT_DIR` | `~/Documents/url-tools` | Where results are written |
+| `OUTPUT_DIR` | `output/` in the working directory | Where results are written (Docker Compose: `/app/output`) |
 | `URL_TOOLS_ALLOW_LOCALHOST` | `0` | When `1`, disables the SSRF guard's localhost block (also loopback addresses in the Site Audit guard, never private networks). Needed to crawl the bundled `public/demo/` fixtures (e.g. the Link Checker domain-badge demo) and used by the crawler tests. Dev only — never set in production. |
 | `URL_TOOLS_ALLOWED_HOSTS` | (empty) | Comma-separated extra host names/IPs under which the UI/API/MCP may be reached (LAN, reverse proxy). `*` disables the host check. |
 | `URL_TOOLS_MCP_ALLOW_CRAWL` | `0` | When `1`, MCP clients may start and stop crawls (`start_crawl`, `stop_crawl`). Off: agents can only read crawls. |

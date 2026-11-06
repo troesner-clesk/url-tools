@@ -1,7 +1,9 @@
 # ADR-006: Configurable Output Directory
 
 **Date:** 2026-03-29
-**Status:** Accepted
+**Status:** Accepted, default amended (see Update)
+
+> **Update 2026-03-31 (commit 0a81bd9, #16):** The default went back to `output/` in the working directory, because `~/Documents` does not exist on Linux servers. `OUTPUT_DIR` stays the way to choose another location; Docker Compose sets `/app/output`. The rest of this ADR (single source of truth in `path-guard.ts`) still applies.
 
 ## Context
 
