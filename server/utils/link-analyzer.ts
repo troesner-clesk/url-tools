@@ -1,5 +1,5 @@
 import * as cheerio from 'cheerio'
-import { isAllowedUrl } from './url-validator'
+import { blockedTargetReason } from './safe-fetch'
 
 export interface LinkInfo {
   sourceUrl: string
@@ -65,6 +65,19 @@ export async function getRedirectChain(
 
   while (redirectCount < maxRedirects) {
     try {
+      // Checks the URL string and the resolved IP of every hop (ADR-013).
+      const blocked = await blockedTargetReason(currentUrl)
+      if (blocked) {
+        return {
+          chain,
+          finalUrl: currentUrl,
+          finalStatus: 0,
+          error:
+            chain.length > 0
+              ? 'Redirect to blocked URL'
+              : `Blocked target: ${blocked}`,
+        }
+      }
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
 
@@ -86,14 +99,6 @@ export async function getRedirectChain(
         const location = response.headers.get('location')
         if (location) {
           currentUrl = new URL(location, currentUrl).href
-          if (!isAllowedUrl(currentUrl)) {
-            return {
-              chain,
-              finalUrl: currentUrl,
-              finalStatus: 0,
-              error: 'Redirect to blocked URL',
-            }
-          }
           redirectCount++
           continue
         }

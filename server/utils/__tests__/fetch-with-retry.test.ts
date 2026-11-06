@@ -1,5 +1,11 @@
+import { lookup } from 'node:dns/promises'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fetchWithRetry, type RequestSettings } from '../fetch-with-retry'
+import { BlockedUrlError } from '../safe-fetch'
+
+// fetchWithRetry resolves hosts for the SSRF check (safe-fetch.ts); keep the
+// tests offline and deterministic.
+vi.mock('node:dns/promises', () => ({ lookup: vi.fn() }))
 
 // Helper to build a minimal Response-like object that fetch would return
 function mockResponse(
@@ -19,6 +25,19 @@ describe('fetchWithRetry', () => {
   beforeEach(() => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     vi.stubGlobal('fetch', vi.fn())
+    vi.mocked(lookup).mockResolvedValue([
+      { address: '93.184.215.14', family: 4 },
+    ] as never)
+  })
+
+  it('does not retry targets blocked by the SSRF guard', async () => {
+    vi.mocked(lookup).mockResolvedValue([
+      { address: '192.168.0.10', family: 4 },
+    ] as never)
+    await expect(
+      fetchWithRetry('https://example.com', defaultSettings),
+    ).rejects.toThrow(BlockedUrlError)
+    expect(fetch).not.toHaveBeenCalled()
   })
 
   afterEach(() => {

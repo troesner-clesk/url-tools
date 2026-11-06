@@ -100,7 +100,7 @@ docker compose up -d
 
 **Solution:** This is intentional — SSRF protection prevents access to internal networks. Only public HTTP/HTTPS URLs are allowed.
 
-The Site Audit checks the resolved IP address of every connection, including each redirect hop (ADR-013). A public hostname that resolves to a private address shows up as `crawl_state = blocked_target` with the message `Blocked target <host> → <ip> (private or reserved address)`. For local tests only: `URL_TOOLS_ALLOW_LOCALHOST=1` allows loopback addresses (never private networks).
+All tools check the resolved IP address of every request, including each redirect hop (ADR-013). The scraping tools report `Blocked target: ...`, screenshots `Blocked target (the page or a redirect points to a private or local address)`, the Link Checker `Redirect to blocked URL`. The Site Audit checks inside the connection itself. A public hostname that resolves to a private address shows up as `crawl_state = blocked_target` with the message `Blocked target <host> → <ip> (private or reserved address)`. For local tests only: `URL_TOOLS_ALLOW_LOCALHOST=1` allows loopback addresses (never private networks).
 
 ### 403 "Host not allowed" or "Origin not allowed"
 

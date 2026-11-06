@@ -3,6 +3,7 @@ import { join, resolve } from 'node:path'
 import { defineEventHandler, readBody } from 'h3'
 import puppeteer, { type Browser, type Page } from 'puppeteer'
 import { assertWithinOutput, OUTPUT_ROOT } from '../utils/path-guard'
+import { blockedBrowserRequestReason } from '../utils/safe-fetch'
 
 interface ScreenshotRequest {
   urls: string[]
@@ -36,6 +37,23 @@ async function getBrowser(): Promise<Browser> {
     })
   }
   return browser
+}
+
+/**
+ * Every browser request (navigation, redirect hop, subresource) is checked
+ * like the scraping tools (ADR-013): private, loopback and other reserved
+ * targets are aborted before Chromium connects.
+ */
+async function guardPage(page: Page): Promise<void> {
+  await page.setRequestInterception(true)
+  page.on('request', (request) => {
+    if (request.isInterceptResolutionHandled()) return
+    blockedBrowserRequestReason(request.url())
+      .then((reason) =>
+        reason ? request.abort('blockedbyclient') : request.continue(),
+      )
+      .catch(() => request.abort('failed').catch(() => {}))
+  })
 }
 
 async function takeScreenshot(
@@ -97,10 +115,13 @@ async function takeScreenshot(
       size: fileSize,
     }
   } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
     return {
       url,
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: message.includes('ERR_BLOCKED_BY_CLIENT')
+        ? 'Blocked target (the page or a redirect points to a private or local address)'
+        : message,
     }
   }
 }
@@ -129,6 +150,7 @@ export default defineEventHandler(async (event) => {
   try {
     const browserInstance = await getBrowser()
     const page = await browserInstance.newPage()
+    await guardPage(page)
 
     const startIndex = body.startIndex || 0
     for (let i = 0; i < body.urls.length; i++) {

@@ -17,6 +17,7 @@ Second, the URL-string SSRF check (`server/utils/url-validator.ts`) cannot see w
    - an `Origin` header (if present) must be exactly the server's own origin (same host and port as the `Host` header) or point to a host listed in `URL_TOOLS_ALLOWED_HOSTS`; `Origin: null` is rejected
    - requests without `Origin` (curl, MCP clients, server-side calls) pass
 2. **Connection-level SSRF guard** for the site crawler (`server/crawler/net-guard.ts`): every request uses `node:http(s)` with a custom `lookup` that resolves all addresses and refuses the connection if any of them is loopback, private, link-local, CGNAT, multicast, reserved or a NAT64/IPv4-mapped form of those. Redirects are never followed automatically; each hop is a new, checked request. Literal IPs and `localhost` are rejected before any network activity. `URL_TOOLS_ALLOW_LOCALHOST=1` allows loopback only (tests, demo fixtures).
+3. **Hop-by-hop check for the scraping tools** (`server/utils/safe-fetch.ts`, added 2026-11-06, #33): `safeFetch` follows redirects itself and checks the URL string and the resolved IP of every hop with the same address rules before sending the request. Used by `fetchWithRetry` (Scraper, SEO Audit, Link Checker, Silo, Sitemap, JSON), the SEO Audit link check and the image downloads; `getRedirectChain` checks each hop the same way. Screenshots use Puppeteer request interception: navigations, redirect hops and subresources to blocked targets are aborted (`ERR_BLOCKED_BY_CLIENT`), hosts are checked once per minute.
 
 ## Rationale
 
@@ -28,7 +29,7 @@ Second, the URL-string SSRF check (`server/utils/url-validator.ts`) cannot see w
 
 - **CSRF tokens:** would require changes in every UI request and do not help against DNS rebinding. Rejected.
 - **Binding to 127.0.0.1 only:** good practice, but Docker needs `0.0.0.0` and it does not stop browser-based attacks anyway. Not sufficient on its own.
-- **Retrofitting the guard into `fetchWithRetry` for all existing tools:** desirable, but changes the behaviour and tests of every legacy endpoint and Puppeteer needs request interception. Left as a follow-up; the existing tools keep the string check.
+- **Moving the legacy tools to the socket-level guard of the crawler:** would also close the rebinding window, but replaces `fetch` in every legacy endpoint and does not work for Chromium. The hop-by-hop pre-check (decision 3) covers redirects and hostnames that resolve to private addresses with small changes.
 
 ## Consequences
 
@@ -38,4 +39,5 @@ Second, the URL-string SSRF check (`server/utils/url-validator.ts`) cannot see w
 
 **Negative:**
 - Accessing url-tools under another hostname or IP (e.g. from another device in the LAN, or behind a reverse proxy) requires `URL_TOOLS_ALLOWED_HOSTS`
-- Legacy tools (Scraper, SEO Audit, Link Checker, Images, Screenshots) still rely on the URL-string check and follow redirects without re-checking
+- The legacy tools and Chromium resolve the hostname again when they connect: a DNS answer that changes between check and connection (rebinding) is not caught there, only in the Site Audit
+- Screenshots of pages that load resources from private addresses render without those resources

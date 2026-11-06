@@ -1,3 +1,4 @@
+import { BlockedUrlError, safeFetch } from './safe-fetch'
 import { sanitizeHeaders } from './sanitize-headers'
 
 export interface RequestSettings {
@@ -27,14 +28,14 @@ export async function fetchWithRetry(
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), timeout * 1000)
 
-      const response = await fetch(url, {
+      // safeFetch checks the resolved IP of the URL and of every redirect hop.
+      const response = await safeFetch(url, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (compatible; URLTools/1.0)',
           ...sanitizeHeaders(headers),
         },
         signal: controller.signal,
-      })
-      clearTimeout(timeoutId)
+      }).finally(() => clearTimeout(timeoutId))
 
       if (response.status >= 500 && attempt < retries) {
         lastError = new Error(`Server error: ${response.status}`)
@@ -44,6 +45,8 @@ export async function fetchWithRetry(
 
       return { response, retryCount: attempt, loadTime: Date.now() - startTime }
     } catch (error) {
+      // A blocked target stays blocked; retrying would only waste time.
+      if (error instanceof BlockedUrlError) throw error
       lastError = error instanceof Error ? error : new Error('Unknown error')
       if (attempt < retries) {
         await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)))

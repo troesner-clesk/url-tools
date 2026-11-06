@@ -3,6 +3,7 @@ import { extname, join } from 'node:path'
 import * as cheerio from 'cheerio'
 import { defineEventHandler, readBody } from 'h3'
 import { assertWithinOutput, OUTPUT_ROOT } from '../utils/path-guard'
+import { safeFetch } from '../utils/safe-fetch'
 
 interface ImageResult {
   src: string
@@ -41,7 +42,8 @@ async function fetchWithTimeout(
   const timeoutId = setTimeout(() => controller.abort(), timeout)
 
   try {
-    const response = await fetch(url, {
+    // Page and image URLs come from third-party HTML: check every hop (ADR-013).
+    const response = await safeFetch(url, {
       signal: controller.signal,
       headers: {
         'User-Agent':

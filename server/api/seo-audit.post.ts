@@ -5,6 +5,7 @@ import { defineEventHandler, readBody } from 'h3'
 import Papa from 'papaparse'
 import { fetchWithRetry, type RequestSettings } from '../utils/fetch-with-retry'
 import { OUTPUT_ROOT } from '../utils/path-guard'
+import { safeFetch } from '../utils/safe-fetch'
 import { filterAllowedUrls, isAllowedUrl } from '../utils/url-validator'
 import { computeSimhash } from '../utils/text-similarity'
 
@@ -87,7 +88,8 @@ interface SeoAuditResult {
 async function checkLinkStatus(url: string): Promise<number> {
   if (!isAllowedUrl(url)) return 0
   try {
-    const response = await fetch(url, {
+    // Redirects are followed by safeFetch, which checks every hop (ADR-013).
+    const response = await safeFetch(url, {
       method: 'HEAD',
       signal: AbortSignal.timeout(5000),
     })

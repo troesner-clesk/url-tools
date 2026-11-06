@@ -52,3 +52,4 @@ Create screenshots and PDFs of web pages via Puppeteer (headless Chrome). Suppor
 - **First Launch:** ~300 MB Chromium download (or pre-installed via Docker)
 - **Docker:** Chromium is pre-installed in the Docker image (`/usr/bin/chromium`)
 - **JavaScript:** Fully rendered — SPAs are displayed correctly
+- **SSRF protection:** Every browser request (page, redirect hop, image, script, style) is checked against the resolved IP; requests to private or local addresses are aborted. A page that redirects there fails with "Blocked target", blocked resources are simply missing in the screenshot (ADR-013)
