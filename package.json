@@ -2,6 +2,9 @@
   "name": "url-tools",
   "type": "module",
   "private": true,
+  "engines": {
+    "node": ">=22.13"
+  },
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
