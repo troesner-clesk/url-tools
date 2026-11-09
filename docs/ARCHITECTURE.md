@@ -111,7 +111,9 @@ url-tools/
 │   ├── seo-audit/
 │   ├── screenshots/
 │   └── images/
-├── .github/workflows/ci.yml     # CI/CD pipeline
+├── .github/workflows/
+│   ├── ci.yml                    # CI/CD pipeline
+│   └── commit-authors.yml        # Fails on commits by Claude (see deployment runbook)
 ├── Dockerfile                    # Multi-stage Docker build
 ├── docker-compose.yml            # Docker Compose configuration
 └── nuxt.config.ts                # Nuxt configuration

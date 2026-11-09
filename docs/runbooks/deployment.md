@@ -119,6 +119,12 @@ File: `.github/workflows/ci.yml`
 
 **Environment:** Ubuntu Latest, Node.js 24, npm cache enabled
 
+### Commit authors
+
+File: `.github/workflows/commit-authors.yml`
+
+Fails when a commit is authored or committed by Claude (Anthropic address or `claude[bot]`) or names it as co-author, so only people appear as contributors. The job only starts when a push mentions one of these identities: ordinary pushes show up as skipped and use no Actions minutes. A manual run (Actions → Commit authors → Run workflow) checks the whole history of the selected branch. The same file is used in all repositories of the account, so change it everywhere at once.
+
 ### Production Build
 
 ```bash
